@@ -1,0 +1,36 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Migrations bytecode
+migrations/versions/*.pyc
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
