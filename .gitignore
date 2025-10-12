@@ -1,3 +1,10 @@
+# bmad
+.bmad-core/
+.claude/
+.windsurf/
+docs/
+
+
 # Environment variables
 .env
 
@@ -11,6 +18,7 @@ __pycache__/
 
 # Virtual environments
 venv/
+venvObveznik/
 env/
 ENV/
 
