@@ -15,6 +15,15 @@ class Config:
     # Security
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
+    # Session security
+    SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
+    SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+    SESSION_COOKIE_SECURE = False  # Set to True in ProductionConfig (requires HTTPS)
+
+    # CSRF protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SECRET_KEY = os.environ.get('CSRF_SECRET_KEY') or SECRET_KEY
+
     @classmethod
     def init_app(cls, app):
         """Initialize application with configuration-specific settings."""
@@ -50,6 +59,44 @@ class Config:
     # File Storage
     STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage', 'fakture')
 
+    # Logging
+    LOG_LEVEL = os.environ.get('LOG_LEVEL') or 'INFO'
+    SECURITY_LOG_FILE = os.path.join(os.path.dirname(__file__), 'logs', 'security.log')
+
+    @classmethod
+    def configure_logging(cls, app):
+        """Configure application logging including security logger."""
+        import logging
+        from logging.handlers import RotatingFileHandler
+        import os
+
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+
+        # Configure security logger
+        security_logger = logging.getLogger('security')
+        security_logger.setLevel(logging.INFO)
+
+        # File handler for security logs
+        security_handler = RotatingFileHandler(
+            cls.SECURITY_LOG_FILE,
+            maxBytes=10485760,  # 10MB
+            backupCount=10
+        )
+        security_handler.setFormatter(logging.Formatter(
+            '[%(asctime)s] %(levelname)s: %(message)s'
+        ))
+        security_logger.addHandler(security_handler)
+
+        # Also log to console in development
+        if app.config.get('DEBUG'):
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(logging.Formatter(
+                '[%(asctime)s] %(levelname)s: %(message)s'
+            ))
+            security_logger.addHandler(console_handler)
+
 
 class DevelopmentConfig(Config):
     """Development environment configuration."""
@@ -61,6 +108,10 @@ class ProductionConfig(Config):
     """Production environment configuration."""
     DEBUG = False
     TESTING = False
+
+    # Production session security (HTTPS required)
+    SESSION_COOKIE_SECURE = True  # HTTPS only
+    SESSION_COOKIE_SAMESITE = 'Strict'  # Stricter CSRF protection
 
     # In production, enforce environment variables
     @classmethod

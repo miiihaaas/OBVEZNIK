@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Korisnika - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="bi bi-person-plus"></i> {{ action }} Korisnika</h1>
+
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}  <!-- CSRF token -->
+
+                        <!-- Full Name -->
+                        <div class="mb-3">
+                            {{ form.full_name.label(class="form-label") }}
+                            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), type="email") }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if action == 'Izmeni' %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Ostavite prazno da zadržite postojeću lozinku
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Role -->
+                        <div class="mb-3">
+                            {{ form.role.label(class="form-label") }}
+                            {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else ""), id="role-select") }}
+                            {% if form.role.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.role.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Firma ID (conditional display) -->
+                        <div class="mb-3" id="firma-field">
+                            {{ form.firma_id.label(class="form-label") }}
+                            {{ form.firma_id(class="form-select" + (" is-invalid" if form.firma_id.errors else "")) }}
+                            {% if form.firma_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.firma_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Obavezno za paušalac korisnike
+                            </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Otkaži
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Sačuvaj
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Conditional display: show firma_id only if role is 'pausalac'
+    const roleSelect = document.getElementById('role-select');
+    const firmaField = document.getElementById('firma-field');
+
+    function toggleFirmaField() {
+        if (roleSelect.value === 'pausalac') {
+            firmaField.style.display = 'block';
+        } else {
+            firmaField.style.display = 'none';
+        }
+    }
+
+    roleSelect.addEventListener('change', toggleFirmaField);
+
+    // Set initial state on page load
+    toggleFirmaField();
+</script>
+{% endblock %}

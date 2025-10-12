@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Dobrodošli, {{ user.full_name }}!</h1>
+
+            <div class="alert alert-info" role="alert">
+                <h4 class="alert-heading">Paušalac Dashboard (Placeholder)</h4>
+                <p>Ovo je placeholder stranica za paušalac dashboard.</p>
+                <hr>
+                <p class="mb-0">Kompletan dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
+                <ul class="mt-2">
+                    <li>Pregled faktura</li>
+                    <li>Kreiranje novih faktura</li>
+                    <li>Upravljanje komitentima</li>
+                    <li>Pregled statistika</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5>Vaši podaci</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Ime:</strong> {{ user.full_name }}</p>
+                    <p><strong>Uloga:</strong> {{ user.role }}</p>
+                    <p><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

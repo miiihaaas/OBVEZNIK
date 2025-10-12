@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Dobrodošli Administratore, {{ user.full_name }}!</h1>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h3 class="mb-3">Brzi pristup</h3>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-people"></i> Upravljanje Korisnicima
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">Admin Dashboard (Placeholder)</h4>
+                <p>Ovo je placeholder stranica za admin dashboard.</p>
+                <hr>
+                <p class="mb-0">Kompletan admin dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
+                <ul class="mt-2">
+                    <li><strong>✅ Upravljanje korisnicima</strong> (Story 1.5 - Implementirano)</li>
+                    <li>Upravljanje paušalnim firmama</li>
+                    <li>Pregled svih faktura u sistemu</li>
+                    <li>Sistemske statistike i izveštaji</li>
+                    <li>Konfiguracija sistema</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5>Admin podaci</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Ime:</strong> {{ user.full_name }}</p>
+                    <p><strong>Uloga:</strong> <span class="badge bg-danger">{{ user.role }}</span></p>
+                    <p><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

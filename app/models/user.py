@@ -1,5 +1,5 @@
 """User model for authentication and authorization."""
-from app import db
+from app import db, bcrypt
 from datetime import datetime, timezone
 from flask_login import UserMixin
 
@@ -26,6 +26,32 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         """Check if user has admin role."""
         return self.role == 'admin'
+
+    def set_password(self, password):
+        """
+        Hash password using bcrypt with cost factor 12.
+
+        Args:
+            password: Plain text password to hash
+        """
+        self.password_hash = bcrypt.generate_password_hash(password, rounds=12).decode('utf-8')
+
+    def check_password(self, password):
+        """
+        Verify password against stored hash.
+
+        Args:
+            password: Plain text password to verify
+
+        Returns:
+            bool: True if password matches, False otherwise
+        """
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+    def update_last_login(self):
+        """Update last_login timestamp to current UTC time."""
+        self.last_login = datetime.now(timezone.utc)
+        db.session.commit()
 
     def __repr__(self):
         return f'<User {self.email}>'
