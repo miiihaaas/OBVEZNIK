@@ -65,4 +65,9 @@ def create_app(config_name='development'):
     # app.register_blueprint(artikli.bp)
     # app.register_blueprint(admin.bp)
 
+    # Import models so they are registered with SQLAlchemy
+    # This is necessary for Flask-Migrate to detect model changes
+    with app.app_context():
+        from app import models  # noqa: F401
+
     return app

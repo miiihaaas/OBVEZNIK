@@ -15,6 +15,11 @@ class Config:
     # Security
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
+    @classmethod
+    def init_app(cls, app):
+        """Initialize application with configuration-specific settings."""
+        pass
+
     # Database
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'mysql+pymysql://root:password@localhost:3306/obveznik'

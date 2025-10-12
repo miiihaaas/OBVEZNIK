@@ -17,8 +17,13 @@ def app():
     ctx = app.app_context()
     ctx.push()
 
+    # Create all tables for testing
+    db.create_all()
+
     yield app
 
+    # Clean up: drop all tables
+    db.drop_all()
     ctx.pop()
 
 
@@ -39,17 +44,18 @@ def runner(app):
     return app.test_cli_runner()
 
 
-@pytest.fixture(scope='function')
-def init_database(app):
+@pytest.fixture(scope='function', autouse=True)
+def clean_database(app):
     """
-    Initialize the database for testing.
-    Creates all tables before the test and drops them after.
+    Clean database between tests for isolation.
+    Automatically used for all tests.
     """
-    # Create all tables
-    db.create_all()
+    yield
 
-    yield db
-
-    # Clean up: drop all tables
+    # Clean up: remove all data but keep tables
     db.session.remove()
-    db.drop_all()
+    # Truncate all tables
+    meta = db.metadata
+    for table in reversed(meta.sorted_tables):
+        db.session.execute(table.delete())
+    db.session.commit()
