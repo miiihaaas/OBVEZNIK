@@ -3,33 +3,89 @@
 {% block title %}Dashboard - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-12">
-            <h1 class="mb-4">Dobrodošli, {{ user.full_name }}!</h1>
+<div class="container mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Dobrodošli, {{ user.full_name }}!</h1>
+            <p class="text-muted-gray">Pregled Vaših podataka i aktivnosti</p>
+        </div>
+        <div class="col-md-4">
+            <!-- Limit Tracking Widget (Placeholder) -->
+            <div class="limit-tracking-widget">
+                <h4><i class="fa-solid fa-chart-line"></i> Limit Praćenje</h4>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <p class="limit-text mb-0">Promet ovog meseca: 0 RSD / 6,000,000 RSD</p>
+            </div>
+        </div>
+    </div>
 
+    <!-- Quick Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-file-invoice"></i> Fakture ovog meseca</h3>
+                <div class="stats-value">0</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-chart-line"></i> Ukupan promet</h3>
+                <div class="stats-value">0 RSD</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <h3><i class="fa-regular fa-file"></i> Draft fakture</h3>
+                <div class="stats-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Primary CTA Button -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <button class="btn btn-quick-action" disabled>
+                <i class="fa-solid fa-plus"></i> Kreiraj Novu Fakturu
+            </button>
+            <p class="text-muted-gray mt-2 small">
+                <i class="fa-solid fa-info-circle"></i> Funkcionalnost će biti dostupna u budućim verzijama
+            </p>
+        </div>
+    </div>
+
+    <!-- Info Alert -->
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="alert alert-info" role="alert">
-                <h4 class="alert-heading">Paušalac Dashboard (Placeholder)</h4>
+                <h4 class="alert-heading"><i class="fa-solid fa-circle-info"></i> Paušalac Dashboard (U razvoju)</h4>
                 <p>Ovo je placeholder stranica za paušalac dashboard.</p>
                 <hr>
                 <p class="mb-0">Kompletan dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
-                <ul class="mt-2">
+                <ul class="mt-2 mb-0">
                     <li>Pregled faktura</li>
                     <li>Kreiranje novih faktura</li>
                     <li>Upravljanje komitentima</li>
-                    <li>Pregled statistika</li>
+                    <li>Pregled statistika i KPO knjige</li>
                 </ul>
             </div>
+        </div>
+    </div>
 
+    <!-- User Data Card -->
+    <div class="row">
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h5>Vaši podaci</h5>
+                    <h5><i class="fa-solid fa-user"></i> Vaši podaci</h5>
                 </div>
                 <div class="card-body">
                     <p><strong>Email:</strong> {{ user.email }}</p>
                     <p><strong>Ime:</strong> {{ user.full_name }}</p>
-                    <p><strong>Uloga:</strong> {{ user.role }}</p>
-                    <p><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                    <p><strong>Uloga:</strong> <span class="badge bg-info">{{ user.role }}</span></p>
+                    <p class="mb-0"><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
                 </div>
             </div>
         </div>

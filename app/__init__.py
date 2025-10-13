@@ -106,4 +106,8 @@ def create_app(config_name='development'):
     with app.app_context():
         from app import models  # noqa: F401
 
+    # Register CLI commands
+    from app.cli import register_commands
+    register_commands(app)
+
     return app

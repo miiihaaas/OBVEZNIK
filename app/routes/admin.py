@@ -1,5 +1,5 @@
 """Admin Blueprint for User Management (CRUD operations)."""
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models.user import User
@@ -86,7 +86,7 @@ def user_edit(id):
         GET: Rendered form template with current user data
         POST: Redirect to users list on success, form with errors on failure
     """
-    user = User.query.get_or_404(id)
+    user = db.session.get(User, id) or abort(404)
     form = UserEditForm(original_email=user.email, obj=user)
 
     # Populate firma_id choices dynamically
@@ -109,7 +109,7 @@ def user_edit(id):
         user.firma_id = form.firma_id.data if form.firma_id.data and form.firma_id.data != 0 else None
 
         # Update password only if new password is provided
-        if form.password.data:
+        if form.password.data and form.password.data.strip():
             user.set_password(form.password.data)
 
         db.session.commit()
@@ -140,7 +140,7 @@ def user_delete(id):
     Returns:
         Redirect to users list with success/error message
     """
-    user = User.query.get_or_404(id)
+    user = db.session.get(User, id) or abort(404)
 
     # Prevent admin from deleting themselves
     if user.id == current_user.id:

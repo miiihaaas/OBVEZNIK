@@ -3,45 +3,95 @@
 {% block title %}Admin Dashboard - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
+<div class="container mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
         <div class="col-md-12">
-            <h1 class="mb-4">Dobrodošli Administratore, {{ user.full_name }}!</h1>
+            <h1><i class="fa-solid fa-shield-halved"></i> Admin Dashboard</h1>
+            <p class="text-muted-gray">Dobrodošli Administratore, {{ user.full_name }}!</p>
+        </div>
+    </div>
 
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <h3 class="mb-3">Brzi pristup</h3>
-                    <div class="d-grid gap-2 d-md-flex">
-                        <a href="{{ url_for('admin.users') }}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-people"></i> Upravljanje Korisnicima
-                        </a>
-                    </div>
-                </div>
+    <!-- Quick Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-building"></i> Ukupno Firmi</h3>
+                <div class="stats-value">0</div>
             </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-file-invoice"></i> Fakture (ovaj mesec)</h3>
+                <div class="stats-value">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-users"></i> Aktivni Korisnici</h3>
+                <div class="stats-value">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3><i class="fa-solid fa-chart-line"></i> Prosečan Promet</h3>
+                <div class="stats-value">0 RSD</div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Quick Access Buttons -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h3 class="mb-3"><i class="fa-solid fa-bolt"></i> Brzi pristup</h3>
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="{{ url_for('admin.users') }}" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-users"></i> Upravljanje Korisnicima
+                </a>
+                <button class="btn btn-outline-primary btn-lg" disabled>
+                    <i class="fa-solid fa-building"></i> Paušalne Firme
+                </button>
+                <button class="btn btn-outline-primary btn-lg" disabled>
+                    <i class="fa-solid fa-file-invoice"></i> Sve Fakture
+                </button>
+                <button class="btn btn-outline-primary btn-lg" disabled>
+                    <i class="fa-solid fa-gear"></i> Podešavanja
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Development Status Alert -->
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">Admin Dashboard (Placeholder)</h4>
+                <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation"></i> Admin Dashboard (U razvoju)</h4>
                 <p>Ovo je placeholder stranica za admin dashboard.</p>
                 <hr>
                 <p class="mb-0">Kompletan admin dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
-                <ul class="mt-2">
-                    <li><strong>✅ Upravljanje korisnicima</strong> (Story 1.5 - Implementirano)</li>
+                <ul class="mt-2 mb-0">
+                    <li><strong><i class="fa-solid fa-check"></i> Upravljanje korisnicima</strong> (Story 1.5 - Implementirano)</li>
                     <li>Upravljanje paušalnim firmama</li>
-                    <li>Pregled svih faktura u sistemu</li>
+                    <li>Pregled svih faktura u sistemu (God Mode)</li>
                     <li>Sistemske statistike i izveštaji</li>
                     <li>Konfiguracija sistema</li>
                 </ul>
             </div>
+        </div>
+    </div>
 
+    <!-- Admin Data Card -->
+    <div class="row">
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header bg-warning">
-                    <h5>Admin podaci</h5>
+                <div class="card-header">
+                    <h5><i class="fa-solid fa-user-shield"></i> Admin podaci</h5>
                 </div>
                 <div class="card-body">
                     <p><strong>Email:</strong> {{ user.email }}</p>
                     <p><strong>Ime:</strong> {{ user.full_name }}</p>
                     <p><strong>Uloga:</strong> <span class="badge bg-danger">{{ user.role }}</span></p>
-                    <p><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                    <p class="mb-0"><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
                 </div>
             </div>
         </div>

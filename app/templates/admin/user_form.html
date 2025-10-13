@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1><i class="bi bi-person-plus"></i> {{ action }} Korisnika</h1>
+    <h1><i class="fa-solid fa-user-plus"></i> {{ action }} Korisnika</h1>
 
     <div class="row justify-content-center mt-4">
         <div class="col-md-8">
@@ -46,7 +46,7 @@
                             {% endif %}
                             {% if action == 'Izmeni' %}
                                 <div class="form-text">
-                                    <i class="bi bi-info-circle"></i> Ostavite prazno da zadržite postojeću lozinku
+                                    <i class="fa-solid fa-circle-info"></i> Ostavite prazno da zadržite postojeću lozinku
                                 </div>
                             {% endif %}
                         </div>
@@ -72,17 +72,17 @@
                                 </div>
                             {% endif %}
                             <div class="form-text">
-                                <i class="bi bi-info-circle"></i> Obavezno za paušalac korisnike
+                                <i class="fa-solid fa-circle-info"></i> Obavezno za paušalac korisnike
                             </div>
                         </div>
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
-                                <i class="bi bi-x-circle"></i> Otkaži
+                                <i class="fa-solid fa-xmark"></i> Otkaži
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-circle"></i> Sačuvaj
+                                <i class="fa-solid fa-check"></i> Sačuvaj
                             </button>
                         </div>
                     </form>

@@ -1,0 +1,682 @@
+/* ============================================================
+   OBVEZNIK Custom CSS - Marimar Branding
+   Version: 1.0
+   Based on: Front-End Spec v1.0 (2025-10-11)
+   Framework: Bootstrap 5 with custom overrides
+   ============================================================ */
+
+/* ============================================================
+   1. CSS VARIABLES - Marimar Color Palette & Design Tokens
+   ============================================================ */
+:root {
+    /* Brand Colors - Marimar */
+    --color-primary: #8D696E;           /* Bordo ton iz logotipa */
+    --color-secondary: #C2B3B5;         /* Svetlija nijansa bordo-sive */
+    --color-accent: #D98282;            /* Toplija varijacija - CTA buttons */
+
+    /* Semantic Colors */
+    --color-success: #28A745;           /* Zelena - pozitivan feedback */
+    --color-warning: #FFC107;           /* Žuta - upozorenja */
+    --color-error: #DC3545;             /* Crvena - greške */
+    --color-info: #17A2B8;              /* Plava - informacije */
+
+    /* Neutral Colors */
+    --color-neutral-bg-light: #FCFCFC;  /* Svetla pozadina */
+    --color-neutral-bg-gray: #F5F5F5;   /* Sekundarna pozadina */
+    --color-neutral-text-dark: #4B4B4B; /* Primarni tekst */
+    --color-neutral-text-gray: #7A7A7A; /* Sekundarni tekst */
+    --color-neutral-border: #E0E0E0;    /* Obrube */
+
+    /* Typography */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    --font-monospace: 'Courier New', monospace;
+
+    /* Font Sizes */
+    --font-size-h1: 32px;
+    --font-size-h2: 24px;
+    --font-size-h3: 20px;
+    --font-size-body: 16px;
+    --font-size-small: 14px;
+    --font-size-caption: 12px;
+
+    /* Font Weights */
+    --font-weight-regular: 400;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* Line Heights */
+    --line-height-h1: 1.2;
+    --line-height-h2: 1.3;
+    --line-height-h3: 1.4;
+    --line-height-body: 1.5;
+    --line-height-small: 1.4;
+    --line-height-caption: 1.3;
+
+    /* Spacing Scale (8px base unit) */
+    --spacing-xs: 4px;      /* 0.25rem */
+    --spacing-sm: 8px;      /* 0.5rem */
+    --spacing-md: 16px;     /* 1rem */
+    --spacing-lg: 24px;     /* 1.5rem */
+    --spacing-xl: 32px;     /* 2rem */
+    --spacing-xxl: 48px;    /* 3rem */
+
+    /* Border Radius */
+    --radius-small: 4px;    /* buttons, badges */
+    --radius-medium: 8px;   /* cards, inputs, modals */
+    --radius-large: 12px;   /* dashboard cards */
+
+    /* Shadows */
+    --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-heavy: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+    /* Transitions */
+    --transition-fast: 150ms ease-in-out;
+    --transition-normal: 250ms ease-in-out;
+    --transition-slow: 300ms ease-in-out;
+}
+
+/* ============================================================
+   2. GLOBAL STYLES & TYPOGRAPHY
+   ============================================================ */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px; /* Base font size */
+}
+
+body {
+    font-family: var(--font-primary);
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    color: var(--color-neutral-text-dark);
+    background-color: var(--color-neutral-bg-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography Hierarchy */
+h1, .h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-h1);
+    color: var(--color-neutral-text-dark);
+    margin-bottom: var(--spacing-lg);
+}
+
+h2, .h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-h2);
+    color: var(--color-neutral-text-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+h3, .h3 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-h3);
+    color: var(--color-neutral-text-dark);
+    margin-bottom: var(--spacing-md);
+}
+
+p {
+    margin-bottom: var(--spacing-md);
+}
+
+small, .small {
+    font-size: var(--font-size-small);
+    line-height: var(--line-height-small);
+}
+
+.caption {
+    font-size: var(--font-size-caption);
+    line-height: var(--line-height-caption);
+}
+
+/* Links */
+a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* Focus Styles - WCAG AA Compliance */
+*:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Content Layout */
+.content {
+    flex: 1;
+}
+
+/* ============================================================
+   3. BOOTSTRAP 5 OVERRIDES - Marimar Branding
+   ============================================================ */
+
+/* Primary Color Override */
+.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.text-primary {
+    color: var(--color-primary) !important;
+}
+
+.btn-primary {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+    font-weight: var(--font-weight-semibold);
+    transition: background-color var(--transition-fast),
+                border-color var(--transition-fast),
+                transform var(--transition-fast);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-primary:focus-visible {
+    box-shadow: 0 0 0 0.25rem rgba(217, 130, 130, 0.5);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: var(--color-neutral-text-gray);
+    border-color: var(--color-neutral-text-gray);
+    color: #fff;
+    font-weight: var(--font-weight-semibold);
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-neutral-text-dark);
+    border-color: var(--color-neutral-text-dark);
+}
+
+/* Outline Button (Tertiary) */
+.btn-outline-primary {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    font-weight: var(--font-weight-semibold);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+/* Danger Button */
+.btn-danger {
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Form Controls */
+.form-control {
+    border-radius: var(--radius-medium);
+    border: 1px solid var(--color-neutral-border);
+    padding: 10px 14px;
+    font-size: var(--font-size-body);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-control:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.25rem rgba(217, 130, 130, 0.25);
+}
+
+.form-label {
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-neutral-text-dark);
+}
+
+/* Cards */
+.card {
+    border-radius: var(--radius-medium);
+    border: 1px solid var(--color-neutral-border);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow var(--transition-normal);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-medium);
+}
+
+.card-header {
+    background-color: var(--color-neutral-bg-gray);
+    border-bottom: 1px solid var(--color-neutral-border);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Alerts */
+.alert {
+    border-radius: var(--radius-medium);
+    padding: var(--spacing-md);
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* Badges */
+.badge {
+    border-radius: 50px; /* Pill shape */
+    padding: 4px 12px;
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge.bg-success {
+    background-color: var(--color-success) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--color-warning) !important;
+    color: var(--color-neutral-text-dark) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--color-error) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--color-info) !important;
+}
+
+/* Tables */
+.table {
+    font-size: var(--font-size-body);
+}
+
+.table thead th {
+    background-color: var(--color-neutral-bg-gray);
+    color: var(--color-neutral-text-dark);
+    font-weight: var(--font-weight-semibold);
+    border-bottom: 2px solid var(--color-neutral-border);
+    padding: var(--spacing-md);
+}
+
+.table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background-color: var(--color-neutral-bg-gray);
+}
+
+.table td {
+    padding: var(--spacing-md);
+    vertical-align: middle;
+}
+
+/* ============================================================
+   4. NAVIGATION BAR
+   ============================================================ */
+.navbar {
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-md) 0;
+}
+
+.navbar-brand {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-bold);
+    color: #fff !important;
+    letter-spacing: 1px;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: var(--font-weight-regular);
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: color var(--transition-fast);
+}
+
+.navbar-nav .nav-link:hover {
+    color: #fff !important;
+}
+
+.navbar-nav .dropdown-menu {
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--color-neutral-border);
+}
+
+.navbar-nav .dropdown-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    transition: background-color var(--transition-fast);
+}
+
+.navbar-nav .dropdown-item:hover {
+    background-color: var(--color-neutral-bg-gray);
+}
+
+/* ============================================================
+   5. FOOTER
+   ============================================================ */
+footer {
+    background-color: var(--color-neutral-bg-gray);
+    padding: var(--spacing-lg) 0;
+    margin-top: auto;
+    border-top: 1px solid var(--color-neutral-border);
+}
+
+footer p {
+    margin-bottom: 0;
+    color: var(--color-neutral-text-gray);
+    font-size: var(--font-size-small);
+}
+
+/* ============================================================
+   6. LOGIN PAGE STYLES
+   ============================================================ */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-neutral-bg-light) 0%, var(--color-secondary) 100%);
+    padding: var(--spacing-lg);
+}
+
+.login-card {
+    max-width: 450px;
+    width: 100%;
+}
+
+.login-card .card {
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-heavy);
+    border: none;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.login-header h1 {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-sm);
+    letter-spacing: 2px;
+}
+
+.login-header p {
+    color: var(--color-neutral-text-gray);
+    font-size: var(--font-size-small);
+}
+
+/* ============================================================
+   7. DASHBOARD STYLES
+   ============================================================ */
+
+/* Stats Cards */
+.stats-card {
+    background-color: #fff;
+    border-radius: var(--radius-large);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--color-neutral-border);
+    box-shadow: var(--shadow-light);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    cursor: pointer;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+}
+
+.stats-card h3 {
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-neutral-text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.stats-card .stats-value {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    font-family: var(--font-monospace);
+}
+
+/* Limit Tracking Widget */
+.limit-tracking-widget {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    border-radius: var(--radius-large);
+    padding: var(--spacing-lg);
+    color: #fff;
+    box-shadow: var(--shadow-medium);
+    position: sticky;
+    top: var(--spacing-lg);
+}
+
+.limit-tracking-widget h4 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-md);
+    color: #fff;
+}
+
+.limit-tracking-widget .progress {
+    height: 12px;
+    border-radius: 50px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin-bottom: var(--spacing-sm);
+}
+
+.limit-tracking-widget .progress-bar {
+    background-color: #fff;
+    border-radius: 50px;
+}
+
+.limit-tracking-widget .limit-text {
+    font-size: var(--font-size-small);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: var(--font-monospace);
+}
+
+/* Quick Action Button */
+.btn-quick-action {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-bold);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-medium);
+    box-shadow: var(--shadow-medium);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.btn-quick-action:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-heavy);
+}
+
+/* ============================================================
+   8. ACCESSIBILITY ENHANCEMENTS
+   ============================================================ */
+
+/* Skip Navigation Link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: #fff;
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================================
+   9. RESPONSIVE DESIGN
+   ============================================================ */
+
+/* Mobile (0-767px) */
+@media (max-width: 767px) {
+    h1, .h1 {
+        font-size: 24px;
+    }
+
+    h2, .h2 {
+        font-size: 20px;
+    }
+
+    h3, .h3 {
+        font-size: 18px;
+    }
+
+    .stats-card {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .login-card .card-body {
+        padding: var(--spacing-lg) !important;
+    }
+
+    .btn-quick-action {
+        font-size: var(--font-size-body);
+        padding: var(--spacing-md);
+    }
+}
+
+/* Tablet (768px-1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .container {
+        max-width: 720px;
+    }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1200px;
+    }
+}
+
+/* ============================================================
+   10. UTILITY CLASSES
+   ============================================================ */
+
+/* Text Colors */
+.text-bordo {
+    color: var(--color-primary);
+}
+
+.text-accent {
+    color: var(--color-accent);
+}
+
+.text-muted-gray {
+    color: var(--color-neutral-text-gray);
+}
+
+/* Background Colors */
+.bg-light-gray {
+    background-color: var(--color-neutral-bg-gray);
+}
+
+/* Spacing Utilities */
+.mt-section {
+    margin-top: var(--spacing-xxl);
+}
+
+.mb-section {
+    margin-bottom: var(--spacing-xxl);
+}
+
+/* Monospace Numbers */
+.monospace-number {
+    font-family: var(--font-monospace);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* Icon Sizes */
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-md {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-lg {
+    width: 24px;
+    height: 24px;
+}
+
+/* ============================================================
+   END OF OBVEZNIK CUSTOM CSS
+   ============================================================ */

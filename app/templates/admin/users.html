@@ -5,9 +5,9 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-people"></i> Korisnici</h1>
+        <h1><i class="fa-solid fa-users"></i> Korisnici</h1>
         <a href="{{ url_for('admin.user_create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Dodaj Novog Korisnika
+            <i class="fa-solid fa-user-plus"></i> Dodaj Novog Korisnika
         </a>
     </div>
 
@@ -40,13 +40,13 @@
                     <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                     <td class="text-end">
                         <a href="{{ url_for('admin.user_edit', id=user.id) }}" class="btn btn-sm btn-warning" title="Izmeni korisnika">
-                            <i class="bi bi-pencil"></i> Izmeni
+                            <i class="fa-solid fa-pen"></i> Izmeni
                         </a>
                         <button type="button" class="btn btn-sm btn-danger"
                                 data-bs-toggle="modal"
                                 data-bs-target="#deleteModal{{ user.id }}"
                                 title="Obriši korisnika">
-                            <i class="bi bi-trash"></i> Obriši
+                            <i class="fa-solid fa-trash"></i> Obriši
                         </button>
                     </td>
                 </tr>
@@ -62,13 +62,13 @@
                             <div class="modal-body">
                                 Da li ste sigurni da želite obrisati korisnika <strong>{{ user.email }}</strong>?
                                 <br><br>
-                                <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Ova akcija je nepovratna!</span>
+                                <span class="text-danger"><i class="fa-solid fa-triangle-exclamation"></i> Ova akcija je nepovratna!</span>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
                                 <form method="POST" action="{{ url_for('admin.user_delete', id=user.id) }}" style="display:inline;">
                                     <button type="submit" class="btn btn-danger">
-                                        <i class="bi bi-trash"></i> Potvrdi Brisanje
+                                        <i class="fa-solid fa-trash"></i> Potvrdi Brisanje
                                     </button>
                                 </form>
                             </div>
@@ -81,13 +81,13 @@
     </div>
     {% else %}
     <div class="alert alert-info" role="alert">
-        <i class="bi bi-info-circle"></i> Nema korisnika u sistemu. Kliknite na "Dodaj Novog Korisnika" da kreirate prvog korisnika.
+        <i class="fa-solid fa-circle-info"></i> Nema korisnika u sistemu. Kliknite na "Dodaj Novog Korisnika" da kreirate prvog korisnika.
     </div>
     {% endif %}
 
     <div class="mt-3">
         <a href="{{ url_for('admin_dashboard.admin_dashboard') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Nazad na Dashboard
+            <i class="fa-solid fa-arrow-left"></i> Nazad na Dashboard
         </a>
     </div>
 </div>
