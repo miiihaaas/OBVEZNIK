@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ firma.naziv }} - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-building"></i> {{ firma.naziv }}</h1>
+
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Osnovni Podaci</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>PIB:</strong> {{ firma.pib }}</p>
+                    <p><strong>Matični Broj:</strong> {{ firma.maticni_broj }}</p>
+                    <p><strong>Naziv:</strong> {{ firma.naziv }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Telefon:</strong> {{ firma.telefon }}</p>
+                    <p><strong>Email:</strong> {{ firma.email if firma.email else 'N/A' }}</p>
+                    <p><strong>Status:</strong>
+                        {% if firma.is_active %}
+                            <span class="badge bg-success">Aktivna</span>
+                        {% else %}
+                            <span class="badge bg-danger">Neaktivna</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Adresa</h4>
+        </div>
+        <div class="card-body">
+            <p>{{ firma.adresa }} {{ firma.broj }}, {{ firma.postanski_broj }} {{ firma.mesto }}, {{ firma.drzava }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">Dinarski Računi</h4>
+        </div>
+        <div class="card-body">
+            {% if firma.dinarski_racuni %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Banka</th>
+                            <th>Broj Računa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for racun in firma.dinarski_racuni %}
+                        <tr>
+                            <td>{{ racun.banka }}</td>
+                            <td>{{ racun.broj }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted">Nema dinarskih računa.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0">Devizni Računi</h4>
+        </div>
+        <div class="card-body">
+            {% if firma.devizni_racuni %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Banka</th>
+                            <th>IBAN</th>
+                            <th>SWIFT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for racun in firma.devizni_racuni %}
+                        <tr>
+                            <td>{{ racun.banka }}</td>
+                            <td>{{ racun.iban }}</td>
+                            <td>{{ racun.swift }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted">Nema deviznih računa.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">Fakturisanje</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Prefiks Fakture:</strong> {{ firma.prefiks_fakture if firma.prefiks_fakture else 'N/A' }}</p>
+                    <p><strong>Sufiks Fakture:</strong> {{ firma.sufiks_fakture if firma.sufiks_fakture else 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>PDV Kategorija:</strong> {{ firma.pdv_kategorija }}</p>
+                    <p><strong>Šifra Osnova:</strong> {{ firma.sifra_osnova }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Korisnici ({{ firma.users|length }})</h4>
+        </div>
+        <div class="card-body">
+            {% if firma.users %}
+                <ul class="list-group">
+                    {% for user in firma.users %}
+                    <li class="list-group-item">
+                        <strong>{{ user.full_name }}</strong> ({{ user.email }})
+                        - <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'primary' }}">{{ user.role }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Nema povezanih korisnika.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin.firme') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Firmi
+        </a>
+    </div>
+</div>
+{% endblock %}

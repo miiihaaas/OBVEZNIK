@@ -1,13 +1,17 @@
-"""Admin Blueprint for User Management (CRUD operations)."""
+"""Admin Blueprint for User Management and PausalnFirma CRUD operations."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.forms.user import UserCreateForm, UserEditForm
+from app.forms.pausaln_firma import PausalnFirmaCreateForm
 from app.utils.decorators import admin_required
+from app.services import nbs_komitent_service
 from datetime import datetime, timezone
+from sqlalchemy.exc import IntegrityError
 import logging
+import json
 
 security_logger = logging.getLogger('security')
 
@@ -164,3 +168,102 @@ def user_delete(id):
 
     flash(f'Korisnik {email} je uspešno obrisan.', 'success')
     return redirect(url_for('admin.users'))
+
+
+# ===== PausalnFirma CRUD Routes =====
+
+@admin_bp.route('/firme')
+@login_required
+@admin_required
+def firme():
+    """
+    List all paušalne firme (Admin only).
+
+    Returns:
+        Rendered template with list of all paušalne firme
+    """
+    firme = PausalnFirma.query.order_by(PausalnFirma.naziv).all()
+    return render_template('admin/firme.html', firme=firme)
+
+
+@admin_bp.route('/firme/nova', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def firma_create():
+    """
+    Create new paušalna firma (Admin only).
+
+    Returns:
+        GET: Rendered form template
+        POST: Redirect to firma detail on success, form with errors on failure
+    """
+    form = PausalnFirmaCreateForm()
+
+    if form.validate_on_submit():
+        try:
+            # Parse dinarski računi from JSON hidden field
+            dinarski_racuni = json.loads(form.dinarski_racuni_json.data) if form.dinarski_racuni_json.data else []
+
+            # Parse devizni računi from JSON hidden field
+            devizni_racuni = json.loads(form.devizni_racuni_json.data) if form.devizni_racuni_json.data else []
+
+            # Create new PausalnFirma
+            firma = PausalnFirma(
+                pib=form.pib.data,
+                maticni_broj=form.maticni_broj.data,
+                naziv=form.naziv.data,
+                adresa=form.adresa.data,
+                broj=form.broj.data,
+                postanski_broj=form.postanski_broj.data,
+                mesto=form.mesto.data,
+                drzava=form.drzava.data,
+                telefon=form.telefon.data,
+                email=form.email.data or '',
+                dinarski_racuni=dinarski_racuni,
+                devizni_racuni=devizni_racuni if devizni_racuni else None,
+                prefiks_fakture=form.prefiks_fakture.data or None,
+                sufiks_fakture=form.sufiks_fakture.data or None,
+                pdv_kategorija=form.pdv_kategorija.data or 'SS',
+                sifra_osnova=form.sifra_osnova.data or 'PDV-RS-33'
+            )
+
+            db.session.add(firma)
+            db.session.commit()
+
+            # Security logging
+            security_logger.info(
+                f"PausalnFirma created: firma_id={firma.id}, naziv={firma.naziv}, pib={firma.pib}, "
+                f"created_by={current_user.email}, ip={request.remote_addr}, "
+                f"timestamp={datetime.now(timezone.utc).isoformat()}"
+            )
+
+            flash(f'Paušalna firma "{firma.naziv}" je uspešno kreirana!', 'success')
+            return redirect(url_for('admin.firma_detail', firma_id=firma.id))
+
+        except IntegrityError:
+            db.session.rollback()
+            flash('Greška: Firma sa ovim PIB-om već postoji.', 'danger')
+            return render_template('admin/pausaln_firma_create.html', form=form)
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Greška pri kreiranju firme: {str(e)}', 'danger')
+            return render_template('admin/pausaln_firma_create.html', form=form)
+
+    return render_template('admin/pausaln_firma_create.html', form=form)
+
+
+@admin_bp.route('/firme/<int:firma_id>')
+@login_required
+@admin_required
+def firma_detail(firma_id):
+    """
+    View paušalna firma details (Admin only).
+
+    Args:
+        firma_id: PausalnFirma ID
+
+    Returns:
+        Rendered template with firma details
+    """
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+    return render_template('admin/pausaln_firma_detail.html', firma=firma)

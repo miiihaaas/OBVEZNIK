@@ -32,6 +32,22 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Admin meni">
+                            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Admin
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <li><h6 class="dropdown-header">Korisnici</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.users') }}"><i class="fa-solid fa-users"></i> Lista Korisnika</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.user_create') }}"><i class="fa-solid fa-user-plus"></i> Dodaj Korisnika</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Paušalne Firme</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.firme') }}"><i class="fa-solid fa-building"></i> Lista Firmi</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.firma_create') }}"><i class="fa-solid fa-plus"></i> Dodaj Firmu</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Meni korisnika">
                             <i class="fa-regular fa-circle-user" aria-hidden="true"></i> {{ current_user.full_name }} ({{ current_user.email }})

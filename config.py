@@ -56,6 +56,11 @@ class Config:
     CELERY_BROKER_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
     CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
 
+    # NBS Komitent API
+    NBS_USERNAME = os.environ.get('NBS_USERNAME') or ''
+    NBS_PASSWORD = os.environ.get('NBS_PASSWORD') or ''
+    NBS_LICENCE_ID = os.environ.get('NBS_LICENCE_ID') or ''
+
     # File Storage
     STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'storage', 'fakture')
 

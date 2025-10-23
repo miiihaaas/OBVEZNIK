@@ -11,6 +11,7 @@ from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from redis import Redis
 
 from config import config
 
@@ -55,6 +56,16 @@ def create_app(config_name='development'):
     mail.init_app(app)
     limiter.init_app(app)
 
+    # Initialize Redis
+    try:
+        redis_client = Redis.from_url(app.config['REDIS_URL'])
+        redis_client.ping()  # Test connection
+        app.extensions['redis'] = redis_client
+        app.logger.info("Redis connected successfully")
+    except Exception as e:
+        app.logger.warning(f"Redis connection failed: {e}. Caching disabled.")
+        app.extensions['redis'] = None
+
     # Configure login manager
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Molimo prijavite se da pristupite ovoj stranici.'
@@ -94,6 +105,10 @@ def create_app(config_name='development'):
     # Register admin user management blueprint
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
+
+    # Register API blueprint
+    from app.routes.api import api_bp
+    app.register_blueprint(api_bp)
 
     # TODO: Register other blueprints when they are created in future stories
     # from app.routes import fakture, komitenti, artikli
