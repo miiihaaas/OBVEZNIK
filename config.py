@@ -143,6 +143,9 @@ class TestingConfig(Config):
     # Faster password hashing for tests
     BCRYPT_LOG_ROUNDS = 4
 
+    # Disable rate limiting for tests
+    RATELIMIT_ENABLED = False
+
 
 # Configuration dictionary
 config = {

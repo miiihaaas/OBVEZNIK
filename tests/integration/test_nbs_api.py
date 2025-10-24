@@ -88,28 +88,40 @@ def test_nbs_api_not_found(mock_fetch, client, admin_user):
     assert 'nije pronađena' in json_data['message']
 
 
-def test_nbs_api_invalid_pib_format(client, admin_user):
+@patch('app.services.nbs_komitent_service.fetch_company_by_pib')
+def test_nbs_api_invalid_pib_format(mock_fetch, client, admin_user):
     """Test NBS API with invalid PIB format returns 400 error."""
+    # Mock to return None (not found) for valid format tests
+    mock_fetch.return_value = None
+
     # Login as admin
     client.post('/login', data={
         'email': 'admin@test.com',
         'password': 'admin123'
     })
 
-    # Test short PIB
+    # Test short PIB (should return 400 - invalid format)
     response = client.get('/api/nbs/firma/123')
     assert response.status_code == 400
     json_data = response.get_json()
     assert 'error' in json_data
     assert 'Invalid PIB format' in json_data['error']
 
-    # Test long PIB
-    response = client.get('/api/nbs/firma/123456789')
+    # Test too long PIB (should return 400 - invalid format)
+    response = client.get('/api/nbs/firma/12345678901')
     assert response.status_code == 400
 
-    # Test non-numeric PIB
+    # Test non-numeric PIB (should return 400 - invalid format)
     response = client.get('/api/nbs/firma/1234567a')
     assert response.status_code == 400
+
+    # Test 8 digits (should return 200 - valid format, even if not found)
+    response = client.get('/api/nbs/firma/12345678')
+    assert response.status_code == 200
+
+    # Test 9 digits (should return 200 - valid format, even if not found)
+    response = client.get('/api/nbs/firma/123456789')
+    assert response.status_code == 200
 
 
 def test_nbs_api_requires_authentication(client):

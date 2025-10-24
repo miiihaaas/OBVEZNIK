@@ -33,9 +33,9 @@ class TestPausalnFirmaCreateForm:
             assert form.validate() is True
 
     def test_pib_format_validation(self, app):
-        """Test PIB format validation (must be exactly 8 digits)."""
+        """Test PIB format validation (must be 8 or 9 digits)."""
         with app.app_context():
-            # Test short PIB
+            # Test short PIB (should fail)
             form = PausalnFirmaCreateForm(
                 pib='1234567',  # 7 digits
                 naziv='Test',
@@ -51,9 +51,9 @@ class TestPausalnFirmaCreateForm:
             assert form.validate() is False
             assert 'pib' in form.errors
 
-            # Test long PIB
+            # Test long PIB (should fail)
             form = PausalnFirmaCreateForm(
-                pib='123456789',  # 9 digits
+                pib='1234567890',  # 10 digits
                 naziv='Test',
                 maticni_broj='12345678',
                 adresa='Test',
@@ -67,7 +67,37 @@ class TestPausalnFirmaCreateForm:
             assert form.validate() is False
             assert 'pib' in form.errors
 
-            # Test non-numeric PIB
+            # Test 8 digits (should pass)
+            form = PausalnFirmaCreateForm(
+                pib='12345678',  # 8 digits
+                naziv='Test',
+                maticni_broj='87654321',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}])
+            )
+            assert form.validate() is True
+
+            # Test 9 digits (should pass)
+            form = PausalnFirmaCreateForm(
+                pib='123456789',  # 9 digits
+                naziv='Test',
+                maticni_broj='98765432',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}])
+            )
+            assert form.validate() is True
+
+            # Test non-numeric PIB (should fail)
             form = PausalnFirmaCreateForm(
                 pib='1234567a',
                 naziv='Test',
@@ -144,9 +174,9 @@ class TestPausalnFirmaCreateForm:
         with app.app_context():
             # Invalid email format
             form = PausalnFirmaCreateForm(
-                pib='12345678',
+                pib='87654321',  # Unique PIB to avoid collision
                 naziv='Test Firma',
-                maticni_broj='87654321',
+                maticni_broj='11111111',
                 adresa='Test',
                 broj='1',
                 postanski_broj='11000',
@@ -154,16 +184,17 @@ class TestPausalnFirmaCreateForm:
                 drzava='Srbija',
                 telefon='011123456',
                 email='invalid-email',  # Invalid
-                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}])
+                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}]),
+                meta={'csrf': False}
             )
             assert form.validate() is False
             assert 'email' in form.errors
 
             # Valid email
             form = PausalnFirmaCreateForm(
-                pib='12345678',
+                pib='11223344',  # Different unique PIB
                 naziv='Test Firma',
-                maticni_broj='87654321',
+                maticni_broj='22222222',
                 adresa='Test',
                 broj='1',
                 postanski_broj='11000',
@@ -171,7 +202,8 @@ class TestPausalnFirmaCreateForm:
                 drzava='Srbija',
                 telefon='011123456',
                 email='valid@email.com',
-                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}])
+                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}]),
+                meta={'csrf': False}
             )
             assert form.validate() is True
 
@@ -255,9 +287,9 @@ class TestPausalnFirmaCreateForm:
         with app.app_context():
             # Prefiks too long
             form = PausalnFirmaCreateForm(
-                pib='12345678',
+                pib='55667788',  # Unique PIB to avoid collision
                 naziv='Test Firma',
-                maticni_broj='87654321',
+                maticni_broj='33333333',
                 adresa='Test',
                 broj='1',
                 postanski_broj='11000',
@@ -265,7 +297,8 @@ class TestPausalnFirmaCreateForm:
                 drzava='Srbija',
                 telefon='011123456',
                 prefiks_fakture='12345678901',  # 11 chars
-                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}])
+                dinarski_racuni_json=json.dumps([{'banka': 'test', 'broj': '123'}]),
+                meta={'csrf': False}
             )
             assert form.validate() is False
             assert 'prefiks_fakture' in form.errors

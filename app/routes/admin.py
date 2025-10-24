@@ -5,11 +5,12 @@ from app import db
 from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.forms.user import UserCreateForm, UserEditForm
-from app.forms.pausaln_firma import PausalnFirmaCreateForm
+from app.forms.pausaln_firma import PausalnFirmaCreateForm, PausalnFirmaEditForm
 from app.utils.decorators import admin_required
 from app.services import nbs_komitent_service
 from datetime import datetime, timezone
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import asc, desc, func, or_
 import logging
 import json
 
@@ -177,13 +178,62 @@ def user_delete(id):
 @admin_required
 def firme():
     """
-    List all paušalne firme (Admin only).
+    List all paušalne firme with sorting, search, and pagination (Admin only).
+
+    Query Parameters:
+        sort (str): Column to sort by (naziv, pib, created_at). Default: naziv
+        order (str): Sort order (asc, desc). Default: asc
+        search (str): Search term for naziv or PIB
+        page (int): Page number for pagination. Default: 1
 
     Returns:
-        Rendered template with list of all paušalne firme
+        Rendered template with paginated list of paušalne firme
     """
-    firme = PausalnFirma.query.order_by(PausalnFirma.naziv).all()
-    return render_template('admin/firme.html', firme=firme)
+    # Get query parameters
+    sort_by = request.args.get('sort', 'naziv')
+    order_dir = request.args.get('order', 'asc')
+    search_term = request.args.get('search', '').strip()
+    page = request.args.get('page', 1, type=int)
+
+    # Validate sort column (security: prevent SQL injection)
+    allowed_sort_columns = {
+        'naziv': PausalnFirma.naziv,
+        'pib': PausalnFirma.pib,
+        'created_at': PausalnFirma.created_at
+    }
+
+    if sort_by not in allowed_sort_columns:
+        sort_by = 'naziv'  # Fallback to default
+
+    sort_column = allowed_sort_columns[sort_by]
+
+    # Build query
+    query = PausalnFirma.query
+
+    # Apply search filter
+    if search_term:
+        query = query.filter(
+            or_(
+                PausalnFirma.naziv.ilike(f'%{search_term}%'),
+                PausalnFirma.pib.ilike(f'%{search_term}%')
+            )
+        )
+
+    # Apply sorting
+    order_func = desc if order_dir == 'desc' else asc
+    query = query.order_by(order_func(sort_column))
+
+    # Apply pagination
+    pagination = query.paginate(page=page, per_page=20, error_out=False)
+
+    return render_template(
+        'admin/firme.html',
+        firme=pagination.items,
+        pagination=pagination,
+        sort_by=sort_by,
+        order_dir=order_dir,
+        search_term=search_term
+    )
 
 
 @admin_bp.route('/firme/nova', methods=['GET', 'POST'])
@@ -267,3 +317,130 @@ def firma_detail(firma_id):
     """
     firma = db.session.get(PausalnFirma, firma_id) or abort(404)
     return render_template('admin/pausaln_firma_detail.html', firma=firma)
+
+
+@admin_bp.route('/firme/<int:firma_id>/izmeni', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def firma_edit(firma_id):
+    """
+    Edit existing paušalna firma (Admin only).
+
+    Args:
+        firma_id: PausalnFirma ID
+
+    Returns:
+        GET: Rendered form template with prepopulated data
+        POST: Redirect to firma detail on success, form with errors on failure
+    """
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+    form = PausalnFirmaEditForm()
+
+    if form.validate_on_submit():
+        # CRITICAL: PIB is immutable - cannot be changed after firma creation (SEC-001)
+        if form.pib.data != firma.pib:
+            flash('PIB ne može biti izmenjen nakon kreiranja firme.', 'danger')
+            return render_template('admin/pausaln_firma_edit.html', form=form, firma=firma)
+
+        try:
+            # Parse dinarski računi from JSON hidden field
+            dinarski_racuni = json.loads(form.dinarski_racuni_json.data) if form.dinarski_racuni_json.data else []
+
+            # Parse devizni računi from JSON hidden field
+            devizni_racuni = json.loads(form.devizni_racuni_json.data) if form.devizni_racuni_json.data else []
+
+            # Update firma with new data (PIB remains unchanged)
+            firma.naziv = form.naziv.data
+            firma.maticni_broj = form.maticni_broj.data
+            firma.adresa = form.adresa.data
+            firma.broj = form.broj.data
+            firma.postanski_broj = form.postanski_broj.data
+            firma.mesto = form.mesto.data
+            firma.drzava = form.drzava.data
+            firma.telefon = form.telefon.data
+            firma.email = form.email.data or ''
+            firma.dinarski_racuni = dinarski_racuni
+            firma.devizni_racuni = devizni_racuni if devizni_racuni else None
+            firma.prefiks_fakture = form.prefiks_fakture.data or None
+            firma.sufiks_fakture = form.sufiks_fakture.data or None
+            firma.pdv_kategorija = form.pdv_kategorija.data or 'SS'
+            firma.sifra_osnova = form.sifra_osnova.data or 'PDV-RS-33'
+
+            db.session.commit()
+
+            # Security logging
+            security_logger.info(
+                f"PausalnFirma updated: firma_id={firma.id}, naziv={firma.naziv}, pib={firma.pib}, "
+                f"updated_by={current_user.email}, ip={request.remote_addr}, "
+                f"timestamp={datetime.now(timezone.utc).isoformat()}"
+            )
+
+            flash(f'Paušalna firma "{firma.naziv}" je uspešno izmenjena!', 'success')
+            return redirect(url_for('admin.firma_detail', firma_id=firma.id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Greška pri izmeni firme: {str(e)}', 'danger')
+            return render_template('admin/pausaln_firma_edit.html', form=form, firma=firma)
+
+    # Prepopulate form with existing data on GET request
+    if request.method == 'GET':
+        form.pib.data = firma.pib
+        form.naziv.data = firma.naziv
+        form.maticni_broj.data = firma.maticni_broj
+        form.adresa.data = firma.adresa
+        form.broj.data = firma.broj
+        form.postanski_broj.data = firma.postanski_broj
+        form.mesto.data = firma.mesto
+        form.drzava.data = firma.drzava
+        form.telefon.data = firma.telefon
+        form.email.data = firma.email
+        form.dinarski_racuni_json.data = json.dumps(firma.dinarski_racuni or [])
+        form.devizni_racuni_json.data = json.dumps(firma.devizni_racuni or [])
+        form.prefiks_fakture.data = firma.prefiks_fakture
+        form.sufiks_fakture.data = firma.sufiks_fakture
+        form.pdv_kategorija.data = firma.pdv_kategorija
+        form.sifra_osnova.data = firma.sifra_osnova
+
+    return render_template('admin/pausaln_firma_edit.html', form=form, firma=firma)
+
+
+@admin_bp.route('/firme/<int:firma_id>/obrisi', methods=['POST'])
+@login_required
+@admin_required
+def firma_delete(firma_id):
+    """
+    Delete paušalna firma with CASCADE delete (Admin only).
+
+    Args:
+        firma_id: PausalnFirma ID
+
+    Returns:
+        Redirect to firme list on success or failure
+    """
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+    firma_naziv = firma.naziv
+
+    try:
+        # Delete firma (CASCADE will automatically delete related records)
+        db.session.delete(firma)
+        db.session.commit()
+
+        # Security logging
+        security_logger.info(
+            f"PausalnFirma deleted: firma_id={firma_id}, naziv={firma_naziv}, "
+            f"deleted_by={current_user.email}, ip={request.remote_addr}, "
+            f"timestamp={datetime.now(timezone.utc).isoformat()}"
+        )
+
+        flash(f'Paušalna firma "{firma_naziv}" je uspešno obrisana.', 'success')
+
+    except IntegrityError as e:
+        db.session.rollback()
+        flash(f'Greška pri brisanju firme: {str(e)}', 'danger')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Greška pri brisanju firme: {str(e)}', 'danger')
+
+    return redirect(url_for('admin.firme'))

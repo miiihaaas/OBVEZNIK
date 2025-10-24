@@ -137,10 +137,50 @@
         </div>
     </div>
 
-    <div class="mt-4">
+    <div class="mt-4 d-flex gap-2">
+        <a href="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" class="btn btn-primary">
+            <i class="fa-solid fa-pen"></i> Izmeni
+        </a>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteFirmaModal">
+            <i class="fa-solid fa-trash"></i> Obriši
+        </button>
         <a href="{{ url_for('admin.firme') }}" class="btn btn-secondary">
             <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Firmi
         </a>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFirmaModal" tabindex="-1" aria-labelledby="deleteFirmaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteFirmaModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Potvrda Brisanja
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">
+                    Da li ste sigurni da želite da obrišete <strong>{{ firma.naziv }}</strong>?
+                </p>
+                <p class="text-danger mb-0">
+                    <i class="fa-solid fa-exclamation-circle"></i>
+                    <strong>Upozorenje:</strong> Ovo će obrisati sve povezane fakture, komitente i korisnike.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-times"></i> Otkaži
+                </button>
+                <form method="POST" action="{{ url_for('admin.firma_delete', firma_id=firma.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i> Obriši
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

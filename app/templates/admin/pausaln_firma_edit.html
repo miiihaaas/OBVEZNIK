@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Izmeni Paušalnu Firmu - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-building-pen"></i> Izmeni Paušalnu Firmu</h1>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" id="firmaForm">
+                {{ form.hidden_tag() }}
+
+                <!-- PIB (Readonly) -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <label for="pib" class="form-label">PIB *</label>
+                        {{ form.pib(class="form-control bg-light") }}
+                        <small class="form-text text-muted">PIB se ne može menjati nakon kreiranja firme.</small>
+                    </div>
+                </div>
+
+                <!-- Company Basic Info -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="naziv" class="form-label">Naziv Firme *</label>
+                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        {% if form.naziv.errors %}
+                            <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="maticni_broj" class="form-label">Matični Broj *</label>
+                        {{ form.maticni_broj(class="form-control" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj") }}
+                        {% if form.maticni_broj.errors %}
+                            <div class="invalid-feedback">{{ form.maticni_broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address Info -->
+                <h4 class="mt-4">Adresa</h4>
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="adresa" class="form-label">Ulica *</label>
+                        {{ form.adresa(class="form-control" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa") }}
+                        {% if form.adresa.errors %}
+                            <div class="invalid-feedback">{{ form.adresa.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="broj" class="form-label">Broj *</label>
+                        {{ form.broj(class="form-control" ~ (" is-invalid" if form.broj.errors else ""), id="broj") }}
+                        {% if form.broj.errors %}
+                            <div class="invalid-feedback">{{ form.broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="postanski_broj" class="form-label">Poštanski Broj *</label>
+                        {{ form.postanski_broj(class="form-control" ~ (" is-invalid" if form.postanski_broj.errors else "")) }}
+                        {% if form.postanski_broj.errors %}
+                            <div class="invalid-feedback">{{ form.postanski_broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="mesto" class="form-label">Mesto *</label>
+                        {{ form.mesto(class="form-control" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto") }}
+                        {% if form.mesto.errors %}
+                            <div class="invalid-feedback">{{ form.mesto.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="drzava" class="form-label">Država *</label>
+                        {{ form.drzava(class="form-control" ~ (" is-invalid" if form.drzava.errors else "")) }}
+                        {% if form.drzava.errors %}
+                            <div class="invalid-feedback">{{ form.drzava.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <h4 class="mt-4">Kontakt Informacije</h4>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="telefon" class="form-label">Telefon *</label>
+                        {{ form.telefon(class="form-control" ~ (" is-invalid" if form.telefon.errors else "")) }}
+                        {% if form.telefon.errors %}
+                            <div class="invalid-feedback">{{ form.telefon.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email</label>
+                        {{ form.email(class="form-control" ~ (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Dinarski Računi -->
+                <h4 class="mt-4">Dinarski Računi *</h4>
+                <div id="dinarskiRacuniContainer"></div>
+                <button type="button" id="addDinarskiRacun" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fa-solid fa-plus"></i> Dodaj Dinarski Račun
+                </button>
+
+                <!-- Devizni Računi -->
+                <h4 class="mt-4">Devizni Računi (opciono)</h4>
+                <div id="devizniRacuniContainer"></div>
+                <button type="button" id="addDevizniRacun" class="btn btn-sm btn-outline-secondary mt-2">
+                    <i class="fa-solid fa-plus"></i> Dodaj Devizni Račun
+                </button>
+
+                <!-- Hidden fields for JSON data -->
+                {{ form.dinarski_racuni_json }}
+                {{ form.devizni_racuni_json }}
+
+                <!-- Fakturisanje -->
+                <h4 class="mt-4">Fakturisanje</h4>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="prefiks_fakture" class="form-label">Prefiks Fakture</label>
+                        {{ form.prefiks_fakture(class="form-control" ~ (" is-invalid" if form.prefiks_fakture.errors else "")) }}
+                        {% if form.prefiks_fakture.errors %}
+                            <div class="invalid-feedback">{{ form.prefiks_fakture.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sufiks_fakture" class="form-label">Sufiks Fakture</label>
+                        {{ form.sufiks_fakture(class="form-control" ~ (" is-invalid" if form.sufiks_fakture.errors else "")) }}
+                        {% if form.sufiks_fakture.errors %}
+                            <div class="invalid-feedback">{{ form.sufiks_fakture.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- PDV Info (readonly) -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="pdv_kategorija" class="form-label">PDV Kategorija</label>
+                        {{ form.pdv_kategorija(class="form-control") }}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sifra_osnova" class="form-label">Šifra Osnova</label>
+                        {{ form.sifra_osnova(class="form-control") }}
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Sačuvaj Izmene
+                    </button>
+                    <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-times"></i> Otkaži
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Dynamic Dinarski Računi Management
+let dinarskiRacuni = {{ firma.dinarski_racuni | tojson }};
+const dinarskiContainer = document.getElementById('dinarskiRacuniContainer');
+
+function renderDinarskiRacuni() {
+    dinarskiContainer.innerHTML = '';
+    dinarskiRacuni.forEach((racun, index) => {
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.innerHTML = `
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" placeholder="Naziv banke" value="${racun.banka || ''}" onchange="updateDinarskiRacun(${index}, 'banka', this.value)">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" placeholder="Broj računa" value="${racun.broj || ''}" onchange="updateDinarskiRacun(${index}, 'broj', this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger w-100" onclick="removeDinarskiRacun(${index})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        dinarskiContainer.appendChild(div);
+    });
+    document.getElementById('dinarski_racuni_json').value = JSON.stringify(dinarskiRacuni);
+}
+
+function addDinarskiRacun() {
+    dinarskiRacuni.push({ banka: '', broj: '' });
+    renderDinarskiRacuni();
+}
+
+function removeDinarskiRacun(index) {
+    dinarskiRacuni.splice(index, 1);
+    renderDinarskiRacuni();
+}
+
+function updateDinarskiRacun(index, field, value) {
+    dinarskiRacuni[index][field] = value;
+    document.getElementById('dinarski_racuni_json').value = JSON.stringify(dinarskiRacuni);
+}
+
+document.getElementById('addDinarskiRacun').addEventListener('click', addDinarskiRacun);
+
+// Dynamic Devizni Računi Management
+let devizniRacuni = {{ firma.devizni_racuni | tojson }};
+const devizniContainer = document.getElementById('devizniRacuniContainer');
+
+function renderDevizniRacuni() {
+    devizniContainer.innerHTML = '';
+    devizniRacuni.forEach((racun, index) => {
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.innerHTML = `
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Naziv banke" value="${racun.banka || ''}" onchange="updateDevizniRacun(${index}, 'banka', this.value)">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" placeholder="IBAN" value="${racun.iban || ''}" onchange="updateDevizniRacun(${index}, 'iban', this.value)">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="SWIFT" value="${racun.swift || ''}" onchange="updateDevizniRacun(${index}, 'swift', this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger w-100" onclick="removeDevizniRacun(${index})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        devizniContainer.appendChild(div);
+    });
+    document.getElementById('devizni_racuni_json').value = JSON.stringify(devizniRacuni);
+}
+
+function addDevizniRacun() {
+    devizniRacuni.push({ banka: '', iban: '', swift: '' });
+    renderDevizniRacuni();
+}
+
+function removeDevizniRacun(index) {
+    devizniRacuni.splice(index, 1);
+    renderDevizniRacuni();
+}
+
+function updateDevizniRacun(index, field, value) {
+    devizniRacuni[index][field] = value;
+    document.getElementById('devizni_racuni_json').value = JSON.stringify(devizniRacuni);
+}
+
+document.getElementById('addDevizniRacun').addEventListener('click', addDevizniRacun);
+
+// Initialize rendering with existing data
+renderDinarskiRacuni();
+renderDevizniRacuni();
+</script>
+{% endblock %}

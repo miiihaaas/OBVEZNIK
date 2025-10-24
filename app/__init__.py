@@ -54,7 +54,12 @@ def create_app(config_name='development'):
     migrate.init_app(app, db)
     csrf.init_app(app)
     mail.init_app(app)
-    limiter.init_app(app)
+
+    # Only initialize rate limiter if not disabled in config
+    if app.config.get('RATELIMIT_ENABLED', True):
+        limiter.init_app(app)
+    else:
+        app.logger.info("Rate limiting is disabled (testing mode)")
 
     # Initialize Redis
     try:
