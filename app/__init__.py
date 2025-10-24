@@ -115,10 +115,13 @@ def create_app(config_name='development'):
     from app.routes.api import api_bp
     app.register_blueprint(api_bp)
 
+    # Register komitenti blueprint
+    from app.routes.komitenti import komitenti_bp
+    app.register_blueprint(komitenti_bp)
+
     # TODO: Register other blueprints when they are created in future stories
-    # from app.routes import fakture, komitenti, artikli
+    # from app.routes import fakture, artikli
     # app.register_blueprint(fakture.bp)
-    # app.register_blueprint(komitenti.bp)
     # app.register_blueprint(artikli.bp)
 
     # Import models so they are registered with SQLAlchemy

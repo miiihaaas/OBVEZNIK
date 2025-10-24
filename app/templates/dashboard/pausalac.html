@@ -44,14 +44,23 @@
         </div>
     </div>
 
-    <!-- Primary CTA Button -->
+    <!-- Primary CTA Buttons -->
     <div class="row mb-4">
-        <div class="col-12 text-center">
-            <button class="btn btn-quick-action" disabled>
-                <i class="fa-solid fa-plus"></i> Kreiraj Novu Fakturu
-            </button>
-            <p class="text-muted-gray mt-2 small">
-                <i class="fa-solid fa-info-circle"></i> Funkcionalnost će biti dostupna u budućim verzijama
+        <div class="col-12">
+            <h3 class="mb-3"><i class="fa-solid fa-bolt"></i> Brzi pristup</h3>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <button class="btn btn-quick-action" disabled>
+                    <i class="fa-solid fa-plus"></i> Kreiraj Novu Fakturu
+                </button>
+                <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-address-book"></i> Upravljanje Komitentima
+                </a>
+                <a href="{{ url_for('komitenti.novi') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fa-solid fa-user-plus"></i> Dodaj Komitenta
+                </a>
+            </div>
+            <p class="text-muted-gray mt-2 small text-center">
+                <i class="fa-solid fa-info-circle"></i> Kreiranje faktura će biti dostupno u budućim verzijama
             </p>
         </div>
     </div>
@@ -67,7 +76,7 @@
                 <ul class="mt-2 mb-0">
                     <li>Pregled faktura</li>
                     <li>Kreiranje novih faktura</li>
-                    <li>Upravljanje komitentima</li>
+                    <li><strong><i class="fa-solid fa-check"></i> Upravljanje komitentima</strong> (Implementirano)</li>
                     <li>Pregled statistika i KPO knjige</li>
                 </ul>
             </div>

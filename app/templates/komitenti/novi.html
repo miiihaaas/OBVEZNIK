@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Komitenta - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-user-plus"></i> Dodaj Novog Komitenta</h1>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('komitenti.novi') }}">
+                {{ form.hidden_tag() }}
+
+                <!-- PIB Search Section -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <label for="pib" class="form-label">PIB *</label>
+                        {{ form.pib(class="form-control" ~ (" is-invalid" if form.pib.errors else ""), id="pib") }}
+                        {% if form.pib.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.pib.errors[0] }}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Unesite PIB (8 ili 9 cifara) i kliknite "Pretraži NBS" da automatski učitate podatke.</small>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="button" id="nbsSearchBtn" class="btn btn-success w-100">
+                            <i class="fa-solid fa-magnifying-glass"></i> Pretraži NBS
+                        </button>
+                    </div>
+                </div>
+
+                <div id="nbsAlert" class="alert" role="alert" style="display: none;"></div>
+
+                <!-- Company Basic Info -->
+                <h4 class="mt-4">Osnovni Podaci</h4>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="naziv" class="form-label">Naziv Komitenta *</label>
+                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        {% if form.naziv.errors %}
+                            <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="maticni_broj" class="form-label">Matični Broj *</label>
+                        {{ form.maticni_broj(class="form-control" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj") }}
+                        {% if form.maticni_broj.errors %}
+                            <div class="invalid-feedback">{{ form.maticni_broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Address Info -->
+                <h4 class="mt-4">Adresa</h4>
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="adresa" class="form-label">Ulica *</label>
+                        {{ form.adresa(class="form-control" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa") }}
+                        {% if form.adresa.errors %}
+                            <div class="invalid-feedback">{{ form.adresa.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="broj" class="form-label">Broj *</label>
+                        {{ form.broj(class="form-control" ~ (" is-invalid" if form.broj.errors else ""), id="broj") }}
+                        {% if form.broj.errors %}
+                            <div class="invalid-feedback">{{ form.broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="postanski_broj" class="form-label">Poštanski Broj *</label>
+                        {{ form.postanski_broj(class="form-control" ~ (" is-invalid" if form.postanski_broj.errors else ""), id="postanski_broj") }}
+                        {% if form.postanski_broj.errors %}
+                            <div class="invalid-feedback">{{ form.postanski_broj.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="mesto" class="form-label">Mesto *</label>
+                        {{ form.mesto(class="form-control" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto") }}
+                        {% if form.mesto.errors %}
+                            <div class="invalid-feedback">{{ form.mesto.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="drzava" class="form-label">Država *</label>
+                        {{ form.drzava(class="form-control" ~ (" is-invalid" if form.drzava.errors else ""), id="drzava") }}
+                        {% if form.drzava.errors %}
+                            <div class="invalid-feedback">{{ form.drzava.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <h4 class="mt-4">Kontakt Informacije</h4>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="email" class="form-label">Email *</label>
+                        {{ form.email(class="form-control" ~ (" is-invalid" if form.email.errors else ""), id="email") }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Sačuvaj Komitenta
+                    </button>
+                    <a href="{{ url_for('komitenti.lista') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-times"></i> Otkaži
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// NBS Search
+document.getElementById('nbsSearchBtn').addEventListener('click', function() {
+    const pib = document.getElementById('pib').value.trim();
+    const alertDiv = document.getElementById('nbsAlert');
+
+    if (!pib || (pib.length !== 8 && pib.length !== 9)) {
+        alertDiv.className = 'alert alert-warning';
+        alertDiv.textContent = 'Molimo unesite validan PIB (8 ili 9 cifara).';
+        alertDiv.style.display = 'block';
+        return;
+    }
+
+    // Show loading state
+    this.disabled = true;
+    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pretražujem...';
+
+    fetch(`/komitenti/api/nbs/firma/${pib}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                // Auto-fill form fields
+                document.getElementById('naziv').value = data.data.naziv || '';
+                document.getElementById('maticni_broj').value = data.data.maticni_broj || '';
+                document.getElementById('adresa').value = data.data.adresa || '';
+                document.getElementById('broj').value = data.data.broj || 'bb';
+                document.getElementById('mesto').value = data.data.mesto || '';
+
+                // Set postanski_broj if available (NBS may not always provide this)
+                if (data.data.postanski_broj) {
+                    document.getElementById('postanski_broj').value = data.data.postanski_broj;
+                }
+
+                // Make fields readonly (can be overridden manually via double-click)
+                ['naziv', 'maticni_broj', 'adresa', 'broj', 'mesto'].forEach(id => {
+                    const field = document.getElementById(id);
+                    field.setAttribute('readonly', true);
+                    field.classList.add('bg-light');
+                });
+
+                alertDiv.className = 'alert alert-success';
+                alertDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Podaci uspešno preuzeti iz NBS baze! Dvoklik na polje za ručno menjanje.';
+                alertDiv.style.display = 'block';
+            } else {
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + (data.message || 'Komitent nije pronađen u NBS bazi. Molimo unesite podatke ručno.');
+                alertDiv.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('NBS API error:', error);
+            alertDiv.className = 'alert alert-danger';
+            alertDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Greška pri pretrazi NBS baze. Molimo unesite podatke ručno.';
+            alertDiv.style.display = 'block';
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Pretraži NBS';
+        });
+});
+
+// Allow manual override of readonly fields via double-click
+['naziv', 'maticni_broj', 'adresa', 'broj', 'mesto'].forEach(id => {
+    const field = document.getElementById(id);
+    field.addEventListener('dblclick', function() {
+        this.removeAttribute('readonly');
+        this.classList.remove('bg-light');
+        this.focus();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}{{ komitent.naziv }} - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-user"></i> {{ komitent.naziv }}</h1>
+
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Osnovni Podaci</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>PIB:</strong> {{ komitent.pib }}</p>
+                    <p><strong>Matični Broj:</strong> {{ komitent.maticni_broj }}</p>
+                    <p><strong>Naziv:</strong> {{ komitent.naziv }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> {{ komitent.email }}</p>
+                    <p><strong>Datum Kreiranja:</strong> {{ komitent.created_at.strftime('%d.%m.%Y %H:%M') if komitent.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Adresa</h4>
+        </div>
+        <div class="card-body">
+            <p><i class="fa-solid fa-location-dot"></i> {{ komitent.adresa }} {{ komitent.broj }}, {{ komitent.postanski_broj }} {{ komitent.mesto }}, {{ komitent.drzava }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">Fakture</h4>
+        </div>
+        <div class="card-body">
+            {% if komitent.fakture %}
+                <p class="mb-2"><strong>Broj faktura:</strong> <span class="badge bg-primary">{{ komitent.fakture|length }}</span></p>
+                <div class="alert alert-info" role="alert">
+                    <i class="fa-solid fa-info-circle"></i> Detalji faktura će biti dostupni kada se implementira modul za upravljanje fakturama.
+                </div>
+            {% else %}
+                <p class="text-muted">Nema faktura vezanih za ovog komitenta.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a href="{{ url_for('komitenti.izmeni', id=komitent.id) }}" class="btn btn-primary">
+            <i class="fa-solid fa-pen"></i> Izmeni
+        </a>
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteKomitentModal">
+            <i class="fa-solid fa-trash"></i> Obriši
+        </button>
+        <a href="{{ url_for('komitenti.lista') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Komitenata
+        </a>
+    </div>
+</div>
+
+{# Delete Confirmation Modal #}
+<div class="modal fade" id="deleteKomitentModal" tabindex="-1"
+     aria-labelledby="deleteKomitentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteKomitentModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation text-warning"></i> Potvrda Brisanja
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body">
+                Da li ste sigurni da želite da obrišete komitenta <strong>{{ komitent.naziv }}</strong> (PIB: {{ komitent.pib }})?
+                <br><br>
+                <div class="alert alert-warning" role="alert">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <strong>Napomena:</strong> Ne možete obrisati komitenta koji ima fakture. {{ 'Ovaj komitent ima %d faktura.' % komitent.fakture|length if komitent.fakture else 'Ovaj komitent nema faktura.' }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-times"></i> Otkaži
+                </button>
+                <form method="post" action="{{ url_for('komitenti.obrisi', id=komitent.id) }}" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i> Obriši Komitenta
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
