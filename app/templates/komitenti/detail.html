@@ -19,6 +19,9 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Email:</strong> {{ komitent.email }}</p>
+                    {% if komitent.kontakt_osoba %}
+                    <p><strong>Kontakt Osoba:</strong> {{ komitent.kontakt_osoba }}</p>
+                    {% endif %}
                     <p><strong>Datum Kreiranja:</strong> {{ komitent.created_at.strftime('%d.%m.%Y %H:%M') if komitent.created_at else 'N/A' }}</p>
                 </div>
             </div>
@@ -33,6 +36,17 @@
             <p><i class="fa-solid fa-location-dot"></i> {{ komitent.adresa }} {{ komitent.broj }}, {{ komitent.postanski_broj }} {{ komitent.mesto }}, {{ komitent.drzava }}</p>
         </div>
     </div>
+
+    {% if komitent.napomene %}
+    <div class="card mt-3">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Dodatne Napomene</h4>
+        </div>
+        <div class="card-body">
+            <p>{{ komitent.napomene }}</p>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card mt-3">
         <div class="card-header bg-info text-white">

@@ -109,6 +109,28 @@
                     </div>
                 </div>
 
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="kontakt_osoba" class="form-label">Kontakt Osoba (opciono)</label>
+                        {{ form.kontakt_osoba(class="form-control" ~ (" is-invalid" if form.kontakt_osoba.errors else ""), id="kontakt_osoba") }}
+                        {% if form.kontakt_osoba.errors %}
+                            <div class="invalid-feedback">{{ form.kontakt_osoba.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Ime i prezime kontakt osobe u firmi (opciono).</small>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="napomene" class="form-label">Dodatne Napomene (opciono)</label>
+                        {{ form.napomene(class="form-control" ~ (" is-invalid" if form.napomene.errors else ""), id="napomene") }}
+                        {% if form.napomene.errors %}
+                            <div class="invalid-feedback">{{ form.napomene.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Dodatne napomene o komitentu (opciono).</small>
+                    </div>
+                </div>
+
                 <!-- Submit Buttons -->
                 <div class="d-flex gap-2 mt-4">
                     <button type="submit" class="btn btn-primary">

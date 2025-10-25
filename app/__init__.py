@@ -119,10 +119,13 @@ def create_app(config_name='development'):
     from app.routes.komitenti import komitenti_bp
     app.register_blueprint(komitenti_bp)
 
+    # Register artikli blueprint
+    from app.routes.artikli import artikli_bp
+    app.register_blueprint(artikli_bp)
+
     # TODO: Register other blueprints when they are created in future stories
-    # from app.routes import fakture, artikli
+    # from app.routes import fakture
     # app.register_blueprint(fakture.bp)
-    # app.register_blueprint(artikli.bp)
 
     # Import models so they are registered with SQLAlchemy
     # This is necessary for Flask-Migrate to detect model changes

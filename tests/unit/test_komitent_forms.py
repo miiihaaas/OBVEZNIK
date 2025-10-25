@@ -349,3 +349,101 @@ class TestKomitentEditForm:
                 email='valid@test.rs'
             )
             assert form.validate() is True
+
+    def test_optional_fields_in_create_form(self, app):
+        """Test that optional fields (kontakt_osoba, napomene) work correctly in create form."""
+        with app.app_context():
+            # Create test data
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@firma.rs',
+                dinarski_racuni=[{'banka': 'test', 'broj': '123'}]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            pausalac = User(
+                email='pausalac@test.com',
+                full_name='Pausalac Test',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            pausalac.set_password('password123')
+            db.session.add(pausalac)
+            db.session.commit()
+            pausalac_id = pausalac.id
+
+        with app.test_request_context():
+            pausalac = db.session.get(User, pausalac_id)
+            login_user(pausalac)
+
+            # Test form with optional fields filled
+            form = KomitentCreateForm(
+                pib='98765432',
+                naziv='Test Komitent DOO',
+                maticni_broj='87654321',
+                adresa='Kneza Miloša',
+                broj='10',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='komitent@test.rs',
+                kontakt_osoba='Marko Marković',
+                napomene='Važan klijent, prioritet'
+            )
+            assert form.validate() is True
+
+            # Test form without optional fields (should also be valid)
+            form = KomitentCreateForm(
+                pib='98765433',
+                naziv='Test Komitent 2 DOO',
+                maticni_broj='87654322',
+                adresa='Kneza Miloša',
+                broj='11',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='komitent2@test.rs'
+            )
+            assert form.validate() is True
+
+    def test_optional_fields_in_edit_form(self, app):
+        """Test that optional fields (kontakt_osoba, napomene) work correctly in edit form."""
+        with app.test_request_context():
+            # Test with optional fields filled
+            form = KomitentEditForm(
+                pib='98765432',
+                naziv='Updated Komitent',
+                maticni_broj='87654321',
+                adresa='Updated Street',
+                broj='20',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='updated@test.rs',
+                kontakt_osoba='Petar Petrović',
+                napomene='Dodatne informacije o komitentu'
+            )
+            assert form.validate() is True
+
+            # Test without optional fields (should also be valid)
+            form = KomitentEditForm(
+                pib='98765432',
+                naziv='Updated Komitent',
+                maticni_broj='87654321',
+                adresa='Updated Street',
+                broj='20',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='updated@test.rs'
+            )
+            assert form.validate() is True

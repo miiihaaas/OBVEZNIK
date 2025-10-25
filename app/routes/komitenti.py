@@ -110,7 +110,9 @@ def novi():
                 postanski_broj=form.postanski_broj.data,
                 mesto=form.mesto.data,
                 drzava=form.drzava.data,
-                email=form.email.data
+                email=form.email.data,
+                kontakt_osoba=form.kontakt_osoba.data or None,
+                napomene=form.napomene.data or None
             )
 
             db.session.add(komitent)
@@ -188,6 +190,8 @@ def izmeni(id):
             komitent.mesto = form.mesto.data
             komitent.drzava = form.drzava.data
             komitent.email = form.email.data
+            komitent.kontakt_osoba = form.kontakt_osoba.data or None
+            komitent.napomene = form.napomene.data or None
 
             db.session.commit()
 
@@ -217,6 +221,8 @@ def izmeni(id):
         form.mesto.data = komitent.mesto
         form.drzava.data = komitent.drzava
         form.email.data = komitent.email
+        form.kontakt_osoba.data = komitent.kontakt_osoba
+        form.napomene.data = komitent.napomene
 
     return render_template('komitenti/izmeni.html', form=form, komitent=komitent)
 

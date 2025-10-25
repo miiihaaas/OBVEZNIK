@@ -25,6 +25,8 @@ class Komitent(db.Model):
 
     # Contact information
     email = db.Column(db.String(120), nullable=False)
+    kontakt_osoba = db.Column(db.String(255), nullable=True)  # Optional contact person
+    napomene = db.Column(db.Text, nullable=True)  # Optional notes
 
     # Timestamp
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

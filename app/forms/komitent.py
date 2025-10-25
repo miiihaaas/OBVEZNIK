@@ -1,10 +1,30 @@
 """Forms for Komitent Management (CRUD)."""
 from flask_wtf import FlaskForm
-from wtforms import StringField, HiddenField
-from wtforms.validators import DataRequired, Email, ValidationError, Length, Regexp
+from wtforms import StringField, HiddenField, TextAreaField
+from wtforms.validators import DataRequired, Email, ValidationError, Length, Regexp, Optional
 from app.models.komitent import Komitent
 from flask_login import current_user
 import re
+
+
+def validate_email_format(form, field):
+    """
+    Custom email format validator using regex pattern.
+
+    This provides additional validation beyond the Email() validator
+    to ensure email format compliance with standard patterns.
+
+    Args:
+        form: The form instance
+        field: Email field to validate
+
+    Raises:
+        ValidationError: If email format is invalid
+    """
+    if field.data:
+        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        if not email_pattern.match(field.data):
+            raise ValidationError('Unesite ispravnu email adresu.')
 
 
 class KomitentCreateForm(FlaskForm):
@@ -89,9 +109,25 @@ class KomitentCreateForm(FlaskForm):
         validators=[
             DataRequired(message='Email je obavezan.'),
             Email(message='Unesite ispravnu email adresu.'),
-            Length(max=120, message='Email može imati maksimalno 120 karaktera.')
+            Length(max=120, message='Email može imati maksimalno 120 karaktera.'),
+            validate_email_format
         ],
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
+    )
+
+    kontakt_osoba = StringField(
+        'Kontakt Osoba',
+        validators=[
+            Optional(),
+            Length(max=255, message='Kontakt osoba može imati maksimalno 255 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Ime i prezime kontakt osobe (opciono)'}
+    )
+
+    napomene = TextAreaField(
+        'Dodatne Napomene',
+        validators=[Optional()],
+        render_kw={'class': 'form-control', 'rows': 4, 'placeholder': 'Dodatne napomene o komitentu (opciono)'}
     )
 
     def validate_pib(self, field):
@@ -116,21 +152,6 @@ class KomitentCreateForm(FlaskForm):
 
             if existing:
                 raise ValidationError('Komitent sa ovim PIB-om već postoji u vašoj firmi.')
-
-    def validate_email(self, field):
-        """
-        Validate email format using custom regex if email-validator fails.
-
-        Args:
-            field: Email field to validate
-
-        Raises:
-            ValidationError: If email format is invalid
-        """
-        if field.data:
-            email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-            if not email_pattern.match(field.data):
-                raise ValidationError('Unesite ispravnu email adresu.')
 
 
 class KomitentEditForm(FlaskForm):
@@ -215,22 +236,23 @@ class KomitentEditForm(FlaskForm):
         validators=[
             DataRequired(message='Email je obavezan.'),
             Email(message='Unesite ispravnu email adresu.'),
-            Length(max=120, message='Email može imati maksimalno 120 karaktera.')
+            Length(max=120, message='Email može imati maksimalno 120 karaktera.'),
+            validate_email_format
         ],
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
     )
 
-    def validate_email(self, field):
-        """
-        Validate email format using custom regex if email-validator fails.
+    kontakt_osoba = StringField(
+        'Kontakt Osoba',
+        validators=[
+            Optional(),
+            Length(max=255, message='Kontakt osoba može imati maksimalno 255 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Ime i prezime kontakt osobe (opciono)'}
+    )
 
-        Args:
-            field: Email field to validate
-
-        Raises:
-            ValidationError: If email format is invalid
-        """
-        if field.data:
-            email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-            if not email_pattern.match(field.data):
-                raise ValidationError('Unesite ispravnu email adresu.')
+    napomene = TextAreaField(
+        'Dodatne Napomene',
+        validators=[Optional()],
+        render_kw={'class': 'form-control', 'rows': 4, 'placeholder': 'Dodatne napomene o komitentu (opciono)'}
+    )

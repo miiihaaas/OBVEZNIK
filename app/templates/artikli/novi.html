@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Artikal - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fa-solid fa-box-open"></i> Dodaj Novi Artikal</h1>
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('artikli.novi') }}">
+                {{ form.hidden_tag() }}
+
+                <!-- Article/Service Info -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="naziv" class="form-label">Naziv Artikla ili Usluge *</label>
+                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        {% if form.naziv.errors %}
+                            <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Naziv artikla ili usluge koji će se pojavljivati na fakturama.</small>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="opis" class="form-label">Opis (opciono)</label>
+                        {{ form.opis(class="form-control" ~ (" is-invalid" if form.opis.errors else ""), id="opis") }}
+                        {% if form.opis.errors %}
+                            <div class="invalid-feedback">{{ form.opis.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Detaljan opis artikla ili usluge (opciono).</small>
+                    </div>
+                </div>
+
+                <!-- Price and Unit -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="podrazumevana_cena" class="form-label">Podrazumevana Cena (RSD) (opciono)</label>
+                        {{ form.podrazumevana_cena(class="form-control" ~ (" is-invalid" if form.podrazumevana_cena.errors else ""), id="podrazumevana_cena") }}
+                        {% if form.podrazumevana_cena.errors %}
+                            <div class="invalid-feedback">{{ form.podrazumevana_cena.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Podrazumevana cena po jedinici mere (opciono). Možete ostaviti prazno i uneti cenu pri kreiranju fakture.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="jedinica_mere" class="form-label">Jedinica Mere *</label>
+                        {{ form.jedinica_mere(class="form-select" ~ (" is-invalid" if form.jedinica_mere.errors else ""), id="jedinica_mere") }}
+                        {% if form.jedinica_mere.errors %}
+                            <div class="invalid-feedback">{{ form.jedinica_mere.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Izaberite jedinicu mere (sat, dan, kom, kg, m, m², m³, l, usluga).</small>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> {{ form.submit.label.text }}
+                    </button>
+                    <a href="{{ url_for('artikli.lista') }}" class="btn btn-secondary">
+                        <i class="fa-solid fa-times"></i> Otkaži
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ url_for('artikli.lista') }}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Artikala
+        </a>
+    </div>
+</div>
+{% endblock %}
