@@ -215,7 +215,7 @@
                 const isActive = selectedFirmaId === firma.id ? 'active fw-semibold' : '';
                 return `
                     <li>
-                        <form method="POST" action="/admin/firma/switch/${firma.id}" style="display: inline; width: 100%;">
+                        <form method="POST" action="/admin/switch-firma/${firma.id}" style="display: inline; width: 100%;">
                             <input type="hidden" name="csrf_token" value="${csrfToken}"/>
                             <button type="submit" class="dropdown-item py-2 ${isActive}">
                                 <i class="fa-solid fa-building me-2 ${isActive ? '' : 'text-muted'}"></i>
