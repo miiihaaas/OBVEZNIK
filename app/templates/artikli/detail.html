@@ -3,109 +3,164 @@
 {% block title %}{{ artikal.naziv }} - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-box"></i> {{ artikal.naziv }}</h1>
-
-    <div class="card mt-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Osnovni Podaci</h4>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-box fs-3 text-muted"></i>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Naziv:</strong> {{ artikal.naziv }}</p>
-                    <p><strong>Jedinica Mere:</strong> {{ artikal.jedinica_mere }}</p>
+        <div>
+            <h1 class="mb-1">{{ artikal.naziv }}</h1>
+            <p class="text-muted mb-0"><i class="fa-solid fa-tag me-1"></i> Artikal / Usluga</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-info-circle me-2 text-primary"></i> Osnovni Podaci</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-tag text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Naziv</small>
+                            <strong>{{ artikal.naziv }}</strong>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p><strong>Podrazumevana Cena:</strong>
-                        {% if artikal.podrazumevana_cena %}
-                            {{ "{:,.2f}".format(artikal.podrazumevana_cena|float) }} RSD
-                        {% else %}
-                            <span class="text-muted">Nije definisana</span>
-                        {% endif %}
-                    </p>
-                    <p><strong>Datum Kreiranja:</strong> {{ artikal.created_at.strftime('%d.%m.%Y %H:%M') if artikal.created_at else 'N/A' }}</p>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-ruler text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Jedinica Mere</small>
+                            <span class="badge bg-light text-dark border px-3 py-2">{{ artikal.jedinica_mere }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-coins text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Podrazumevana Cena</small>
+                            {% if artikal.podrazumevana_cena %}
+                                <strong class="font-monospace">{{ "{:,.2f}".format(artikal.podrazumevana_cena|float) }} RSD</strong>
+                            {% else %}
+                                <span class="text-muted">Nije definisana</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="row g-4">
+                <div class="col-md-12">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-calendar text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Datum Kreiranja</small>
+                            <strong>{{ artikal.created_at.strftime('%d.%m.%Y %H:%M') if artikal.created_at else 'N/A' }}</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     {% if artikal.opis %}
-    <div class="card mt-3">
-        <div class="card-header bg-secondary text-white">
-            <h4 class="mb-0">Opis</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-align-left me-2 text-success"></i> Opis</h5>
         </div>
-        <div class="card-body">
-            <p>{{ artikal.opis }}</p>
+        <div class="card-body p-4">
+            <div class="alert alert-light border mb-0">
+                <i class="fa-solid fa-comment-dots text-muted me-2"></i>
+                {{ artikal.opis }}
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <div class="card mt-3">
-        <div class="card-header bg-info text-white">
-            <h4 class="mb-0">Korišćenje na Fakturama</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-file-invoice me-2 text-info"></i> Korišćenje na Fakturama</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             {% if artikal.faktura_stavke %}
-                <p class="mb-2">
-                    <strong>Broj faktura:</strong>
-                    <span class="badge bg-primary">{{ artikal.faktura_stavke|length }}</span>
-                </p>
-                <div class="alert alert-info" role="alert">
-                    <i class="fa-solid fa-info-circle"></i> Detalji faktura će biti dostupni kada se implementira modul za upravljanje fakturama.
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fa-solid fa-file-invoice text-info me-3 fs-4"></i>
+                    <div>
+                        <small class="text-muted d-block">Broj faktura</small>
+                        <span class="badge bg-primary px-3 py-2 fs-6"><i class="fa-solid fa-file-invoice me-1"></i> {{ artikal.faktura_stavke|length }}</span>
+                    </div>
+                </div>
+                <div class="alert alert-info border-0 mb-3">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    Detalji faktura će biti dostupni kada se implementira modul za upravljanje fakturama.
                 </div>
             {% else %}
-                <p class="text-muted">Ovaj artikal još nije korišćen ni na jednoj fakturi.</p>
+                <div class="text-center py-3 mb-3">
+                    <i class="fa-solid fa-file-invoice display-4 text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Ovaj artikal još nije korišćen ni na jednoj fakturi.</p>
+                </div>
             {% endif %}
-            <div class="alert alert-success mt-3" role="alert">
-                <i class="fa-solid fa-check-circle"></i>
+            <div class="alert alert-success border-0 mb-0">
+                <i class="fa-solid fa-check-circle me-2"></i>
                 <strong>Napomena:</strong> Možete obrisati ovaj artikal bilo kada. Brisanje artikla neće uticati na postojeće fakture
                 jer su podaci artikla kopirani u stavke faktura, a ne referencirani.
             </div>
         </div>
     </div>
 
-    <div class="mt-4 d-flex gap-2">
-        <a href="{{ url_for('artikli.izmeni', id=artikal.id) }}" class="btn btn-primary">
-            <i class="fa-solid fa-pen"></i> Izmeni
-        </a>
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteArtikalModal">
-            <i class="fa-solid fa-trash"></i> Obriši
-        </button>
-        <a href="{{ url_for('artikli.lista') }}" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Artikala
-        </a>
+    <div class="mt-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('artikli.izmeni', id=artikal.id) }}" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-pen me-2"></i> Izmeni Artikal
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-lg" data-bs-toggle="modal" data-bs-target="#deleteArtikalModal">
+                        <i class="fa-solid fa-trash me-2"></i> Obriši
+                    </button>
+                    <a href="{{ url_for('artikli.lista') }}" class="btn btn-outline-secondary btn-lg ms-auto">
+                        <i class="fa-solid fa-arrow-left me-2"></i> Nazad na Listu
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 {# Delete Confirmation Modal #}
 <div class="modal fade" id="deleteArtikalModal" tabindex="-1"
      aria-labelledby="deleteArtikalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
                 <h5 class="modal-title" id="deleteArtikalModalLabel">
-                    <i class="fa-solid fa-triangle-exclamation text-warning"></i> Potvrda Brisanja
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
             </div>
-            <div class="modal-body">
-                Da li ste sigurni da želite da obrišete artikal <strong>{{ artikal.naziv }}</strong>?
-                <br><br>
-                <div class="alert alert-info" role="alert">
-                    <i class="fa-solid fa-info-circle"></i>
+            <div class="modal-body p-4">
+                <p class="mb-3">Da li ste sigurni da želite da obrišete artikal?</p>
+                <div class="alert alert-light border mb-3">
+                    <strong><i class="fa-solid fa-box me-2"></i>{{ artikal.naziv }}</strong>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="fa-solid fa-info-circle me-2"></i>
                     <strong>Napomena:</strong> Brisanje artikla neće uticati na postojeće fakture.
                     Podaci o artiklu su već kopirani u stavke faktura.
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times"></i> Otkaži
+                    <i class="fa-solid fa-times me-2"></i> Otkaži
                 </button>
                 <form method="post" action="{{ url_for('artikli.obrisi', id=artikal.id) }}" style="display: inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-trash"></i> Obriši Artikal
+                        <i class="fa-solid fa-trash me-2"></i> Obriši Artikal
                     </button>
                 </form>
             </div>

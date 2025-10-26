@@ -3,133 +3,172 @@
 {% block title %}Izmeni Komitenta - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-user-pen"></i> Izmeni Komitenta: {{ komitent.naziv }}</h1>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-user-pen fs-3 text-muted"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">Izmeni Komitenta</h1>
+            <p class="text-muted mb-0">{{ komitent.naziv }}</p>
+        </div>
+    </div>
 
-    <div class="card mt-4">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('komitenti.izmeni', id=komitent.id) }}">
-                {{ form.hidden_tag() }}
+    <form method="POST" action="{{ url_for('komitenti.izmeni', id=komitent.id) }}">
+        {{ form.hidden_tag() }}
 
-                <!-- PIB (Readonly) -->
-                <div class="row mb-4">
+        <!-- PIB (Readonly) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-hashtag me-2 text-warning"></i> PIB</h5>
+            </div>
+            <div class="card-body p-4">
+                <label for="pib" class="form-label fw-semibold">
+                    <i class="fa-solid fa-hashtag me-1 text-muted"></i> PIB *
+                </label>
+                {{ form.pib(class="form-control form-control-lg bg-light", id="pib", readonly=true) }}
+                <small class="form-text text-muted"><i class="fa-solid fa-lock me-1"></i> PIB ne može biti izmenjen nakon kreiranja komitenta.</small>
+            </div>
+        </div>
+
+        <!-- Company Basic Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-building me-2 text-primary"></i> Osnovni Podaci</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-12">
-                        <label for="pib" class="form-label">PIB * (ne može se menjati)</label>
-                        {{ form.pib(class="form-control bg-light", id="pib", readonly=true) }}
-                        <small class="form-text text-muted">PIB ne može biti izmenjen nakon kreiranja komitenta.</small>
-                    </div>
-                </div>
-
-                <!-- Company Basic Info -->
-                <h4 class="mt-4">Osnovni Podaci</h4>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="naziv" class="form-label">Naziv Komitenta *</label>
-                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        <label for="naziv" class="form-label fw-semibold">
+                            <i class="fa-solid fa-building me-1 text-muted"></i> Naziv Komitenta *
+                        </label>
+                        {{ form.naziv(class="form-control form-control-lg" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv", placeholder="Unesite naziv komitenta") }}
                         {% if form.naziv.errors %}
                             <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="maticni_broj" class="form-label">Matični Broj *</label>
-                        {{ form.maticni_broj(class="form-control" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj") }}
+                        <label for="maticni_broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-id-card me-1 text-muted"></i> Matični Broj *
+                        </label>
+                        {{ form.maticni_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj", placeholder="Matični broj") }}
                         {% if form.maticni_broj.errors %}
                             <div class="invalid-feedback">{{ form.maticni_broj.errors[0] }}</div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Address Info -->
-                <h4 class="mt-4">Adresa</h4>
-                <div class="row mb-3">
+        <!-- Address Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-map-marker-alt me-2 text-success"></i> Adresa</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-8">
-                        <label for="adresa" class="form-label">Ulica *</label>
-                        {{ form.adresa(class="form-control" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa") }}
+                        <label for="adresa" class="form-label fw-semibold">
+                            <i class="fa-solid fa-road me-1 text-muted"></i> Ulica *
+                        </label>
+                        {{ form.adresa(class="form-control form-control-lg" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa", placeholder="Naziv ulice") }}
                         {% if form.adresa.errors %}
                             <div class="invalid-feedback">{{ form.adresa.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="broj" class="form-label">Broj *</label>
-                        {{ form.broj(class="form-control" ~ (" is-invalid" if form.broj.errors else ""), id="broj") }}
+                        <label for="broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-hashtag me-1 text-muted"></i> Broj *
+                        </label>
+                        {{ form.broj(class="form-control form-control-lg" ~ (" is-invalid" if form.broj.errors else ""), id="broj", placeholder="Broj") }}
                         {% if form.broj.errors %}
                             <div class="invalid-feedback">{{ form.broj.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="postanski_broj" class="form-label">Poštanski Broj *</label>
-                        {{ form.postanski_broj(class="form-control" ~ (" is-invalid" if form.postanski_broj.errors else ""), id="postanski_broj") }}
+                        <label for="postanski_broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Poštanski Broj *
+                        </label>
+                        {{ form.postanski_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.postanski_broj.errors else ""), id="postanski_broj", placeholder="Poštanski broj") }}
                         {% if form.postanski_broj.errors %}
                             <div class="invalid-feedback">{{ form.postanski_broj.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="mesto" class="form-label">Mesto *</label>
-                        {{ form.mesto(class="form-control" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto") }}
+                        <label for="mesto" class="form-label fw-semibold">
+                            <i class="fa-solid fa-city me-1 text-muted"></i> Mesto *
+                        </label>
+                        {{ form.mesto(class="form-control form-control-lg" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto", placeholder="Naziv mesta") }}
                         {% if form.mesto.errors %}
                             <div class="invalid-feedback">{{ form.mesto.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="drzava" class="form-label">Država *</label>
-                        {{ form.drzava(class="form-control" ~ (" is-invalid" if form.drzava.errors else ""), id="drzava") }}
+                        <label for="drzava" class="form-label fw-semibold">
+                            <i class="fa-solid fa-flag me-1 text-muted"></i> Država *
+                        </label>
+                        {{ form.drzava(class="form-control form-control-lg" ~ (" is-invalid" if form.drzava.errors else ""), id="drzava", placeholder="Država") }}
                         {% if form.drzava.errors %}
                             <div class="invalid-feedback">{{ form.drzava.errors[0] }}</div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Contact Info -->
-                <h4 class="mt-4">Kontakt Informacije</h4>
-                <div class="row mb-3">
+        <!-- Contact Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-address-card me-2 text-info"></i> Kontakt Informacije</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-12">
-                        <label for="email" class="form-label">Email *</label>
-                        {{ form.email(class="form-control" ~ (" is-invalid" if form.email.errors else ""), id="email") }}
+                        <label for="email" class="form-label fw-semibold">
+                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Email *
+                        </label>
+                        {{ form.email(class="form-control form-control-lg" ~ (" is-invalid" if form.email.errors else ""), id="email", placeholder="email@primer.com") }}
                         {% if form.email.errors %}
                             <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-12">
-                        <label for="kontakt_osoba" class="form-label">Kontakt Osoba (opciono)</label>
-                        {{ form.kontakt_osoba(class="form-control" ~ (" is-invalid" if form.kontakt_osoba.errors else ""), id="kontakt_osoba") }}
+                        <label for="kontakt_osoba" class="form-label fw-semibold">
+                            <i class="fa-solid fa-user me-1 text-muted"></i> Kontakt Osoba (opciono)
+                        </label>
+                        {{ form.kontakt_osoba(class="form-control form-control-lg" ~ (" is-invalid" if form.kontakt_osoba.errors else ""), id="kontakt_osoba", placeholder="Ime i prezime kontakt osobe") }}
                         {% if form.kontakt_osoba.errors %}
                             <div class="invalid-feedback">{{ form.kontakt_osoba.errors[0] }}</div>
                         {% endif %}
                         <small class="form-text text-muted">Ime i prezime kontakt osobe u firmi (opciono).</small>
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-12">
-                        <label for="napomene" class="form-label">Dodatne Napomene (opciono)</label>
-                        {{ form.napomene(class="form-control" ~ (" is-invalid" if form.napomene.errors else ""), id="napomene") }}
+                        <label for="napomene" class="form-label fw-semibold">
+                            <i class="fa-solid fa-sticky-note me-1 text-muted"></i> Dodatne Napomene (opciono)
+                        </label>
+                        {{ form.napomene(class="form-control form-control-lg" ~ (" is-invalid" if form.napomene.errors else ""), id="napomene", rows="3", placeholder="Unesite dodatne napomene o komitentu") }}
                         {% if form.napomene.errors %}
                             <div class="invalid-feedback">{{ form.napomene.errors[0] }}</div>
                         {% endif %}
                         <small class="form-text text-muted">Dodatne napomene o komitentu (opciono).</small>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Submit Buttons -->
-                <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-save"></i> Sačuvaj Izmene
+        <!-- Submit Buttons -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-save me-2"></i> Sačuvaj Izmene
                     </button>
-                    <a href="{{ url_for('komitenti.detail', id=komitent.id) }}" class="btn btn-secondary">
-                        <i class="fa-solid fa-times"></i> Otkaži
+                    <a href="{{ url_for('komitenti.detail', id=komitent.id) }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fa-solid fa-times me-2"></i> Otkaži
                     </a>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 {% endblock %}

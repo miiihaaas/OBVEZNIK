@@ -111,6 +111,10 @@ def create_app(config_name='development'):
     from app.routes.admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    # Register admin API blueprint (autocomplete, lazy load)
+    from app.routes.admin_api import admin_api_bp
+    app.register_blueprint(admin_api_bp)
+
     # Register API blueprint
     from app.routes.api import api_bp
     app.register_blueprint(api_bp)
@@ -145,10 +149,7 @@ def create_app(config_name='development'):
 
         # Only inject for authenticated admin users
         if not current_user.is_authenticated or not current_user.is_admin():
-            return dict(pausaln_firme=[], admin_selected_firma=None)
-
-        # Get all pausaln firme sorted by naziv
-        pausaln_firme = PausalnFirma.query.order_by(PausalnFirma.naziv).all()
+            return dict(admin_selected_firma=None)
 
         # Get currently selected firma (if any)
         admin_selected_firma_id = get_admin_selected_firma_id()
@@ -156,8 +157,9 @@ def create_app(config_name='development'):
         if admin_selected_firma_id:
             admin_selected_firma = db.session.get(PausalnFirma, admin_selected_firma_id)
 
+        # Note: pausaln_firme is now loaded via AJAX for performance (lazy load)
+        # See /api/admin/firme/search endpoint and base.html autocomplete JS
         return dict(
-            pausaln_firme=pausaln_firme,
             admin_selected_firma=admin_selected_firma
         )
 

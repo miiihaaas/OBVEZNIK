@@ -3,43 +3,47 @@
 {% block title %}Dashboard - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <!-- Welcome Header -->
-    <div class="row mb-4">
+    <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <h1>Dobrodošli, {{ user.full_name }}!</h1>
-            <p class="text-muted-gray">Pregled Vaših podataka i aktivnosti</p>
+            <h1 class="mb-2"><i class="fa-solid fa-house me-2 text-primary"></i>Dobrodošli, {{ user.full_name }}!</h1>
+            <p class="text-muted-gray mb-0"><i class="fa-solid fa-chart-line me-1"></i> Pregled Vaših podataka i aktivnosti.</p>
         </div>
         <div class="col-md-4">
             <!-- Limit Tracking Widget (Placeholder) -->
-            <div class="limit-tracking-widget">
-                <h4><i class="fa-solid fa-chart-line"></i> Limit Praćenje</h4>
-                <div class="progress">
+            <div class="limit-tracking-widget shadow-sm">
+                <h4 class="mb-3"><i class="fa-solid fa-chart-line me-2"></i> Limit Praćenje</h4>
+                <div class="progress mb-2" style="height: 14px;">
                     <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <p class="limit-text mb-0">Promet ovog meseca: 0 RSD / 6,000,000 RSD</p>
+                <p class="limit-text mb-0"><strong>0 RSD</strong> / 6,000,000 RSD</p>
+                <small class="text-white-50 d-block mt-1">Promet ovog meseca</small>
             </div>
         </div>
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4 g-3">
         <div class="col-md-4">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-file-invoice"></i> Fakture ovog meseca</h3>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-file-invoice me-2 text-primary"></i> Fakture ovog meseca</h3>
                 <div class="stats-value">0</div>
+                <small class="text-muted d-block mt-2">Kreirane ovog meseca</small>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-chart-line"></i> Ukupan promet</h3>
-                <div class="stats-value">0 RSD</div>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-chart-line me-2 text-success"></i> Ukupan promet</h3>
+                <div class="stats-value">0,00 RSD</div>
+                <small class="text-muted d-block mt-2">Tekuća godina</small>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="stats-card">
-                <h3><i class="fa-regular fa-file"></i> Draft fakture</h3>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-regular fa-file me-2 text-warning"></i> Draft fakture</h3>
                 <div class="stats-value">0</div>
+                <small class="text-muted d-block mt-2">Na čekanju</small>
             </div>
         </div>
     </div>
@@ -47,54 +51,134 @@
     <!-- Primary CTA Buttons -->
     <div class="row mb-4">
         <div class="col-12">
-            <h3 class="mb-3"><i class="fa-solid fa-bolt"></i> Brzi pristup</h3>
-            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                <button class="btn btn-quick-action" disabled>
-                    <i class="fa-solid fa-plus"></i> Kreiraj Novu Fakturu
-                </button>
-                <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-address-book"></i> Upravljanje Komitentima
-                </a>
-                <a href="{{ url_for('komitenti.novi') }}" class="btn btn-outline-primary btn-lg">
-                    <i class="fa-solid fa-user-plus"></i> Dodaj Komitenta
-                </a>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="mb-4"><i class="fa-solid fa-bolt me-2 text-primary"></i> Brzi pristup</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <button class="btn btn-quick-action w-100 h-100 py-4" disabled>
+                                <i class="fa-solid fa-plus-circle d-block mb-2 fs-3"></i>
+                                <span class="d-block">Kreiraj Novu Fakturu</span>
+                                <small class="text-white-50 d-block mt-2">(U razvoju)</small>
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">
+                                <i class="fa-solid fa-address-book d-block mb-2 fs-3"></i>
+                                <span class="d-block">Upravljanje Komitentima</span>
+                                <small class="text-white-50 d-block mt-2">Pregled i izmena</small>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('komitenti.novi') }}" class="btn btn-outline-primary w-100 h-100 py-4">
+                                <i class="fa-solid fa-user-plus d-block mb-2 fs-3"></i>
+                                <span class="d-block">Dodaj Komitenta</span>
+                                <small class="text-muted d-block mt-2">Brzo kreiranje</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p class="text-muted-gray mt-2 small text-center">
-                <i class="fa-solid fa-info-circle"></i> Kreiranje faktura će biti dostupno u budućim verzijama
-            </p>
         </div>
     </div>
 
     <!-- Info Alert -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="alert alert-info" role="alert">
-                <h4 class="alert-heading"><i class="fa-solid fa-circle-info"></i> Paušalac Dashboard (U razvoju)</h4>
-                <p>Ovo je placeholder stranica za paušalac dashboard.</p>
-                <hr>
-                <p class="mb-0">Kompletan dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
-                <ul class="mt-2 mb-0">
-                    <li>Pregled faktura</li>
-                    <li>Kreiranje novih faktura</li>
-                    <li><strong><i class="fa-solid fa-check"></i> Upravljanje komitentima</strong> (Implementirano)</li>
-                    <li>Pregled statistika i KPO knjige</li>
-                </ul>
+            <div class="alert alert-info border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="fa-solid fa-circle-info fs-4 me-3 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-2">Paušalac Dashboard (U razvoju)</h5>
+                        <p class="mb-2">Ovo je placeholder stranica za paušalac dashboard.</p>
+                        <hr class="my-3">
+                        <p class="mb-2 fw-semibold">Kompletan dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
+                        <ul class="mb-0 ps-3">
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Pregled faktura</li>
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Kreiranje novih faktura</li>
+                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje komitentima (Implementirano)</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje artiklima (Implementirano)</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Pregled statistika i KPO knjige</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- User Data Card -->
     <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fa-solid fa-user"></i> Vaši podaci</h5>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fa-solid fa-user me-2 text-primary"></i> Vaši podaci</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Email:</strong> {{ user.email }}</p>
-                    <p><strong>Ime:</strong> {{ user.full_name }}</p>
-                    <p><strong>Uloga:</strong> <span class="badge bg-info">{{ user.role }}</span></p>
-                    <p class="mb-0"><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-envelope text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Email</small>
+                                    <strong>{{ user.email }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-id-card text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Ime i prezime</small>
+                                    <strong>{{ user.full_name }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-shield text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Uloga</small>
+                                    <span class="badge bg-info">{{ user.role }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-clock text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Poslednja prijava</small>
+                                    <strong>{{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fa-solid fa-rocket me-2 text-success"></i> Brzi linkovi</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('artikli.lista') }}" class="list-group-item list-group-item-action border-0 d-flex align-items-center py-3">
+                            <i class="fa-solid fa-box text-muted me-3 fs-5"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">Artikli i Usluge</div>
+                                <small class="text-muted">Upravljanje artiklima</small>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('komitenti.lista') }}" class="list-group-item list-group-item-action border-0 d-flex align-items-center py-3">
+                            <i class="fa-solid fa-address-book text-muted me-3 fs-5"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">Komitenti</div>
+                                <small class="text-muted">Pregled svih komitenata</small>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-muted"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

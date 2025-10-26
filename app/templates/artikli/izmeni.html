@@ -3,74 +3,82 @@
 {% block title %}Izmeni {{ artikal.naziv }} - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-pen-to-square"></i> Izmeni Artikal: {{ artikal.naziv }}</h1>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-pen-to-square fs-3 text-muted"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">Izmeni Artikal</h1>
+            <p class="text-muted mb-0">{{ artikal.naziv }}</p>
+        </div>
+    </div>
 
-    <div class="card mt-4">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('artikli.izmeni', id=artikal.id) }}">
-                {{ form.hidden_tag() }}
+    <form method="POST" action="{{ url_for('artikli.izmeni', id=artikal.id) }}">
+        {{ form.hidden_tag() }}
 
-                <!-- Article/Service Info -->
-                <div class="row mb-3">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-tag me-2 text-primary"></i> Osnovni Podaci</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-12">
-                        <label for="naziv" class="form-label">Naziv Artikla ili Usluge *</label>
-                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        <label for="naziv" class="form-label fw-semibold">
+                            <i class="fa-solid fa-tag me-1 text-muted"></i> Naziv Artikla ili Usluge *
+                        </label>
+                        {{ form.naziv(class="form-control form-control-lg" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv", placeholder="Unesite naziv") }}
                         {% if form.naziv.errors %}
                             <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
                         {% endif %}
                         <small class="form-text text-muted">Naziv artikla ili usluge koji će se pojavljivati na fakturama.</small>
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-12">
-                        <label for="opis" class="form-label">Opis (opciono)</label>
-                        {{ form.opis(class="form-control" ~ (" is-invalid" if form.opis.errors else ""), id="opis") }}
+                        <label for="opis" class="form-label fw-semibold">
+                            <i class="fa-solid fa-align-left me-1 text-muted"></i> Opis (opciono)
+                        </label>
+                        {{ form.opis(class="form-control form-control-lg" ~ (" is-invalid" if form.opis.errors else ""), id="opis", rows="3", placeholder="Detaljan opis artikla ili usluge") }}
                         {% if form.opis.errors %}
                             <div class="invalid-feedback">{{ form.opis.errors[0] }}</div>
                         {% endif %}
                         <small class="form-text text-muted">Detaljan opis artikla ili usluge (opciono).</small>
                     </div>
-                </div>
-
-                <!-- Price and Unit -->
-                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="podrazumevana_cena" class="form-label">Podrazumevana Cena (RSD) (opciono)</label>
-                        {{ form.podrazumevana_cena(class="form-control" ~ (" is-invalid" if form.podrazumevana_cena.errors else ""), id="podrazumevana_cena") }}
+                        <label for="podrazumevana_cena" class="form-label fw-semibold">
+                            <i class="fa-solid fa-coins me-1 text-muted"></i> Podrazumevana Cena (RSD)
+                        </label>
+                        {{ form.podrazumevana_cena(class="form-control form-control-lg" ~ (" is-invalid" if form.podrazumevana_cena.errors else ""), id="podrazumevana_cena", placeholder="0.00") }}
                         {% if form.podrazumevana_cena.errors %}
                             <div class="invalid-feedback">{{ form.podrazumevana_cena.errors[0] }}</div>
                         {% endif %}
-                        <small class="form-text text-muted">Podrazumevana cena po jedinici mere (opciono). Možete ostaviti prazno i uneti cenu pri kreiranju fakture.</small>
+                        <small class="form-text text-muted">Podrazumevana cena (opciono).</small>
                     </div>
                     <div class="col-md-6">
-                        <label for="jedinica_mere" class="form-label">Jedinica Mere *</label>
-                        {{ form.jedinica_mere(class="form-select" ~ (" is-invalid" if form.jedinica_mere.errors else ""), id="jedinica_mere") }}
+                        <label for="jedinica_mere" class="form-label fw-semibold">
+                            <i class="fa-solid fa-ruler me-1 text-muted"></i> Jedinica Mere *
+                        </label>
+                        {{ form.jedinica_mere(class="form-select form-select-lg" ~ (" is-invalid" if form.jedinica_mere.errors else ""), id="jedinica_mere") }}
                         {% if form.jedinica_mere.errors %}
                             <div class="invalid-feedback">{{ form.jedinica_mere.errors[0] }}</div>
                         {% endif %}
-                        <small class="form-text text-muted">Izaberite jedinicu mere (sat, dan, kom, kg, m, m², m³, l, usluga).</small>
+                        <small class="form-text text-muted">Izaberite jedinicu mere.</small>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Submit Buttons -->
-                <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-save"></i> {{ form.submit.label.text }}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-save me-2"></i> Sačuvaj Izmene
                     </button>
-                    <a href="{{ url_for('artikli.detail', id=artikal.id) }}" class="btn btn-secondary">
-                        <i class="fa-solid fa-times"></i> Otkaži
+                    <a href="{{ url_for('artikli.detail', id=artikal.id) }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fa-solid fa-times me-2"></i> Otkaži
                     </a>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
-
-    <div class="mt-3">
-        <a href="{{ url_for('artikli.detail', id=artikal.id) }}" class="btn btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Nazad na Detalje Artikla
-        </a>
-    </div>
+    </form>
 </div>
 {% endblock %}

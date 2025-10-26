@@ -3,29 +3,39 @@
 {% block title %}Paušalne Firme - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fa-solid fa-building"></i> Paušalne Firme</h1>
-        <a href="{{ url_for('admin.firma_create') }}" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Dodaj Novu Paušalnu Firmu
+        <div>
+            <h1 class="mb-2"><i class="fa-solid fa-building me-2 text-primary"></i> Paušalne Firme</h1>
+            <p class="text-muted mb-0">Upravljanje paušalnim firmama u sistemu.</p>
+        </div>
+        <a href="{{ url_for('admin.firma_create') }}" class="btn btn-primary btn-lg shadow-sm">
+            <i class="fa-solid fa-plus me-2"></i> Dodaj Novu Paušalnu Firmu
         </a>
     </div>
 
     {# Search Form #}
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
             <form method="get" action="{{ url_for('admin.firme') }}" class="row g-3">
-                <div class="col-md-8">
-                    <label for="search" class="form-label">Pretraži po nazivu ili PIB-u</label>
-                    <input type="text" class="form-control" id="search" name="search"
-                           value="{{ search_term }}" placeholder="Unesite naziv ili PIB...">
+                <div class="col-md-9">
+                    <label for="search" class="form-label fw-semibold">
+                        <i class="fa-solid fa-search me-2 text-muted"></i>Pretraži po nazivu ili PIB-u
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fa-solid fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="search" name="search"
+                               value="{{ search_term }}" placeholder="Unesite naziv ili PIB..." autofocus>
+                    </div>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="fa-solid fa-search"></i> Pretraži
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                        <i class="fa-solid fa-search me-2"></i> Pretraži
                     </button>
-                    <a href="{{ url_for('admin.firme') }}" class="btn btn-secondary">
-                        <i class="fa-solid fa-times"></i> Resetuj
+                    <a href="{{ url_for('admin.firme') }}" class="btn btn-outline-secondary btn-lg" title="Resetuj pretragu">
+                        <i class="fa-solid fa-times"></i>
                     </a>
                 </div>
             </form>
@@ -35,80 +45,94 @@
     {% if firme %}
     {# Results Info #}
     <div class="mb-3">
-        <p class="text-muted">
-            {% if search_term %}
-                Pronađeno {{ pagination.total }} rezultata za "{{ search_term }}"
-            {% else %}
-                Ukupno firmi: {{ pagination.total }}
-            {% endif %}
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="text-muted mb-0">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                {% if search_term %}
+                    Pronađeno <strong>{{ pagination.total }}</strong> rezultata za "<strong>{{ search_term }}</strong>"
+                {% else %}
+                    Ukupno firmi: <strong>{{ pagination.total }}</strong>
+                {% endif %}
+            </p>
             {% if pagination.pages > 1 %}
-                - Stranica {{ pagination.page }} od {{ pagination.pages }}
+                <small class="text-muted">Stranica {{ pagination.page }} od {{ pagination.pages }}</small>
             {% endif %}
-        </p>
+        </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    {# Sortable Naziv column #}
-                    <th>
-                        <a href="{{ url_for('admin.firme', sort='naziv', order='desc' if (sort_by == 'naziv' and order_dir == 'asc') else 'asc', search=search_term, page=request.args.get('page')) }}"
-                           class="text-white text-decoration-none">
-                            Naziv
-                            {% if sort_by == 'naziv' %}
-                                <i class="fa-solid fa-sort-{{ 'up' if order_dir == 'asc' else 'down' }}"></i>
-                            {% else %}
-                                <i class="fa-solid fa-sort text-muted"></i>
-                            {% endif %}
-                        </a>
-                    </th>
-                    {# Sortable PIB column #}
-                    <th>
-                        <a href="{{ url_for('admin.firme', sort='pib', order='desc' if (sort_by == 'pib' and order_dir == 'asc') else 'asc', search=search_term, page=request.args.get('page')) }}"
-                           class="text-white text-decoration-none">
-                            PIB
-                            {% if sort_by == 'pib' %}
-                                <i class="fa-solid fa-sort-{{ 'up' if order_dir == 'asc' else 'down' }}"></i>
-                            {% else %}
-                                <i class="fa-solid fa-sort text-muted"></i>
-                            {% endif %}
-                        </a>
-                    </th>
-                    <th>Matični Broj</th>
-                    <th>Mesto</th>
-                    <th class="text-center">Broj Faktura</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-end">Akcije</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for firma in firme %}
-                <tr>
-                    <td><strong>{{ firma.naziv }}</strong></td>
-                    <td>{{ firma.pib }}</td>
-                    <td>{{ firma.maticni_broj }}</td>
-                    <td>{{ firma.mesto }}</td>
-                    <td class="text-center">
-                        <span class="badge bg-secondary">{{ firma.fakture|length }}</span>
-                    </td>
-                    <td class="text-center">
-                        {% if firma.is_active %}
-                            <span class="badge bg-success">Aktivna</span>
-                        {% else %}
-                            <span class="badge bg-danger">Neaktivna</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}"
-                           class="btn btn-sm btn-info" title="Detalji firme">
-                            <i class="fa-solid fa-eye"></i> Detalji
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            {# Sortable Naziv column #}
+                            <th class="border-0 py-3 px-4">
+                                <a href="{{ url_for('admin.firme', sort='naziv', order='desc' if (sort_by == 'naziv' and order_dir == 'asc') else 'asc', search=search_term, page=request.args.get('page')) }}"
+                                   class="text-dark text-decoration-none d-flex align-items-center">
+                                    <i class="fa-solid fa-building me-2 text-muted"></i>Naziv
+                                    {% if sort_by == 'naziv' %}
+                                        <i class="fa-solid fa-sort-{{ 'up' if order_dir == 'asc' else 'down' }} ms-2"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-sort ms-2 text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            {# Sortable PIB column #}
+                            <th class="border-0 py-3">
+                                <a href="{{ url_for('admin.firme', sort='pib', order='desc' if (sort_by == 'pib' and order_dir == 'asc') else 'asc', search=search_term, page=request.args.get('page')) }}"
+                                   class="text-dark text-decoration-none d-flex align-items-center">
+                                    <i class="fa-solid fa-hashtag me-2 text-muted"></i>PIB
+                                    {% if sort_by == 'pib' %}
+                                        <i class="fa-solid fa-sort-{{ 'up' if order_dir == 'asc' else 'down' }} ms-2"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-sort ms-2 text-muted"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="border-0 py-3"><i class="fa-solid fa-id-card me-2 text-muted"></i>Matični Broj</th>
+                            <th class="border-0 py-3"><i class="fa-solid fa-map-marker-alt me-2 text-muted"></i>Mesto</th>
+                            <th class="border-0 py-3 text-center"><i class="fa-solid fa-file-invoice me-2 text-muted"></i>Broj Faktura</th>
+                            <th class="border-0 py-3 text-center"><i class="fa-solid fa-circle-check me-2 text-muted"></i>Status</th>
+                            <th class="border-0 py-3 text-end pe-4">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for firma in firme %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="fa-solid fa-building text-muted"></i>
+                                    </div>
+                                    <strong>{{ firma.naziv }}</strong>
+                                </div>
+                            </td>
+                            <td class="py-3"><span class="font-monospace text-muted">{{ firma.pib }}</span></td>
+                            <td class="py-3"><span class="font-monospace text-muted">{{ firma.maticni_broj }}</span></td>
+                            <td class="py-3">{{ firma.mesto }}</td>
+                            <td class="text-center py-3">
+                                <span class="badge bg-secondary px-3 py-2"><i class="fa-solid fa-file-invoice me-1"></i> {{ firma.fakture|length }}</span>
+                            </td>
+                            <td class="text-center py-3">
+                                {% if firma.is_active %}
+                                    <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i> Aktivna</span>
+                                {% else %}
+                                    <span class="badge bg-danger px-3 py-2"><i class="fa-solid fa-circle-xmark me-1"></i> Neaktivna</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4 py-3">
+                                <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}"
+                                   class="btn btn-sm btn-outline-info" title="Detalji firme">
+                                    <i class="fa-solid fa-eye me-1"></i> Detalji
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     {# Pagination Controls #}
@@ -148,19 +172,29 @@
     {% endif %}
 
     {% else %}
-    <div class="alert alert-info" role="alert">
-        <i class="fa-solid fa-circle-info"></i>
-        {% if search_term %}
-            Nema rezultata pretrage za "{{ search_term }}". Pokušajte sa drugim pojmom.
-        {% else %}
-            Nema paušalnih firmi u sistemu. Kliknite na "Dodaj Novu Paušalnu Firmu" da kreirate prvu firmu.
-        {% endif %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-building display-1 text-muted mb-3"></i>
+            {% if search_term %}
+                <h4 class="mb-2">Nema rezultata pretrage</h4>
+                <p class="text-muted mb-4">Nema rezultata pretrage za "<strong>{{ search_term }}</strong>". Pokušajte sa drugim pojmom.</p>
+                <a href="{{ url_for('admin.firme') }}" class="btn btn-primary">
+                    <i class="fa-solid fa-times me-2"></i> Očisti pretragu
+                </a>
+            {% else %}
+                <h4 class="mb-2">Nema paušalnih firmi u sistemu</h4>
+                <p class="text-muted mb-4">Kliknite na dugme ispod da kreirate prvu firmu.</p>
+                <a href="{{ url_for('admin.firma_create') }}" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Novu Paušalnu Firmu
+                </a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 
-    <div class="mt-3">
-        <a href="{{ url_for('admin_dashboard.admin_dashboard') }}" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Nazad na Dashboard
+    <div class="mt-4">
+        <a href="{{ url_for('admin_dashboard.admin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-2"></i> Nazad na Dashboard
         </a>
     </div>
 </div>

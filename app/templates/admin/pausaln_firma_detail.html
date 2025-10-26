@@ -3,204 +3,328 @@
 {% block title %}{{ firma.naziv }} - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-building"></i> {{ firma.naziv }}</h1>
-
-    <div class="card mt-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Osnovni Podaci</h4>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-building fs-3 text-muted"></i>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>PIB:</strong> {{ firma.pib }}</p>
-                    <p><strong>Matični Broj:</strong> {{ firma.maticni_broj }}</p>
-                    <p><strong>Naziv:</strong> {{ firma.naziv }}</p>
+        <div>
+            <h1 class="mb-1">{{ firma.naziv }}</h1>
+            <p class="text-muted mb-0">
+                <i class="fa-solid fa-hashtag me-1"></i> PIB: {{ firma.pib }}
+                {% if firma.is_active %}
+                    <span class="badge bg-success ms-2"><i class="fa-solid fa-circle-check me-1"></i> Aktivna</span>
+                {% else %}
+                    <span class="badge bg-danger ms-2"><i class="fa-solid fa-circle-xmark me-1"></i> Neaktivna</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-info-circle me-2 text-primary"></i> Osnovni Podaci</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-hashtag text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">PIB</small>
+                            <strong class="font-monospace">{{ firma.pib }}</strong>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p><strong>Telefon:</strong> {{ firma.telefon }}</p>
-                    <p><strong>Email:</strong> {{ firma.email if firma.email else 'N/A' }}</p>
-                    <p><strong>Status:</strong>
-                        {% if firma.is_active %}
-                            <span class="badge bg-success">Aktivna</span>
-                        {% else %}
-                            <span class="badge bg-danger">Neaktivna</span>
-                        {% endif %}
-                    </p>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-id-card text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Matični Broj</small>
+                            <strong class="font-monospace">{{ firma.maticni_broj }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-building text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Naziv</small>
+                            <strong>{{ firma.naziv }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-phone text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Telefon</small>
+                            <strong>{{ firma.telefon }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-envelope text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Email</small>
+                            <strong>{{ firma.email if firma.email else 'N/A' }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-circle-check text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Status</small>
+                            {% if firma.is_active %}
+                                <span class="badge bg-success px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i> Aktivna</span>
+                            {% else %}
+                                <span class="badge bg-danger px-3 py-2"><i class="fa-solid fa-circle-xmark me-1"></i> Neaktivna</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-secondary text-white">
-            <h4 class="mb-0">Adresa</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-map-marker-alt me-2 text-success"></i> Adresa</h5>
         </div>
-        <div class="card-body">
-            <p>{{ firma.adresa }} {{ firma.broj }}, {{ firma.postanski_broj }} {{ firma.mesto }}, {{ firma.drzava }}</p>
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start">
+                <i class="fa-solid fa-location-dot text-success me-3 fs-4 mt-1"></i>
+                <div>
+                    <p class="mb-1"><strong>{{ firma.adresa }} {{ firma.broj }}</strong></p>
+                    <p class="mb-0 text-muted">{{ firma.postanski_broj }} {{ firma.mesto }}, {{ firma.drzava }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-info text-white">
-            <h4 class="mb-0">Dinarski Računi</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-money-bill me-2 text-info"></i> Dinarski Računi</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             {% if firma.dinarski_racuni %}
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Banka</th>
-                            <th>Broj Računa</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for racun in firma.dinarski_racuni %}
-                        <tr>
-                            <td>{{ racun.banka }}</td>
-                            <td>{{ racun.broj }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 py-3"><i class="fa-solid fa-building-columns me-2 text-muted"></i>Banka</th>
+                                <th class="border-0 py-3"><i class="fa-solid fa-hashtag me-2 text-muted"></i>Broj Računa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for racun in firma.dinarski_racuni %}
+                            <tr>
+                                <td class="py-3">{{ racun.banka }}</td>
+                                <td class="py-3"><span class="font-monospace">{{ racun.broj }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p class="text-muted">Nema dinarskih računa.</p>
+                <p class="text-muted text-center py-3 mb-0">Nema dinarskih računa.</p>
             {% endif %}
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-warning text-dark">
-            <h4 class="mb-0">Devizni Računi</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-dollar-sign me-2 text-warning"></i> Devizni Računi</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             {% if firma.devizni_racuni %}
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Banka</th>
-                            <th>IBAN</th>
-                            <th>SWIFT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for racun in firma.devizni_racuni %}
-                        <tr>
-                            <td>{{ racun.banka }}</td>
-                            <td>{{ racun.iban }}</td>
-                            <td>{{ racun.swift }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 py-3"><i class="fa-solid fa-building-columns me-2 text-muted"></i>Banka</th>
+                                <th class="border-0 py-3"><i class="fa-solid fa-credit-card me-2 text-muted"></i>IBAN</th>
+                                <th class="border-0 py-3"><i class="fa-solid fa-code me-2 text-muted"></i>SWIFT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for racun in firma.devizni_racuni %}
+                            <tr>
+                                <td class="py-3">{{ racun.banka }}</td>
+                                <td class="py-3"><span class="font-monospace">{{ racun.iban }}</span></td>
+                                <td class="py-3"><span class="font-monospace">{{ racun.swift }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p class="text-muted">Nema deviznih računa.</p>
+                <p class="text-muted text-center py-3 mb-0">Nema deviznih računa.</p>
             {% endif %}
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-success text-white">
-            <h4 class="mb-0">Fakturisanje</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="fa-solid fa-file-invoice me-2 text-success"></i> Fakturisanje</h5>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Prefiks Fakture:</strong> {{ firma.prefiks_fakture if firma.prefiks_fakture else 'N/A' }}</p>
-                    <p><strong>Sufiks Fakture:</strong> {{ firma.sufiks_fakture if firma.sufiks_fakture else 'N/A' }}</p>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-arrow-right text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Prefiks Fakture</small>
+                            <strong>{{ firma.prefiks_fakture if firma.prefiks_fakture else 'N/A' }}</strong>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p><strong>PDV Kategorija:</strong> {{ firma.pdv_kategorija }}</p>
-                    <p><strong>Šifra Osnova:</strong> {{ firma.sifra_osnova }}</p>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-arrow-left text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Sufiks Fakture</small>
+                            <strong>{{ firma.sufiks_fakture if firma.sufiks_fakture else 'N/A' }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-percent text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">PDV Kategorija</small>
+                            <strong>{{ firma.pdv_kategorija }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-code text-muted me-3 fs-5"></i>
+                        <div>
+                            <small class="text-muted d-block">Šifra Osnova</small>
+                            <strong>{{ firma.sifra_osnova }}</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Podaci Firme</h4>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('admin.firma_view_komitenti', firma_id=firma.id) }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fa-solid fa-address-book"></i> Komitenti ({{ komitenti_count }})
-                        </a>
-                    </div>
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="fa-solid fa-address-book display-4 text-primary mb-3"></i>
+                    <h5 class="mb-3">Komitenti</h5>
+                    <p class="text-muted mb-3">Ukupno komitenata: <strong>{{ komitenti_count }}</strong></p>
+                    <a href="{{ url_for('admin.firma_view_komitenti', firma_id=firma.id) }}" class="btn btn-primary btn-lg w-100">
+                        <i class="fa-solid fa-eye me-2"></i> Pregled Komitenata
+                    </a>
                 </div>
-                <div class="col-md-6">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('admin.firma_view_artikli', firma_id=firma.id) }}" class="btn btn-outline-success btn-lg">
-                            <i class="fa-solid fa-box"></i> Artikli ({{ artikli_count }})
-                        </a>
-                    </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <i class="fa-solid fa-box display-4 text-success mb-3"></i>
+                    <h5 class="mb-3">Artikli</h5>
+                    <p class="text-muted mb-3">Ukupno artikala: <strong>{{ artikli_count }}</strong></p>
+                    <a href="{{ url_for('admin.firma_view_artikli', firma_id=firma.id) }}" class="btn btn-success btn-lg w-100">
+                        <i class="fa-solid fa-eye me-2"></i> Pregled Artikala
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card mt-3">
-        <div class="card-header bg-dark text-white">
-            <h4 class="mb-0">Korisnici ({{ firma.users|length }})</h4>
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0">
+                <i class="fa-solid fa-users me-2 text-dark"></i> Korisnici 
+                <span class="badge bg-secondary ms-2">{{ firma.users|length }}</span>
+            </h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             {% if firma.users %}
-                <ul class="list-group">
+                <div class="list-group list-group-flush">
                     {% for user in firma.users %}
-                    <li class="list-group-item">
-                        <strong>{{ user.full_name }}</strong> ({{ user.email }})
-                        - <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'primary' }}">{{ user.role }}</span>
-                    </li>
+                    <div class="list-group-item border-0 px-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-user text-muted"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong>{{ user.full_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </div>
+                            <span class="badge bg-{{ 'danger' if user.role == 'admin' else 'primary' }} px-3 py-2">
+                                <i class="fa-solid fa-{{ 'shield-halved' if user.role == 'admin' else 'user' }} me-1"></i>
+                                {{ user.role }}
+                            </span>
+                        </div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
             {% else %}
-                <p class="text-muted">Nema povezanih korisnika.</p>
+                <p class="text-muted text-center py-3 mb-0">Nema povezanih korisnika.</p>
             {% endif %}
         </div>
     </div>
 
-    <div class="mt-4 d-flex gap-2">
-        <a href="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" class="btn btn-primary">
-            <i class="fa-solid fa-pen"></i> Izmeni
-        </a>
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteFirmaModal">
-            <i class="fa-solid fa-trash"></i> Obriši
-        </button>
-        <a href="{{ url_for('admin.firme') }}" class="btn btn-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Nazad na Listu Firmi
-        </a>
+    <div class="mt-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-pen me-2"></i> Izmeni Firmu
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-lg" data-bs-toggle="modal" data-bs-target="#deleteFirmaModal">
+                        <i class="fa-solid fa-trash me-2"></i> Obriši
+                    </button>
+                    <a href="{{ url_for('admin.firme') }}" class="btn btn-outline-secondary btn-lg ms-auto">
+                        <i class="fa-solid fa-arrow-left me-2"></i> Nazad na Listu
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteFirmaModal" tabindex="-1" aria-labelledby="deleteFirmaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
                 <h5 class="modal-title" id="deleteFirmaModalLabel">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Potvrda Brisanja
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
             </div>
-            <div class="modal-body">
-                <p class="mb-3">
-                    Da li ste sigurni da želite da obrišete <strong>{{ firma.naziv }}</strong>?
-                </p>
-                <p class="text-danger mb-0">
-                    <i class="fa-solid fa-exclamation-circle"></i>
+            <div class="modal-body p-4">
+                <p class="mb-3">Da li ste sigurni da želite da obrišete firmu?</p>
+                <div class="alert alert-light border mb-3">
+                    <strong><i class="fa-solid fa-building me-2"></i>{{ firma.naziv }}</strong><br>
+                    <small class="text-muted">PIB: {{ firma.pib }}</small>
+                </div>
+                <div class="alert alert-danger mb-0">
+                    <i class="fa-solid fa-exclamation-circle me-2"></i>
                     <strong>Upozorenje:</strong> Ovo će obrisati sve povezane fakture, komitente i korisnike.
-                </p>
+                </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times"></i> Otkaži
+                    <i class="fa-solid fa-times me-2"></i> Otkaži
                 </button>
                 <form method="POST" action="{{ url_for('admin.firma_delete', firma_id=firma.id) }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-trash"></i> Obriši
+                        <i class="fa-solid fa-trash me-2"></i> Obriši Firmu
                     </button>
                 </form>
             </div>

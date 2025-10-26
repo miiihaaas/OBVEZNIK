@@ -3,167 +3,235 @@
 {% block title %}Izmeni Paušalnu Firmu - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-building-pen"></i> Izmeni Paušalnu Firmu</h1>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-building-pen fs-3 text-muted"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">Izmeni Paušalnu Firmu</h1>
+            <p class="text-muted mb-0">{{ firma.naziv }}</p>
+        </div>
+    </div>
 
-    <div class="card mt-4">
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" id="firmaForm">
-                {{ form.hidden_tag() }}
+    <form method="POST" action="{{ url_for('admin.firma_edit', firma_id=firma.id) }}" id="firmaForm">
+        {{ form.hidden_tag() }}
 
-                <!-- PIB (Readonly) -->
-                <div class="row mb-4">
+        <!-- PIB (Readonly) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-hashtag me-2 text-warning"></i> PIB</h5>
+            </div>
+            <div class="card-body p-4">
+                <label for="pib" class="form-label fw-semibold">
+                    <i class="fa-solid fa-hashtag me-1 text-muted"></i> PIB *
+                </label>
+                {{ form.pib(class="form-control form-control-lg bg-light", readonly=true) }}
+                <small class="form-text text-muted"><i class="fa-solid fa-lock me-1"></i> PIB se ne može menjati nakon kreiranja firme.</small>
+            </div>
+        </div>
+
+        <!-- Company Basic Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-building me-2 text-primary"></i> Osnovni Podaci</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-12">
-                        <label for="pib" class="form-label">PIB *</label>
-                        {{ form.pib(class="form-control bg-light") }}
-                        <small class="form-text text-muted">PIB se ne može menjati nakon kreiranja firme.</small>
-                    </div>
-                </div>
-
-                <!-- Company Basic Info -->
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="naziv" class="form-label">Naziv Firme *</label>
-                        {{ form.naziv(class="form-control" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv") }}
+                        <label for="naziv" class="form-label fw-semibold">
+                            <i class="fa-solid fa-building me-1 text-muted"></i> Naziv Firme *
+                        </label>
+                        {{ form.naziv(class="form-control form-control-lg" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv", placeholder="Unesite pun naziv firme") }}
                         {% if form.naziv.errors %}
                             <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="maticni_broj" class="form-label">Matični Broj *</label>
-                        {{ form.maticni_broj(class="form-control" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj") }}
+                        <label for="maticni_broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-id-card me-1 text-muted"></i> Matični Broj *
+                        </label>
+                        {{ form.maticni_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj", placeholder="Matični broj firme") }}
                         {% if form.maticni_broj.errors %}
                             <div class="invalid-feedback">{{ form.maticni_broj.errors[0] }}</div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Address Info -->
-                <h4 class="mt-4">Adresa</h4>
-                <div class="row mb-3">
+        <!-- Address Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-map-marker-alt me-2 text-success"></i> Adresa</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-8">
-                        <label for="adresa" class="form-label">Ulica *</label>
-                        {{ form.adresa(class="form-control" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa") }}
+                        <label for="adresa" class="form-label fw-semibold">
+                            <i class="fa-solid fa-road me-1 text-muted"></i> Ulica *
+                        </label>
+                        {{ form.adresa(class="form-control form-control-lg" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa", placeholder="Naziv ulice") }}
                         {% if form.adresa.errors %}
                             <div class="invalid-feedback">{{ form.adresa.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="broj" class="form-label">Broj *</label>
-                        {{ form.broj(class="form-control" ~ (" is-invalid" if form.broj.errors else ""), id="broj") }}
+                        <label for="broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-hashtag me-1 text-muted"></i> Broj *
+                        </label>
+                        {{ form.broj(class="form-control form-control-lg" ~ (" is-invalid" if form.broj.errors else ""), id="broj", placeholder="Broj") }}
                         {% if form.broj.errors %}
                             <div class="invalid-feedback">{{ form.broj.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="postanski_broj" class="form-label">Poštanski Broj *</label>
-                        {{ form.postanski_broj(class="form-control" ~ (" is-invalid" if form.postanski_broj.errors else "")) }}
+                        <label for="postanski_broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Poštanski Broj *
+                        </label>
+                        {{ form.postanski_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.postanski_broj.errors else ""), placeholder="Poštanski broj") }}
                         {% if form.postanski_broj.errors %}
                             <div class="invalid-feedback">{{ form.postanski_broj.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="mesto" class="form-label">Mesto *</label>
-                        {{ form.mesto(class="form-control" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto") }}
+                        <label for="mesto" class="form-label fw-semibold">
+                            <i class="fa-solid fa-city me-1 text-muted"></i> Mesto *
+                        </label>
+                        {{ form.mesto(class="form-control form-control-lg" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto", placeholder="Naziv mesta") }}
                         {% if form.mesto.errors %}
                             <div class="invalid-feedback">{{ form.mesto.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-4">
-                        <label for="drzava" class="form-label">Država *</label>
-                        {{ form.drzava(class="form-control" ~ (" is-invalid" if form.drzava.errors else "")) }}
+                        <label for="drzava" class="form-label fw-semibold">
+                            <i class="fa-solid fa-flag me-1 text-muted"></i> Država *
+                        </label>
+                        {{ form.drzava(class="form-control form-control-lg" ~ (" is-invalid" if form.drzava.errors else ""), placeholder="Država") }}
                         {% if form.drzava.errors %}
                             <div class="invalid-feedback">{{ form.drzava.errors[0] }}</div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Contact Info -->
-                <h4 class="mt-4">Kontakt Informacije</h4>
-                <div class="row mb-3">
+        <!-- Contact Info -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-phone me-2 text-info"></i> Kontakt Informacije</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="telefon" class="form-label">Telefon *</label>
-                        {{ form.telefon(class="form-control" ~ (" is-invalid" if form.telefon.errors else "")) }}
+                        <label for="telefon" class="form-label fw-semibold">
+                            <i class="fa-solid fa-phone me-1 text-muted"></i> Telefon *
+                        </label>
+                        {{ form.telefon(class="form-control form-control-lg" ~ (" is-invalid" if form.telefon.errors else ""), placeholder="Kontakt telefon") }}
                         {% if form.telefon.errors %}
                             <div class="invalid-feedback">{{ form.telefon.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <label for="email" class="form-label">Email</label>
-                        {{ form.email(class="form-control" ~ (" is-invalid" if form.email.errors else "")) }}
+                        <label for="email" class="form-label fw-semibold">
+                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Email
+                        </label>
+                        {{ form.email(class="form-control form-control-lg" ~ (" is-invalid" if form.email.errors else ""), placeholder="Email adresa (opciono)") }}
                         {% if form.email.errors %}
                             <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Dinarski Računi -->
-                <h4 class="mt-4">Dinarski Računi *</h4>
+        <!-- Dinarski Računi -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-money-bill me-2 text-warning"></i> Dinarski Računi *</h5>
+            </div>
+            <div class="card-body p-4">
                 <div id="dinarskiRacuniContainer"></div>
-                <button type="button" id="addDinarskiRacun" class="btn btn-sm btn-outline-primary mt-2">
-                    <i class="fa-solid fa-plus"></i> Dodaj Dinarski Račun
+                <button type="button" id="addDinarskiRacun" class="btn btn-outline-primary mt-3">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Dinarski Račun
                 </button>
+            </div>
+        </div>
 
-                <!-- Devizni Računi -->
-                <h4 class="mt-4">Devizni Računi (opciono)</h4>
+        <!-- Devizni Računi -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-dollar-sign me-2 text-success"></i> Devizni Računi (opciono)</h5>
+            </div>
+            <div class="card-body p-4">
                 <div id="devizniRacuniContainer"></div>
-                <button type="button" id="addDevizniRacun" class="btn btn-sm btn-outline-secondary mt-2">
-                    <i class="fa-solid fa-plus"></i> Dodaj Devizni Račun
+                <button type="button" id="addDevizniRacun" class="btn btn-outline-secondary mt-3">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Devizni Račun
                 </button>
+            </div>
+        </div>
 
-                <!-- Hidden fields for JSON data -->
-                {{ form.dinarski_racuni_json }}
-                {{ form.devizni_racuni_json }}
+        <!-- Hidden fields for JSON data -->
+        {{ form.dinarski_racuni_json }}
+        {{ form.devizni_racuni_json }}
 
-                <!-- Fakturisanje -->
-                <h4 class="mt-4">Fakturisanje</h4>
-                <div class="row mb-3">
+        <!-- Fakturisanje -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-file-invoice me-2 text-primary"></i> Fakturisanje</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="prefiks_fakture" class="form-label">Prefiks Fakture</label>
-                        {{ form.prefiks_fakture(class="form-control" ~ (" is-invalid" if form.prefiks_fakture.errors else "")) }}
+                        <label for="prefiks_fakture" class="form-label fw-semibold">
+                            <i class="fa-solid fa-arrow-right me-1 text-muted"></i> Prefiks Fakture
+                        </label>
+                        {{ form.prefiks_fakture(class="form-control form-control-lg" ~ (" is-invalid" if form.prefiks_fakture.errors else ""), placeholder="Prefiks (opciono)") }}
                         {% if form.prefiks_fakture.errors %}
                             <div class="invalid-feedback">{{ form.prefiks_fakture.errors[0] }}</div>
                         {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <label for="sufiks_fakture" class="form-label">Sufiks Fakture</label>
-                        {{ form.sufiks_fakture(class="form-control" ~ (" is-invalid" if form.sufiks_fakture.errors else "")) }}
+                        <label for="sufiks_fakture" class="form-label fw-semibold">
+                            <i class="fa-solid fa-arrow-left me-1 text-muted"></i> Sufiks Fakture
+                        </label>
+                        {{ form.sufiks_fakture(class="form-control form-control-lg" ~ (" is-invalid" if form.sufiks_fakture.errors else ""), placeholder="Sufiks (opciono)") }}
                         {% if form.sufiks_fakture.errors %}
                             <div class="invalid-feedback">{{ form.sufiks_fakture.errors[0] }}</div>
                         {% endif %}
                     </div>
-                </div>
-
-                <!-- PDV Info (readonly) -->
-                <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="pdv_kategorija" class="form-label">PDV Kategorija</label>
-                        {{ form.pdv_kategorija(class="form-control") }}
+                        <label for="pdv_kategorija" class="form-label fw-semibold">
+                            <i class="fa-solid fa-percent me-1 text-muted"></i> PDV Kategorija
+                        </label>
+                        {{ form.pdv_kategorija(class="form-control form-control-lg bg-light", readonly=true) }}
+                        <small class="text-muted">Automatski popunjeno</small>
                     </div>
                     <div class="col-md-6">
-                        <label for="sifra_osnova" class="form-label">Šifra Osnova</label>
-                        {{ form.sifra_osnova(class="form-control") }}
+                        <label for="sifra_osnova" class="form-label fw-semibold">
+                            <i class="fa-solid fa-code me-1 text-muted"></i> Šifra Osnova
+                        </label>
+                        {{ form.sifra_osnova(class="form-control form-control-lg bg-light", readonly=true) }}
+                        <small class="text-muted">Automatski popunjeno</small>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Submit Buttons -->
-                <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-save"></i> Sačuvaj Izmene
+        <!-- Submit Buttons -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-save me-2"></i> Sačuvaj Izmene
                     </button>
-                    <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}" class="btn btn-secondary">
-                        <i class="fa-solid fa-times"></i> Otkaži
+                    <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fa-solid fa-times me-2"></i> Otkaži
                     </a>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>

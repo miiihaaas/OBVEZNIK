@@ -3,39 +3,43 @@
 {% block title %}Admin Dashboard - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <!-- Welcome Header -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <h1><i class="fa-solid fa-shield-halved"></i> Admin Dashboard</h1>
-            <p class="text-muted-gray">Dobrodošli Administratore, {{ user.full_name }}!</p>
+            <h1 class="mb-2"><i class="fa-solid fa-shield-halved me-2 text-danger"></i> Admin Dashboard</h1>
+            <p class="text-muted-gray mb-0"><i class="fa-solid fa-user-shield me-1"></i> Dobrodošli Administratore, {{ user.full_name }}!</p>
         </div>
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="row mb-4">
+    <div class="row mb-4 g-3">
         <div class="col-md-3">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-building"></i> Ukupno Firmi</h3>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-building me-2 text-primary"></i> Ukupno Firmi</h3>
                 <div class="stats-value">0</div>
+                <small class="text-muted d-block mt-2">Registrovane firme</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-file-invoice"></i> Fakture (ovaj mesec)</h3>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-file-invoice me-2 text-success"></i> Fakture (ovaj mesec)</h3>
                 <div class="stats-value">0</div>
+                <small class="text-muted d-block mt-2">Kreirane u tokućem mesecu</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-users"></i> Aktivni Korisnici</h3>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-users me-2 text-info"></i> Aktivni Korisnici</h3>
                 <div class="stats-value">0</div>
+                <small class="text-muted d-block mt-2">Korisnika u sistemu</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card">
-                <h3><i class="fa-solid fa-chart-line"></i> Prosečan Promet</h3>
-                <div class="stats-value">0 RSD</div>
+            <div class="stats-card shadow-sm border-0">
+                <h3 class="mb-3"><i class="fa-solid fa-chart-line me-2 text-warning"></i> Prosečan Promet</h3>
+                <div class="stats-value">0,00 RSD</div>
+                <small class="text-muted d-block mt-2">Po firmi ovog meseca</small>
             </div>
         </div>
     </div>
@@ -43,29 +47,53 @@
     <!-- Quick Access Buttons -->
     <div class="row mb-4">
         <div class="col-md-12">
-            <h3 class="mb-3"><i class="fa-solid fa-bolt"></i> Brzi pristup</h3>
-            <div class="d-grid gap-2">
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('admin.users') }}" class="btn btn-primary btn-lg">
-                        <i class="fa-solid fa-users"></i> Upravljanje Korisnicima
-                    </a>
-                    <a href="{{ url_for('admin.user_create') }}" class="btn btn-outline-primary btn-lg">
-                        <i class="fa-solid fa-user-plus"></i> Dodaj Korisnika
-                    </a>
-                    <a href="{{ url_for('admin.firme') }}" class="btn btn-primary btn-lg">
-                        <i class="fa-solid fa-building"></i> Paušalne Firme
-                    </a>
-                    <a href="{{ url_for('admin.firma_create') }}" class="btn btn-outline-primary btn-lg">
-                        <i class="fa-solid fa-plus"></i> Dodaj Firmu
-                    </a>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <button class="btn btn-outline-secondary btn-lg" disabled>
-                        <i class="fa-solid fa-file-invoice"></i> Sve Fakture
-                    </button>
-                    <button class="btn btn-outline-secondary btn-lg" disabled>
-                        <i class="fa-solid fa-gear"></i> Podešavanja
-                    </button>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="mb-4"><i class="fa-solid fa-bolt me-2 text-primary"></i> Brzi pristup</h3>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">
+                                <i class="fa-solid fa-users d-block mb-2 fs-3"></i>
+                                <span class="d-block">Upravljanje Korisnicima</span>
+                                <small class="text-white-50 d-block mt-2">Pregled i izmena</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.user_create') }}" class="btn btn-outline-primary w-100 h-100 py-4">
+                                <i class="fa-solid fa-user-plus d-block mb-2 fs-3"></i>
+                                <span class="d-block">Dodaj Korisnika</span>
+                                <small class="text-muted d-block mt-2">Kreiranje novog</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.firme') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">
+                                <i class="fa-solid fa-building d-block mb-2 fs-3"></i>
+                                <span class="d-block">Paušalne Firme</span>
+                                <small class="text-white-50 d-block mt-2">Pregled i izmena</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.firma_create') }}" class="btn btn-outline-primary w-100 h-100 py-4">
+                                <i class="fa-solid fa-plus-circle d-block mb-2 fs-3"></i>
+                                <span class="d-block">Dodaj Firmu</span>
+                                <small class="text-muted d-block mt-2">Kreiranje nove</small>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary w-100 py-3" disabled>
+                                <i class="fa-solid fa-file-invoice me-2"></i> Sve Fakture
+                                <small class="d-block text-muted mt-1">(U razvoju)</small>
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary w-100 py-3" disabled>
+                                <i class="fa-solid fa-gear me-2"></i> Podešavanja Sistema
+                                <small class="d-block text-muted mt-1">(U razvoju)</small>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,18 +102,23 @@
     <!-- Development Status Alert -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation"></i> Admin Dashboard (U razvoju)</h4>
-                <p>Ovo je placeholder stranica za admin dashboard.</p>
-                <hr>
-                <p class="mb-0">Kompletan admin dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
-                <ul class="mt-2 mb-0">
-                    <li><strong><i class="fa-solid fa-check"></i> Upravljanje korisnicima</strong> (Implementirano)</li>
-                    <li><strong><i class="fa-solid fa-check"></i> Upravljanje paušalnim firmama</strong> (Implementirano)</li>
-                    <li>Pregled svih faktura u sistemu (God Mode)</li>
-                    <li>Sistemske statistike i izveštaji</li>
-                    <li>Konfiguracija sistema</li>
-                </ul>
+            <div class="alert alert-warning border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="fa-solid fa-triangle-exclamation fs-4 me-3 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-2">Admin Dashboard (U razvoju)</h5>
+                        <p class="mb-2">Ovo je placeholder stranica za admin dashboard.</p>
+                        <hr class="my-3">
+                        <p class="mb-2 fw-semibold">Kompletan admin dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
+                        <ul class="mb-0 ps-3">
+                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje korisnicima (Implementirano)</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje paušalnim firmama (Implementirano)</strong></li>
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Pregled svih faktura u sistemu (God Mode)</li>
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Sistemske statistike i izveštaji</li>
+                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Konfiguracija sistema</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -93,15 +126,49 @@
     <!-- Admin Data Card -->
     <div class="row">
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fa-solid fa-user-shield"></i> Admin podaci</h5>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fa-solid fa-user-shield me-2 text-danger"></i> Admin podaci</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Email:</strong> {{ user.email }}</p>
-                    <p><strong>Ime:</strong> {{ user.full_name }}</p>
-                    <p><strong>Uloga:</strong> <span class="badge bg-danger">{{ user.role }}</span></p>
-                    <p class="mb-0"><strong>Poslednja prijava:</strong> {{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-envelope text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Email</small>
+                                    <strong>{{ user.email }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-id-card text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Ime i prezime</small>
+                                    <strong>{{ user.full_name }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-shield text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Uloga</small>
+                                    <span class="badge bg-danger">{{ user.role }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex align-items-center">
+                                <i class="fa-solid fa-clock text-muted me-3"></i>
+                                <div>
+                                    <small class="text-muted d-block">Poslednja prijava</small>
+                                    <strong>{{ user.last_login.strftime('%d.%m.%Y %H:%M') if user.last_login else 'Nikad' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

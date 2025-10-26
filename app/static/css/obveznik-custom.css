@@ -678,5 +678,258 @@ footer p {
 }
 
 /* ============================================================
+   11. ADDITIONAL UI ENHANCEMENTS
+   ============================================================ */
+
+/* Avatar/Icon Circles */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-neutral-bg-gray);
+}
+
+/* Improved Table Styling */
+.table-hover tbody tr {
+    transition: all var(--transition-fast);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--color-neutral-bg-gray);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-light);
+}
+
+/* Button Groups */
+.btn-group .btn {
+    transition: all var(--transition-fast);
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+    z-index: 1;
+}
+
+/* Search Input Enhancement */
+.input-group-text.bg-light {
+    background-color: var(--color-neutral-bg-gray) !important;
+}
+
+.form-control.border-start-0:focus {
+    border-left: 1px solid var(--color-accent) !important;
+}
+
+/* Modal Improvements */
+.modal-content {
+    border-radius: var(--radius-medium);
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+}
+
+.modal-header.bg-danger {
+    background: linear-gradient(135deg, var(--color-error) 0%, #c82333 100%);
+}
+
+/* Empty State */
+.empty-state {
+    padding: var(--spacing-xxl) var(--spacing-lg);
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 5rem;
+    color: var(--color-neutral-border);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Info Badges */
+.badge.px-3 {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+.badge.py-2 {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+/* Pagination Enhancements */
+.pagination .page-link {
+    border-radius: var(--radius-small);
+    margin: 0 4px;
+    border: 1px solid var(--color-neutral-border);
+    color: var(--color-neutral-text-dark);
+    transition: all var(--transition-fast);
+}
+
+.pagination .page-link:hover {
+    background-color: var(--color-neutral-bg-gray);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+/* Card Hover Effects */
+.card.shadow-sm:hover {
+    box-shadow: var(--shadow-medium) !important;
+    transition: box-shadow var(--transition-normal);
+}
+
+/* Quick Action Buttons */
+.btn-quick-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* List Group Enhancements */
+.list-group-item-action:hover {
+    background-color: var(--color-neutral-bg-gray);
+    transform: translateX(4px);
+    transition: all var(--transition-fast);
+}
+
+/* Alert Improvements */
+.alert.border-0 {
+    border-left: 4px solid transparent;
+}
+
+.alert-info.border-0 {
+    border-left-color: var(--color-info);
+}
+
+.alert-success.border-0 {
+    border-left-color: var(--color-success);
+}
+
+.alert-warning.border-0 {
+    border-left-color: var(--color-warning);
+}
+
+.alert-danger.border-0 {
+    border-left-color: var(--color-error);
+}
+
+/* Form Focus States */
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(217, 130, 130, 0.15);
+}
+
+/* Navbar Improvements */
+.navbar-nav .nav-link {
+    position: relative;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: all var(--transition-fast);
+    transform: translateX(-50%);
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    width: 80%;
+}
+
+/* Dropdown Menu Improvements */
+.dropdown-menu {
+    animation: fadeInDown 0.3s ease-in-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stats Card Improvements */
+.stats-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-primary) 100%);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.stats-card:hover::before {
+    opacity: 1;
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+    .container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+    }
+    
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: var(--radius-small) !important;
+        margin-bottom: 4px;
+    }
+}
+
+/* Loading States */
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================
    END OF OBVEZNIK CUSTOM CSS
    ============================================================ */

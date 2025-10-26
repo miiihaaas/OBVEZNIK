@@ -1,5 +1,5 @@
 """Admin Blueprint for User Management and PausalnFirma CRUD operations."""
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models.user import User

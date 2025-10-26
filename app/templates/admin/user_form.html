@@ -3,91 +3,128 @@
 {% block title %}{{ action }} Korisnika - OBVEZNIK{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1><i class="fa-solid fa-user-plus"></i> {{ action }} Korisnika</h1>
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-user-{{ 'plus' if action == 'Dodaj' else 'pen' }} fs-3 text-muted"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">{{ action }} Korisnika</h1>
+            <p class="text-muted mb-0">Upravljanje korisničkim nalogom.</p>
+        </div>
+    </div>
 
-    <div class="row justify-content-center mt-4">
+    <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-body">
-                    <form method="POST">
-                        {{ form.hidden_tag() }}  <!-- CSRF token -->
+            <form method="POST">
+                {{ form.hidden_tag() }}
 
-                        <!-- Full Name -->
-                        <div class="mb-3">
-                            {{ form.full_name.label(class="form-label") }}
-                            {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else "")) }}
-                            {% if form.full_name.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.full_name.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Email -->
-                        <div class="mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), type="email") }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Password -->
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.password.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                            {% if action == 'Izmeni' %}
-                                <div class="form-text">
-                                    <i class="fa-solid fa-circle-info"></i> Ostavite prazno da zadržite postojeću lozinku
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Role -->
-                        <div class="mb-3">
-                            {{ form.role.label(class="form-label") }}
-                            {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else ""), id="role-select") }}
-                            {% if form.role.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.role.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Firma ID (conditional display) -->
-                        <div class="mb-3" id="firma-field">
-                            {{ form.firma_id.label(class="form-label") }}
-                            {{ form.firma_id(class="form-select" + (" is-invalid" if form.firma_id.errors else "")) }}
-                            {% if form.firma_id.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.firma_id.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">
-                                <i class="fa-solid fa-circle-info"></i> Obavezno za paušalac korisnike
+                <!-- Osnovni Podaci -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-user me-2 text-primary"></i> Osnovni Podaci</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label for="full_name" class="form-label fw-semibold">
+                                    <i class="fa-solid fa-id-card me-1 text-muted"></i> {{ form.full_name.label.text }}
+                                </label>
+                                {{ form.full_name(class="form-control form-control-lg" + (" is-invalid" if form.full_name.errors else ""), placeholder="Unesite ime i prezime") }}
+                                {% if form.full_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12">
+                                <label for="email" class="form-label fw-semibold">
+                                    <i class="fa-solid fa-envelope me-1 text-muted"></i> {{ form.email.label.text }}
+                                </label>
+                                {{ form.email(class="form-control form-control-lg" + (" is-invalid" if form.email.errors else ""), type="email", placeholder="primer@email.com") }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Buttons -->
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
-                                <i class="fa-solid fa-xmark"></i> Otkaži
+                <!-- Lozinka -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-lock me-2 text-warning"></i> Lozinka</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <label for="password" class="form-label fw-semibold">
+                            <i class="fa-solid fa-key me-1 text-muted"></i> {{ form.password.label.text }}
+                        </label>
+                        {{ form.password(class="form-control form-control-lg" + (" is-invalid" if form.password.errors else ""), placeholder="Unesite lozinku") }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if action == 'Izmeni' %}
+                            <div class="alert alert-info mt-3 mb-0">
+                                <i class="fa-solid fa-circle-info me-2"></i> Ostavite prazno da zadržite postojeću lozinku.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Uloga i Firma -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-shield me-2 text-success"></i> Uloga i Pristup</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label for="role" class="form-label fw-semibold">
+                                    <i class="fa-solid fa-user-tag me-1 text-muted"></i> {{ form.role.label.text }}
+                                </label>
+                                {{ form.role(class="form-select form-select-lg" + (" is-invalid" if form.role.errors else ""), id="role-select") }}
+                                {% if form.role.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.role.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12" id="firma-field">
+                                <label for="firma_id" class="form-label fw-semibold">
+                                    <i class="fa-solid fa-building me-1 text-muted"></i> {{ form.firma_id.label.text }}
+                                </label>
+                                {{ form.firma_id(class="form-select form-select-lg" + (" is-invalid" if form.firma_id.errors else "")) }}
+                                {% if form.firma_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.firma_id.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    <i class="fa-solid fa-circle-info me-1"></i> Obavezno za paušalac korisnike.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap gap-2 justify-content-between">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fa-solid fa-xmark me-2"></i> Otkaži
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa-solid fa-check"></i> Sačuvaj
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-check me-2"></i> Sačuvaj Korisnika
                             </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
