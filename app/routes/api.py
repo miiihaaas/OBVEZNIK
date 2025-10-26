@@ -38,3 +38,91 @@ def nbs_firma_lookup(pib):
             'success': False,
             'message': 'Firma nije pronađena u NBS bazi. Molimo unesite podatke ručno.'
         }), 200
+
+
+@api_bp.route('/komitenti/search', methods=['GET'])
+@login_required
+def komitenti_search():
+    """
+    Komitenti autocomplete search endpoint (AJAX).
+
+    Query Parameters:
+        q: Search query string
+
+    Returns:
+        JSON array of matching komitenti [{id, naziv, pib, adresa}, ...]
+        Limited to 20 results with tenant isolation
+    """
+    from flask import request
+    from app.models.komitent import Komitent
+    from app.utils.query_helpers import filter_by_firma
+
+    query_string = request.args.get('q', '').strip()
+
+    if not query_string:
+        return jsonify([]), 200
+
+    # Search komitenti by naziv (case-insensitive) with tenant isolation
+    komitenti = (
+        filter_by_firma(Komitent.query)
+        .filter(Komitent.naziv.ilike(f'%{query_string}%'))
+        .limit(20)
+        .all()
+    )
+
+    # Format results for autocomplete
+    results = [
+        {
+            'id': k.id,
+            'naziv': k.naziv,
+            'pib': k.pib,
+            'adresa': f"{k.adresa} {k.broj}, {k.postanski_broj} {k.mesto}"
+        }
+        for k in komitenti
+    ]
+
+    return jsonify(results), 200
+
+
+@api_bp.route('/artikli/search', methods=['GET'])
+@login_required
+def artikli_search():
+    """
+    Artikli autocomplete search endpoint (AJAX).
+
+    Query Parameters:
+        q: Search query string
+
+    Returns:
+        JSON array of matching artikli [{id, naziv, podrazumevana_cena, jedinica_mere}, ...]
+        Limited to 20 results with tenant isolation
+    """
+    from flask import request
+    from app.models.artikal import Artikal
+    from app.utils.query_helpers import filter_by_firma
+
+    query_string = request.args.get('q', '').strip()
+
+    if not query_string:
+        return jsonify([]), 200
+
+    # Search artikli by naziv (case-insensitive) with tenant isolation
+    artikli = (
+        filter_by_firma(Artikal.query)
+        .filter(Artikal.naziv.ilike(f'%{query_string}%'))
+        .limit(20)
+        .all()
+    )
+
+    # Format results for autocomplete
+    results = [
+        {
+            'id': a.id,
+            'naziv': a.naziv,
+            'podrazumevana_cena': str(a.podrazumevana_cena) if a.podrazumevana_cena else '0.00',
+            'jedinica_mere': a.jedinica_mere or 'kom'
+        }
+        for a in artikli
+    ]
+
+    return jsonify(results), 200

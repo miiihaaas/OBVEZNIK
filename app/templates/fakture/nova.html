@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Faktura - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex align-items-center mb-4">
+        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+            <i class="fa-solid fa-file-invoice fs-3 text-muted"></i>
+        </div>
+        <div>
+            <h1 class="mb-1">Kreiranje Nove Fakture</h1>
+            <p class="text-muted mb-0">Unesite podatke za novu fakturu.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('fakture.nova_faktura') }}" id="fakturaForm">
+        {{ form.hidden_tag() }}
+
+        <!-- Tip Fakture -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-file-lines me-2 text-primary"></i> Tip Fakture</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="btn-group w-100" role="group" aria-label="Tip fakture">
+                    <input type="radio" class="btn-check" name="tip_fakture" id="tip_standardna" value="standardna" checked>
+                    <label class="btn btn-outline-primary" for="tip_standardna">
+                        <i class="fa-solid fa-file-invoice me-2"></i> Domaća (RSD)
+                    </label>
+
+                    <input type="radio" class="btn-check" name="tip_fakture" id="tip_profaktura" value="profaktura">
+                    <label class="btn btn-outline-primary" for="tip_profaktura">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Profaktura
+                    </label>
+
+                    <input type="radio" class="btn-check" name="tip_fakture" id="tip_avansna" value="avansna">
+                    <label class="btn btn-outline-primary" for="tip_avansna">
+                        <i class="fa-solid fa-file-contract me-2"></i> Avansna
+                    </label>
+                </div>
+                {% if form.tip_fakture.errors %}
+                    <div class="text-danger mt-2">{{ form.tip_fakture.errors[0] }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Komitent Selection -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-building me-2 text-success"></i> Komitent</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-10">
+                        <label for="komitent_search" class="form-label fw-semibold">
+                            <i class="fa-solid fa-search me-1 text-muted"></i> Pretraži Komitenta *
+                        </label>
+                        <input
+                            type="text"
+                            id="komitent_search"
+                            class="form-control form-control-lg"
+                            placeholder="Počnite da kucate naziv komitenta..."
+                            autocomplete="off">
+                        <div id="komitent_results" class="list-group mt-2" style="position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; display: none;"></div>
+
+                        <!-- Hidden field za komitent_id -->
+                        {{ form.komitent_id(type="hidden", id="komitent_id") }}
+
+                        <!-- Display selected komitent -->
+                        <div id="selected_komitent" class="alert alert-success mt-3" style="display: none;">
+                            <strong id="selected_komitent_naziv"></strong><br>
+                            <small id="selected_komitent_info"></small>
+                        </div>
+
+                        {% if form.komitent_id.errors %}
+                            <div class="text-danger mt-2">{{ form.komitent_id.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <a href="{{ url_for('komitenti.novi') }}" class="btn btn-outline-success btn-lg w-100" target="_blank">
+                            <i class="fa-solid fa-plus me-2"></i> Novi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datumi i Valuta -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-calendar me-2 text-info"></i> Datumi i Uslovi Plaćanja</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="datum_prometa" class="form-label fw-semibold">
+                            <i class="fa-solid fa-calendar-day me-1 text-muted"></i> Datum Prometa *
+                        </label>
+                        {{ form.datum_prometa(class="form-control form-control-lg" ~ (" is-invalid" if form.datum_prometa.errors else ""), id="datum_prometa", type="date") }}
+                        {% if form.datum_prometa.errors %}
+                            <div class="invalid-feedback">{{ form.datum_prometa.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="valuta_placanja" class="form-label fw-semibold">
+                            <i class="fa-solid fa-clock me-1 text-muted"></i> Valuta Plaćanja (dana) *
+                        </label>
+                        {{ form.valuta_placanja(class="form-control form-control-lg" ~ (" is-invalid" if form.valuta_placanja.errors else ""), id="valuta_placanja", type="number", min="1", value="7") }}
+                        {% if form.valuta_placanja.errors %}
+                            <div class="invalid-feedback">{{ form.valuta_placanja.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="datum_dospeca" class="form-label fw-semibold">
+                            <i class="fa-solid fa-calendar-check me-1 text-muted"></i> Datum Dospeća
+                        </label>
+                        <input type="date" id="datum_dospeca" class="form-control form-control-lg bg-light" readonly>
+                        <small class="form-text text-muted">Auto-kalkulisano (vikend → ponedeljak)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opcioni Podaci -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-info-circle me-2 text-warning"></i> Dodatni Podaci (Opciono)</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="broj_ugovora" class="form-label fw-semibold">
+                            <i class="fa-solid fa-file-contract me-1 text-muted"></i> Broj Ugovora
+                        </label>
+                        {{ form.broj_ugovora(class="form-control form-control-lg" ~ (" is-invalid" if form.broj_ugovora.errors else ""), id="broj_ugovora", placeholder="Broj ugovora (opciono)") }}
+                        {% if form.broj_ugovora.errors %}
+                            <div class="invalid-feedback">{{ form.broj_ugovora.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="broj_odluke" class="form-label fw-semibold">
+                            <i class="fa-solid fa-gavel me-1 text-muted"></i> Broj Odluke
+                        </label>
+                        {{ form.broj_odluke(class="form-control form-control-lg" ~ (" is-invalid" if form.broj_odluke.errors else ""), id="broj_odluke", placeholder="Broj odluke (opciono)") }}
+                        {% if form.broj_odluke.errors %}
+                            <div class="invalid-feedback">{{ form.broj_odluke.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="broj_narudzbenice" class="form-label fw-semibold">
+                            <i class="fa-solid fa-clipboard-list me-1 text-muted"></i> Broj Narudžbenice
+                        </label>
+                        {{ form.broj_narudzbenice(class="form-control form-control-lg" ~ (" is-invalid" if form.broj_narudzbenice.errors else ""), id="broj_narudzbenice", placeholder="Broj narudžbenice (opciono)") }}
+                        {% if form.broj_narudzbenice.errors %}
+                            <div class="invalid-feedback">{{ form.broj_narudzbenice.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="poziv_na_broj" class="form-label fw-semibold">
+                            <i class="fa-solid fa-hashtag me-1 text-muted"></i> Poziv na Broj
+                        </label>
+                        {{ form.poziv_na_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.poziv_na_broj.errors else ""), id="poziv_na_broj", placeholder="95 ili 97...") }}
+                        {% if form.poziv_na_broj.errors %}
+                            <div class="invalid-feedback">{{ form.poziv_na_broj.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Mora početi sa 95 ili 97</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="model" class="form-label fw-semibold">
+                            <i class="fa-solid fa-barcode me-1 text-muted"></i> Model
+                        </label>
+                        {{ form.model(class="form-control form-control-lg" ~ (" is-invalid" if form.model.errors else ""), id="model", placeholder="Model") }}
+                        {% if form.model.errors %}
+                            <div class="invalid-feedback">{{ form.model.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stavke Fakture -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fa-solid fa-list me-2 text-danger"></i> Stavke Fakture</h5>
+                <button type="button" id="addStavkaBtn" class="btn btn-success">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Stavku
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <div id="stavke_container">
+                    <!-- Stavke will be added here dynamically -->
+                </div>
+
+                <!-- Ukupan Iznos -->
+                <div class="row mt-4">
+                    <div class="col-md-8"></div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="text-end mb-2">Ukupan Iznos:</h5>
+                                <h3 class="text-end mb-0" id="ukupan_iznos">0.00 RSD</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-save me-2"></i> Sačuvaj kao Nacrt
+                    </button>
+                    <a href="{{ url_for('dashboard.pausalac_dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fa-solid fa-times me-2"></i> Otkaži
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Stavka Template (hidden) -->
+<template id="stavka_template">
+    <div class="stavka-row card mb-3 border-secondary">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">#</label>
+                    <input type="text" class="form-control redni-broj" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Naziv Usluge/Artikla *</label>
+                    <input
+                        type="text"
+                        class="form-control artikal-search"
+                        placeholder="Pretraži artikle ili unesite ručno..."
+                        autocomplete="off">
+                    <div class="artikal-results list-group mt-1" style="position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto; display: none;"></div>
+                    <input type="hidden" class="artikal-id">
+                    <input type="hidden" class="stavka-naziv" name="stavke-naziv">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Količina *</label>
+                    <input type="number" class="form-control stavka-kolicina" name="stavke-kolicina" min="0.01" step="0.01" placeholder="1.00" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Jedinica *</label>
+                    <input type="text" class="form-control stavka-jedinica" name="stavke-jedinica_mere" placeholder="h, kom, m..." maxlength="20" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Cena (RSD) *</label>
+                    <input type="number" class="form-control stavka-cena" name="stavke-cena" min="0.01" step="0.01" placeholder="1000.00" required>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm w-100 remove-stavka">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-12 text-end">
+                    <strong>Ukupno: <span class="stavka-ukupno">0.00</span> RSD</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script src="{{ url_for('static', filename='js/faktura.js') }}"></script>
+{% endblock %}

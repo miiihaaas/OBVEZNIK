@@ -148,7 +148,7 @@ a {
 
 a:hover {
     color: var(--color-primary);
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 /* Focus Styles - WCAG AA Compliance */

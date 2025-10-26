@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Faktura {{ faktura.broj_fakture }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Faktura {{ faktura.broj_fakture }}</h2>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>Status: <span class="badge bg-{{ 'warning' if faktura.status == 'draft' else 'success' }}">{{ faktura.status }}</span></h5>
+            <p><strong>Komitent:</strong> {{ faktura.komitent.naziv }}</p>
+            <p><strong>Datum prometa:</strong> {{ faktura.datum_prometa }}</p>
+            <p><strong>Datum dospeća:</strong> {{ faktura.datum_dospeca }}</p>
+            <p><strong>Ukupan iznos:</strong> {{ faktura.ukupan_iznos_rsd }} RSD</p>
+        </div>
+    </div>
+
+    <h4>Stavke</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Naziv</th>
+                <th>Količina</th>
+                <th>Cena</th>
+                <th>Ukupno</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stavka in faktura.stavke %}
+            <tr>
+                <td>{{ stavka.redni_broj }}</td>
+                <td>{{ stavka.naziv }}</td>
+                <td>{{ stavka.kolicina }} {{ stavka.jedinica_mere }}</td>
+                <td>{{ stavka.cena }} RSD</td>
+                <td>{{ stavka.ukupno }} RSD</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if faktura.status == 'draft' %}
+    <form method="POST" action="{{ url_for('fakture.finalizuj', faktura_id=faktura.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn btn-success">Finalizuj Fakturu</button>
+    </form>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard.pausalac_dashboard') }}" class="btn btn-secondary mt-3">Nazad na Dashboard</a>
+</div>
+{% endblock %}

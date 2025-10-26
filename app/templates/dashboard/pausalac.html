@@ -56,11 +56,11 @@
                     <h3 class="mb-4"><i class="fa-solid fa-bolt me-2 text-primary"></i> Brzi pristup</h3>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <button class="btn btn-quick-action w-100 h-100 py-4" disabled>
+                            <a href="{{ url_for('fakture.nova_faktura') }}" class="btn btn-quick-action w-100 h-100 py-4">
                                 <i class="fa-solid fa-plus-circle d-block mb-2 fs-3"></i>
                                 <span class="d-block">Kreiraj Novu Fakturu</span>
-                                <small class="text-white-50 d-block mt-2">(U razvoju)</small>
-                            </button>
+                                <small class="text-white-50 d-block mt-2">Brzo kreiranje</small>
+                            </a>
                         </div>
                         <div class="col-md-4">
                             <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">

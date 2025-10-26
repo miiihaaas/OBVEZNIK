@@ -126,6 +126,10 @@ def create_app(config_name='development'):
     # Register artikli blueprint
     from app.routes.artikli import artikli_bp
     app.register_blueprint(artikli_bp)
+    
+    # Register fakture blueprint
+    from app.routes.fakture import fakture_bp
+    app.register_blueprint(fakture_bp)
 
     # TODO: Register other blueprints when they are created in future stories
     # from app.routes import fakture

@@ -1,0 +1,214 @@
+"""Forms for Faktura Management (Invoice CRUD)."""
+from flask_wtf import FlaskForm
+from wtforms import (
+    StringField, IntegerField, DateField, SelectField,
+    DecimalField, HiddenField, FieldList, FormField
+)
+from wtforms.validators import (
+    DataRequired, Optional, Length, NumberRange,
+    Regexp, ValidationError
+)
+from datetime import date
+from flask_login import current_user
+from app.models.komitent import Komitent
+from app.utils.query_helpers import filter_by_firma
+
+
+class FakturaStavkaForm(FlaskForm):
+    """Form for a single faktura line item (stavka)."""
+
+    artikal_id = IntegerField(
+        'Artikal ID',
+        validators=[Optional()],
+        render_kw={'class': 'form-control artikal-id-input', 'type': 'hidden'}
+    )
+
+    naziv = StringField(
+        'Naziv',
+        validators=[
+            DataRequired(message='Naziv stavke je obavezan.'),
+            Length(max=255, message='Naziv može imati maksimalno 255 karaktera.')
+        ],
+        render_kw={'class': 'form-control naziv-input', 'placeholder': 'Naziv usluge/proizvoda'}
+    )
+
+    kolicina = DecimalField(
+        'Količina',
+        validators=[
+            DataRequired(message='Količina je obavezna.'),
+            NumberRange(min=0.01, message='Količina mora biti veća od 0.')
+        ],
+        places=2,
+        render_kw={'class': 'form-control kolicina-input', 'placeholder': '1.00', 'step': '0.01'}
+    )
+
+    jedinica_mere = StringField(
+        'Jedinica mere',
+        validators=[
+            DataRequired(message='Jedinica mere je obavezna.'),
+            Length(max=20, message='Jedinica mere može imati maksimalno 20 karaktera.')
+        ],
+        render_kw={'class': 'form-control jedinica-input', 'placeholder': 'kom, h, m2...'}
+    )
+
+    cena = DecimalField(
+        'Cena po jedinici',
+        validators=[
+            DataRequired(message='Cena je obavezna.'),
+            NumberRange(min=0.01, message='Cena mora biti veća od 0.')
+        ],
+        places=2,
+        render_kw={'class': 'form-control cena-input', 'placeholder': '0.00', 'step': '0.01'}
+    )
+
+    ukupno = DecimalField(
+        'Ukupno',
+        validators=[Optional()],
+        places=2,
+        render_kw={'class': 'form-control ukupno-input', 'readonly': True, 'placeholder': '0.00'}
+    )
+
+    redni_broj = IntegerField(
+        'Redni broj',
+        validators=[Optional()],
+        render_kw={'class': 'form-control redni-broj-input', 'type': 'hidden'}
+    )
+
+    class Meta:
+        csrf = False  # CSRF je već uključen u parent formu
+
+
+class FakturaCreateForm(FlaskForm):
+    """Form for creating a new invoice (faktura)."""
+
+    tip_fakture = SelectField(
+        'Tip fakture',
+        choices=[
+            ('standardna', 'Domaća (RSD)'),
+            ('profaktura', 'Profaktura'),
+            ('avansna', 'Avansna')
+        ],
+        default='standardna',
+        validators=[DataRequired(message='Tip fakture je obavezan.')],
+        render_kw={'class': 'form-control'}
+    )
+
+    komitent_id = IntegerField(
+        'Komitent',
+        validators=[DataRequired(message='Komitent je obavezan.')],
+        render_kw={'class': 'form-control komitent-select', 'type': 'hidden'}
+    )
+
+    datum_prometa = DateField(
+        'Datum prometa',
+        validators=[DataRequired(message='Datum prometa je obavezan.')],
+        default=date.today,
+        format='%Y-%m-%d',
+        render_kw={'class': 'form-control', 'type': 'date'}
+    )
+
+    valuta_placanja = IntegerField(
+        'Valuta plaćanja (dani)',
+        validators=[
+            DataRequired(message='Valuta plaćanja je obavezna.'),
+            NumberRange(min=1, max=365, message='Valuta plaćanja mora biti između 1 i 365 dana.')
+        ],
+        default=7,
+        render_kw={'class': 'form-control', 'placeholder': '7'}
+    )
+
+    # Optional reference fields
+    broj_ugovora = StringField(
+        'Broj ugovora',
+        validators=[
+            Optional(),
+            Length(max=100, message='Broj ugovora može imati maksimalno 100 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Opciono'}
+    )
+
+    broj_odluke = StringField(
+        'Broj odluke',
+        validators=[
+            Optional(),
+            Length(max=100, message='Broj odluke može imati maksimalno 100 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Opciono'}
+    )
+
+    broj_narudzbenice = StringField(
+        'Broj narudžbenice/ponude',
+        validators=[
+            Optional(),
+            Length(max=100, message='Broj narudžbenice može imati maksimalno 100 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Opciono'}
+    )
+
+    poziv_na_broj = StringField(
+        'Poziv na broj',
+        validators=[
+            Optional(),
+            Regexp(r'^(95|97)', message='Poziv na broj mora početi sa 95 ili 97.'),
+            Length(max=50, message='Poziv na broj može imati maksimalno 50 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': '95 ili 97...'}
+    )
+
+    model = StringField(
+        'Model',
+        validators=[
+            Optional(),
+            Length(max=10, message='Model može imati maksimalno 10 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Opciono'}
+    )
+
+    # Dynamic list of line items
+    stavke = FieldList(
+        FormField(FakturaStavkaForm),
+        min_entries=1,
+        max_entries=100
+    )
+
+    def validate_komitent_id(self, field):
+        """
+        Validate that komitent exists and belongs to current user's firma.
+
+        Args:
+            field: komitent_id field to validate
+
+        Raises:
+            ValidationError: If komitent doesn't exist or doesn't belong to firma
+        """
+        if not field.data:
+            raise ValidationError('Komitent je obavezan.')
+
+        # Get komitent with tenant isolation
+        komitent = filter_by_firma(Komitent.query).filter_by(id=field.data).first()
+
+        if not komitent:
+            raise ValidationError('Izabrani komitent ne postoji ili ne pripada vašoj firmi.')
+
+    def validate_stavke(self, field):
+        """
+        Validate that at least one valid line item exists.
+
+        Args:
+            field: stavke field to validate
+
+        Raises:
+            ValidationError: If no valid line items exist
+        """
+        if not field.data or len(field.data) == 0:
+            raise ValidationError('Mora postojati bar jedna stavka fakture.')
+
+        # Check that at least one stavka has data
+        has_valid_stavka = False
+        for stavka in field.data:
+            if stavka.get('naziv') and stavka.get('kolicina') and stavka.get('cena'):
+                has_valid_stavka = True
+                break
+
+        if not has_valid_stavka:
+            raise ValidationError('Mora postojati bar jedna popunjena stavka fakture.')
