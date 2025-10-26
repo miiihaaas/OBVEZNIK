@@ -19,11 +19,12 @@ Usage:
     set_admin_firm_context(firma_id=5)  # Admin now sees only firma 5 data
     clear_admin_firm_context()  # Admin returns to god mode (all data)
 """
+from typing import Optional
 from flask import session
 from flask_login import current_user
 
 
-def get_admin_selected_firma_id():
+def get_admin_selected_firma_id() -> Optional[int]:
     """
     Get admin's currently selected firma_id from session.
 
@@ -43,7 +44,7 @@ def get_admin_selected_firma_id():
     return session.get('admin_selected_firma_id', None)
 
 
-def get_user_firma_id():
+def get_user_firma_id() -> Optional[int]:
     """
     Get firma_id for current user to apply tenant isolation.
 
@@ -115,7 +116,7 @@ def filter_by_firma(query):
     return query.filter_by(firma_id=firma_id)
 
 
-def set_admin_firm_context(firma_id):
+def set_admin_firm_context(firma_id: int) -> None:
     """
     Set admin's selected firma context in session.
 
@@ -133,7 +134,7 @@ def set_admin_firm_context(firma_id):
     session['admin_selected_firma_id'] = firma_id
 
 
-def clear_admin_firm_context():
+def clear_admin_firm_context() -> None:
     """
     Clear admin's selected firma context from session.
 

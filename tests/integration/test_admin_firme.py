@@ -114,14 +114,10 @@ class TestAdminFirmeAccess:
             assert response.status_code == 200
 
             # Try to access admin route
-            response = client.get('/admin/firme', follow_redirects=True)
+            response = client.get('/admin/firme', follow_redirects=False)
 
-            # Should be forbidden or redirected
-            assert response.status_code == 200
-            # Should see access denied message or be redirected to dashboard
-            assert ('Nemate pristup'.encode('utf-8') in response.data or
-                    b'Access denied' in response.data or
-                    b'Dashboard' in response.data)
+            # Should be forbidden (403) - pausalac cannot access admin routes
+            assert response.status_code == 403
 
     def test_anonymous_user_redirected_to_login(self, client):
         """Test anonymous user is redirected or gets unauthorized."""

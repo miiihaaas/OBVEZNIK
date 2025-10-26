@@ -5,11 +5,11 @@ import pytest
 from app import create_app, db
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def app():
     """
     Create and configure a Flask app instance for testing.
-    Session-scoped to reuse across all tests.
+    Function-scoped for complete test isolation.
     """
     app = create_app('testing')
 
@@ -53,9 +53,16 @@ def clean_database(app):
     yield
 
     # Clean up: remove all data but keep tables
-    db.session.remove()
+    # Expunge all objects from session to prevent DetachedInstanceError
+    db.session.expunge_all()
+    # Rollback any uncommitted transactions
+    db.session.rollback()
+
     # Truncate all tables
     meta = db.metadata
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())
     db.session.commit()
+
+    # Remove session to ensure clean state
+    db.session.remove()
