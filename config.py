@@ -146,6 +146,14 @@ class TestingConfig(Config):
     # Disable rate limiting for tests
     RATELIMIT_ENABLED = False
 
+    # Optimized connection pooling for tests (module-scoped fixtures)
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 2,         # Small pool since app is module-scoped
+        'max_overflow': 0,      # No overflow connections
+        'pool_recycle': 3600,   # Recycle connections after 1 hour
+        'pool_pre_ping': True,  # Verify connections before using
+    }
+
 
 # Configuration dictionary
 config = {

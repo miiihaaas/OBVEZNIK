@@ -10,6 +10,7 @@ def app():
     """
     Create and configure a Flask app instance for testing.
     Function-scoped for complete test isolation.
+    Connection pooling (pool_size=2) prevents max_user_connections errors.
     """
     app = create_app('testing')
 
@@ -31,7 +32,7 @@ def app():
 def client(app):
     """
     Create a test client for the Flask app.
-    Function-scoped for test isolation.
+    Function-scoped for complete test isolation.
     """
     return app.test_client()
 
@@ -40,6 +41,7 @@ def client(app):
 def runner(app):
     """
     Create a test CLI runner for the Flask app.
+    Function-scoped for complete test isolation.
     """
     return app.test_cli_runner()
 
@@ -52,7 +54,7 @@ def clean_database(app):
     """
     yield
 
-    # Clean up: remove all data but keep tables
+    # Post-test cleanup: remove all data but keep tables
     # Expunge all objects from session to prevent DetachedInstanceError
     db.session.expunge_all()
     # Rollback any uncommitted transactions
@@ -64,5 +66,5 @@ def clean_database(app):
         db.session.execute(table.delete())
     db.session.commit()
 
-    # Remove session to ensure clean state
+    # Remove database session to ensure clean state
     db.session.remove()
