@@ -60,6 +60,43 @@
                         </ul>
                     </li>
                     {% endif %}
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="firmaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Selektor firme">
+                            <i class="fa-solid fa-building" aria-hidden="true"></i>
+                            {% if admin_selected_firma %}
+                                {{ admin_selected_firma.naziv }}
+                            {% else %}
+                                Sve Firme (God Mode)
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="firmaDropdown">
+                            <li>
+                                <form method="POST" action="{{ url_for('admin.clear_firma_context') }}" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="dropdown-item {% if not admin_selected_firma %}active{% endif %}">
+                                        <i class="fa-solid fa-globe"></i> Sve Firme (God Mode)
+                                    </button>
+                                </form>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if pausaln_firme %}
+                                {% for firma in pausaln_firme %}
+                                <li>
+                                    <form method="POST" action="{{ url_for('admin.switch_firma', firma_id=firma.id) }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="dropdown-item {% if admin_selected_firma and admin_selected_firma.id == firma.id %}active{% endif %}">
+                                            {{ firma.naziv }}
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li><span class="dropdown-item text-muted">Nema firmi</span></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Meni korisnika">
                             <i class="fa-regular fa-circle-user" aria-hidden="true"></i> {{ current_user.full_name }} ({{ current_user.email }})

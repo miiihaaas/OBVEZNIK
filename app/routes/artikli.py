@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.artikal import Artikal
 from app.forms.artikal import ArtikalCreateForm, ArtikalEditForm
-from app.utils.query_helpers import filter_by_firma
+from app.utils.query_helpers import filter_by_firma, get_user_firma_id
 from datetime import datetime, timezone
 from sqlalchemy import asc, desc, or_
 import logging
@@ -83,10 +83,12 @@ def novi():
     if form.validate_on_submit():
         try:
             # Get firma_id (tenant isolation)
-            firma_id = current_user.firma_id
+            # For pausalac: uses their firma_id
+            # For admin: uses selected firma from session (admin_selected_firma_id)
+            firma_id = get_user_firma_id()
 
             if not firma_id:
-                flash('Greška: Korisnik nije povezan sa paušalnom firmom.', 'danger')
+                flash('Greška: Admin mora prvo selektovati firmu (koristi dropdown u navigation bar-u).', 'danger')
                 return render_template('artikli/novi.html', form=form)
 
             # Create new artikal

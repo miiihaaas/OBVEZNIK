@@ -127,6 +127,40 @@ def create_app(config_name='development'):
     # from app.routes import fakture
     # app.register_blueprint(fakture.bp)
 
+    # Register context processors
+    @app.context_processor
+    def inject_admin_firm_context():
+        """
+        Inject admin firm context into all templates.
+
+        Provides pausaln_firme list and admin_selected_firma for navigation bar
+        firm selector dropdown (admin only).
+
+        Returns:
+            dict: Context variables (pausaln_firme, admin_selected_firma)
+        """
+        from flask_login import current_user
+        from app.models.pausaln_firma import PausalnFirma
+        from app.utils.query_helpers import get_admin_selected_firma_id
+
+        # Only inject for authenticated admin users
+        if not current_user.is_authenticated or not current_user.is_admin():
+            return dict(pausaln_firme=[], admin_selected_firma=None)
+
+        # Get all pausaln firme sorted by naziv
+        pausaln_firme = PausalnFirma.query.order_by(PausalnFirma.naziv).all()
+
+        # Get currently selected firma (if any)
+        admin_selected_firma_id = get_admin_selected_firma_id()
+        admin_selected_firma = None
+        if admin_selected_firma_id:
+            admin_selected_firma = db.session.get(PausalnFirma, admin_selected_firma_id)
+
+        return dict(
+            pausaln_firme=pausaln_firme,
+            admin_selected_firma=admin_selected_firma
+        )
+
     # Import models so they are registered with SQLAlchemy
     # This is necessary for Flask-Migrate to detect model changes
     with app.app_context():

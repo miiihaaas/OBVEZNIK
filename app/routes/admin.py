@@ -7,6 +7,7 @@ from app.models.pausaln_firma import PausalnFirma
 from app.forms.user import UserCreateForm, UserEditForm
 from app.forms.pausaln_firma import PausalnFirmaCreateForm, PausalnFirmaEditForm
 from app.utils.decorators import admin_required
+from app.utils.query_helpers import set_admin_firm_context, clear_admin_firm_context
 from app.services import nbs_komitent_service
 from datetime import datetime, timezone
 from sqlalchemy.exc import IntegrityError
@@ -313,10 +314,25 @@ def firma_detail(firma_id):
         firma_id: PausalnFirma ID
 
     Returns:
-        Rendered template with firma details
+        Rendered template with firma details, komitenti count, artikli count
     """
+    from app.models.komitent import Komitent
+    from app.models.artikal import Artikal
+
     firma = db.session.get(PausalnFirma, firma_id) or abort(404)
-    return render_template('admin/pausaln_firma_detail.html', firma=firma)
+
+    # Get count of komitenti for this firma
+    komitenti_count = Komitent.query.filter_by(firma_id=firma.id).count()
+
+    # Get count of artikli for this firma
+    artikli_count = Artikal.query.filter_by(firma_id=firma.id).count()
+
+    return render_template(
+        'admin/pausaln_firma_detail.html',
+        firma=firma,
+        komitenti_count=komitenti_count,
+        artikli_count=artikli_count
+    )
 
 
 @admin_bp.route('/firme/<int:firma_id>/izmeni', methods=['GET', 'POST'])
@@ -444,3 +460,144 @@ def firma_delete(firma_id):
         flash(f'Greška pri brisanju firme: {str(e)}', 'danger')
 
     return redirect(url_for('admin.firme'))
+
+
+# ===== Admin Firm Context Switching Routes =====
+
+@admin_bp.route('/switch-firma/<int:firma_id>', methods=['POST'])
+@login_required
+@admin_required
+def switch_firma(firma_id):
+    """
+    Switch admin's selected firma context (Admin only).
+
+    This allows admin to view and manage data for a specific firma only,
+    simulating a pausalac user's view or focusing on specific firma data.
+
+    Args:
+        firma_id: PausalnFirma ID to set as context
+
+    Returns:
+        Redirect to referer or dashboard with success message
+    """
+    # Verify firma exists
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+
+    # Set admin firm context in session
+    set_admin_firm_context(firma_id)
+
+    # Security logging
+    security_logger.info(
+        f"Admin switched to firma: firma_id={firma.id}, naziv={firma.naziv}, "
+        f"admin={current_user.email}, ip={request.remote_addr}, "
+        f"timestamp={datetime.now(timezone.utc).isoformat()}"
+    )
+
+    # Flash success message
+    flash(f'Selektovana firma: {firma.naziv}', 'success')
+
+    # Redirect to referer or dashboard
+    referer = request.referrer
+    if referer and referer.startswith(request.host_url):
+        return redirect(referer)
+    else:
+        return redirect(url_for('admin_dashboard.admin_dashboard'))
+
+
+@admin_bp.route('/clear-firma-context', methods=['POST'])
+@login_required
+@admin_required
+def clear_firma_context():
+    """
+    Clear admin's selected firma context (Admin only).
+
+    This returns the admin user to god mode (viewing all data across all firme).
+
+    Returns:
+        Redirect to referer or dashboard with success message
+    """
+    # Clear admin firm context from session
+    clear_admin_firm_context()
+
+    # Security logging
+    security_logger.info(
+        f"Admin cleared firma context (returned to god mode): "
+        f"admin={current_user.email}, ip={request.remote_addr}, "
+        f"timestamp={datetime.now(timezone.utc).isoformat()}"
+    )
+
+    # Flash success message
+    flash('Selektovane su sve firme (God Mode)', 'info')
+
+    # Redirect to referer or dashboard
+    referer = request.referrer
+    if referer and referer.startswith(request.host_url):
+        return redirect(referer)
+    else:
+        return redirect(url_for('admin_dashboard.admin_dashboard'))
+
+
+@admin_bp.route('/firma/<int:firma_id>/view-komitenti')
+@login_required
+@admin_required
+def firma_view_komitenti(firma_id):
+    """
+    Switch admin context to specific firma and redirect to komitenti list (Admin only).
+
+    Args:
+        firma_id: PausalnFirma ID to set as context
+
+    Returns:
+        Redirect to komitenti list with selected firma context
+    """
+    # Verify firma exists
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+
+    # Set admin firm context
+    set_admin_firm_context(firma_id)
+
+    # Security logging
+    security_logger.info(
+        f"Admin switched to firma for komitenti view: firma_id={firma.id}, naziv={firma.naziv}, "
+        f"admin={current_user.email}, ip={request.remote_addr}, "
+        f"timestamp={datetime.now(timezone.utc).isoformat()}"
+    )
+
+    # Flash message
+    flash(f'Prikazani komitenti firme: {firma.naziv}', 'success')
+
+    # Redirect to komitenti list
+    return redirect(url_for('komitenti.lista'))
+
+
+@admin_bp.route('/firma/<int:firma_id>/view-artikli')
+@login_required
+@admin_required
+def firma_view_artikli(firma_id):
+    """
+    Switch admin context to specific firma and redirect to artikli list (Admin only).
+
+    Args:
+        firma_id: PausalnFirma ID to set as context
+
+    Returns:
+        Redirect to artikli list with selected firma context
+    """
+    # Verify firma exists
+    firma = db.session.get(PausalnFirma, firma_id) or abort(404)
+
+    # Set admin firm context
+    set_admin_firm_context(firma_id)
+
+    # Security logging
+    security_logger.info(
+        f"Admin switched to firma for artikli view: firma_id={firma.id}, naziv={firma.naziv}, "
+        f"admin={current_user.email}, ip={request.remote_addr}, "
+        f"timestamp={datetime.now(timezone.utc).isoformat()}"
+    )
+
+    # Flash message
+    flash(f'Prikazani artikli firme: {firma.naziv}', 'success')
+
+    # Redirect to artikli list
+    return redirect(url_for('artikli.lista'))
