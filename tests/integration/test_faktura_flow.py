@@ -498,3 +498,33 @@ def test_pausalac_sees_only_own_firma_fakture(client, pausalac_with_komitent, se
     # User2 should NOT see firma1's fakture
     # This would be tested via API/route level, but we verify at DB level here
     assert fakture_firma1[0].id != fakture_firma2[0].id
+
+def test_pausalac_can_view_fakture_lista(client, pausalac_with_komitent):
+    """Test: Paušalac može pristupiti /fakture i videti listu faktura."""
+    user, firma, komitent = pausalac_with_komitent
+
+    # Login
+    client.post('/login', data={
+        'email': 'pausalac@test.com',
+        'password': 'password123'
+    }, follow_redirects=True)
+
+    # Create a faktura first
+    client.post('/fakture/nova', data={
+        'tip_fakture': 'standardna',
+        'komitent_id': komitent.id,
+        'datum_prometa': date.today().strftime('%Y-%m-%d'),
+        'valuta_placanja': 7,
+        'stavke-0-naziv': 'Test stavka',
+        'stavke-0-kolicina': '1',
+        'stavke-0-jedinica_mere': 'kom',
+        'stavke-0-cena': '1000.00',
+        'stavke-0-ukupno': '1000.00',
+    }, follow_redirects=True)
+
+    # Access fakture list
+    response = client.get('/fakture', follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Moje Fakture' in response.data or b'Fakture' in response.data
+    assert b'TF-0001/2025' in response.data  # Should show created invoice

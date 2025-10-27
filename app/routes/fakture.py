@@ -11,6 +11,20 @@ from app.utils.query_helpers import filter_by_firma
 fakture_bp = Blueprint('fakture', __name__, url_prefix='/fakture')
 
 
+@fakture_bp.route('/')
+@login_required
+def lista():
+    """
+    Display list of all invoices for current user's firma.
+
+    Returns paginated list of invoices sorted by creation date (newest first).
+    """
+    # Get all fakture for current firma (with tenant isolation)
+    fakture = filter_by_firma(Faktura.query).order_by(Faktura.created_at.desc()).all()
+
+    return render_template('fakture/lista.html', fakture=fakture)
+
+
 @fakture_bp.route('/nova', methods=['GET', 'POST'])
 @login_required
 def nova_faktura():

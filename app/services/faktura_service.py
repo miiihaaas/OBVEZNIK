@@ -204,7 +204,7 @@ def finalize_faktura(faktura_id):
         - Sets finalized_at timestamp
         - Finalized invoices are immutable (cannot be edited)
     """
-    faktura = Faktura.query.get(faktura_id)
+    faktura = db.session.get(Faktura, faktura_id)
 
     if not faktura:
         raise ValueError(f"Faktura with ID {faktura_id} not found.")
