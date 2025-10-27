@@ -1,0 +1,281 @@
+"""Integration tests for foreign currency (devizna) invoices with NBS exchange rates."""
+import pytest
+from unittest.mock import patch
+from decimal import Decimal
+from datetime import date
+from app import db
+from app.models.user import User
+from app.models.pausaln_firma import PausalnFirma
+from app.models.komitent import Komitent
+from app.services.faktura_service import create_faktura
+
+
+@pytest.fixture
+def pausalac_user(app):
+    """Create a pausalac user with firma for testing."""
+    firma = PausalnFirma(
+        pib='123456789',
+        maticni_broj='12345678',
+        naziv='Test Firma',
+        adresa='Test Address',
+        broj='1',
+        mesto='Belgrade',
+        postanski_broj='11000',
+        email='test@firma.com',
+        telefon='+381111111111',
+        dinarski_racuni=['111-111111-11'],
+        prefiks_fakture='TF-',
+        sufiks_fakture='/2025',
+        brojac_fakture=1
+    )
+    db.session.add(firma)
+    db.session.flush()
+
+    user = User(
+        email='pausalac@test.com',
+        full_name='Test Pausalac',
+        role='pausalac',
+        firma_id=firma.id
+    )
+    user.set_password('password123')
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
+def komitent(app, pausalac_user):
+    """Create a komitent for testing."""
+    komitent = Komitent(
+        firma_id=pausalac_user.firma_id,
+        pib='987654321',
+        maticni_broj='87654321',
+        naziv='Test Komitent',
+        adresa='Komitent Address',
+        broj='10',
+        mesto='Belgrade',
+        postanski_broj='11000',
+        drzava='Srbija',
+        email='test@komitent.com'
+    )
+    db.session.add(komitent)
+    db.session.commit()
+    return komitent
+
+
+class TestDeviznaFaktura:
+    """Integration tests for foreign currency invoices."""
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_create_devizna_faktura_with_nbs_kurs(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test creating foreign currency invoice with NBS exchange rate."""
+        with app.app_context():
+            # Mock NBS exchange rate (EUR to RSD)
+            mock_get_kurs.return_value = Decimal('117.5432')
+
+            # Invoice data
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'EUR',  # Foreign currency
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 10,
+                        'jedinica_mere': 'kom',
+                        'cena': 100.00  # 100 EUR
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert faktura is not None
+            assert faktura.valuta_fakture == 'EUR'
+            assert faktura.srednji_kurs == Decimal('117.5432')
+            assert faktura.ukupan_iznos_originalna_valuta == Decimal('1000.00')  # 10 * 100 EUR
+            assert faktura.ukupan_iznos_rsd == Decimal('1000.00') * Decimal('117.5432')  # EUR * kurs
+
+            # Verify get_kurs was called
+            mock_get_kurs.assert_called_once_with('EUR', date.today())
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_create_devizna_faktura_nbs_unavailable_manual_override(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test creating foreign currency invoice with manual kurs override when NBS is unavailable."""
+        with app.app_context():
+            # Mock NBS returning None (not available)
+            mock_get_kurs.return_value = None
+
+            # Invoice data with manual kurs override
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'EUR',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'srednji_kurs_override': '118.0000',  # Manual override
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 5,
+                        'jedinica_mere': 'kom',
+                        'cena': 200.00  # 200 EUR
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert faktura is not None
+            assert faktura.valuta_fakture == 'EUR'
+            assert faktura.srednji_kurs == Decimal('118.0000')  # Manual override used
+            assert faktura.ukupan_iznos_originalna_valuta == Decimal('1000.00')  # 5 * 200 EUR
+            assert faktura.ukupan_iznos_rsd == Decimal('1000.00') * Decimal('118.0000')
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_create_devizna_faktura_nbs_unavailable_no_override_fails(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test creating foreign currency invoice fails when NBS is unavailable and no manual override."""
+        with app.app_context():
+            # Mock NBS returning None (not available)
+            mock_get_kurs.return_value = None
+
+            # Invoice data WITHOUT manual kurs override
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'USD',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 1,
+                        'jedinica_mere': 'kom',
+                        'cena': 500.00
+                    }
+                ]
+            }
+
+            # Attempt to create invoice - should raise ValueError
+            with pytest.raises(ValueError) as exc_info:
+                create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert 'NBS kurs nije dostupan' in str(exc_info.value)
+            assert 'USD' in str(exc_info.value)
+
+    def test_create_domestic_faktura_no_nbs_call(self, app, pausalac_user, komitent):
+        """Test creating domestic (RSD) invoice does not call NBS service."""
+        with app.app_context():
+            # Invoice data in RSD (no NBS call needed)
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',  # Domestic currency
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 10,
+                        'jedinica_mere': 'kom',
+                        'cena': 1000.00  # 1000 RSD
+                    }
+                ]
+            }
+
+            # Create invoice
+            with patch('app.services.faktura_service.get_kurs') as mock_get_kurs:
+                faktura = create_faktura(data, pausalac_user)
+
+                # Assertions
+                assert faktura is not None
+                assert faktura.valuta_fakture == 'RSD'
+                assert faktura.srednji_kurs is None
+                assert faktura.ukupan_iznos_rsd == Decimal('10000.00')  # 10 * 1000 RSD
+                assert faktura.ukupan_iznos_originalna_valuta is None
+
+                # Verify get_kurs was NOT called
+                mock_get_kurs.assert_not_called()
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_create_devizna_faktura_multiple_stavke(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test creating foreign currency invoice with multiple line items."""
+        with app.app_context():
+            # Mock NBS exchange rate
+            mock_get_kurs.return_value = Decimal('135.6789')  # GBP to RSD
+
+            # Invoice data with multiple stavke
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'GBP',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Product A',
+                        'kolicina': 5,
+                        'jedinica_mere': 'kom',
+                        'cena': 50.00  # 50 GBP
+                    },
+                    {
+                        'naziv': 'Product B',
+                        'kolicina': 3,
+                        'jedinica_mere': 'kom',
+                        'cena': 100.00  # 100 GBP
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert faktura is not None
+            assert faktura.valuta_fakture == 'GBP'
+            assert faktura.srednji_kurs == Decimal('135.6789')
+            # Total: (5 * 50) + (3 * 100) = 250 + 300 = 550 GBP
+            assert faktura.ukupan_iznos_originalna_valuta == Decimal('550.00')
+            # RSD amount is rounded to 2 decimal places (DECIMAL(12,2) in DB)
+            expected_rsd = (Decimal('550.00') * Decimal('135.6789')).quantize(Decimal('0.01'))
+            assert faktura.ukupan_iznos_rsd == expected_rsd
+            assert len(faktura.stavke) == 2
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_manual_override_takes_precedence_over_nbs(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test manual kurs override takes precedence over NBS rate."""
+        with app.app_context():
+            # Mock NBS returning a rate
+            mock_get_kurs.return_value = Decimal('117.5432')
+
+            # Invoice data with manual override (should use this instead of NBS)
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'EUR',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'srednji_kurs_override': '120.0000',  # Manual override
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 10,
+                        'jedinica_mere': 'kom',
+                        'cena': 100.00
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+
+            # Assertions - should use manual override, not NBS rate
+            assert faktura.srednji_kurs == Decimal('120.0000')  # Not 117.5432
+            assert faktura.ukupan_iznos_rsd == Decimal('1000.00') * Decimal('120.0000')

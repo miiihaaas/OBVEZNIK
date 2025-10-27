@@ -1,7 +1,9 @@
 """API routes for AJAX calls (NBS lookup, etc.)."""
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, request
 from flask_login import login_required
+from datetime import date, datetime
 from app.services import nbs_komitent_service
+from app.services.nbs_kursna_service import get_kurs
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -126,3 +128,85 @@ def artikli_search():
     ]
 
     return jsonify(results), 200
+
+
+@api_bp.route('/kursevi', methods=['GET'])
+@login_required
+def get_kursevi():
+    """
+    Get NBS exchange rates for currencies.
+
+    Query Parameters:
+        valuta: Currency code (EUR, USD, GBP, CHF) - optional, returns all if not specified
+        datum: Date in YYYY-MM-DD format - optional, defaults to today
+
+    Returns:
+        JSON with exchange rates:
+        {
+            'EUR': '117.5432',
+            'USD': '105.2341',
+            'GBP': '135.6789',
+            'CHF': '120.3456',
+            'datum': '2025-01-15'
+        }
+
+        Or error response (503) if rates are not available
+    """
+    # Parse query parameters
+    valuta = request.args.get('valuta', '').upper()
+    datum_str = request.args.get('datum', '')
+
+    # Parse datum (default to today)
+    if datum_str:
+        try:
+            datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({
+                'error': 'Invalid date format',
+                'message': 'Datum mora biti u formatu YYYY-MM-DD.'
+            }), 400
+    else:
+        datum = date.today()
+
+    # Supported currencies
+    supported_currencies = ['EUR', 'USD', 'GBP', 'CHF']
+
+    # Validate valuta if specified
+    if valuta and valuta not in supported_currencies:
+        return jsonify({
+            'error': 'Invalid currency',
+            'message': f'Podržane valute: {", ".join(supported_currencies)}'
+        }), 400
+
+    # Determine which currencies to fetch
+    currencies_to_fetch = [valuta] if valuta else supported_currencies
+
+    # Fetch exchange rates
+    kursevi = {}
+    missing_currencies = []
+
+    for currency in currencies_to_fetch:
+        kurs = get_kurs(currency, datum)
+        if kurs is not None:
+            kursevi[currency] = str(kurs)
+        else:
+            missing_currencies.append(currency)
+
+    # If any currencies are missing, return 503 error
+    if missing_currencies:
+        current_app.logger.warning(
+            f"NBS kursevi not available for {missing_currencies} on {datum}"
+        )
+        return jsonify({
+            'error': 'Exchange rates not available',
+            'message': f'NBS kursevi nisu dostupni za {", ".join(missing_currencies)}. '
+                      f'Molimo pokušajte kasnije ili unesite kurs ručno.',
+            'missing_currencies': missing_currencies,
+            'datum': str(datum)
+        }), 503
+
+    # Return successful response
+    return jsonify({
+        **kursevi,
+        'datum': str(datum)
+    }), 200

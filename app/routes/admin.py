@@ -6,10 +6,12 @@ from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.forms.user import UserCreateForm, UserEditForm
 from app.forms.pausaln_firma import PausalnFirmaCreateForm, PausalnFirmaEditForm
+from app.forms.kursevi import KursManualOverrideForm
 from app.utils.decorators import admin_required
 from app.utils.query_helpers import set_admin_firm_context, clear_admin_firm_context
 from app.services import nbs_komitent_service
-from datetime import datetime, timezone
+from app.services.nbs_kursna_service import get_kurs, cache_kurs
+from datetime import datetime, timezone, date as date_class
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc, func, or_
 import logging
@@ -601,3 +603,74 @@ def firma_view_artikli(firma_id):
 
     # Redirect to artikli list
     return redirect(url_for('artikli.lista'))
+
+
+@admin_bp.route('/kursevi', methods=['GET'])
+@login_required
+@admin_required
+def kursevi():
+    """
+    Display current NBS exchange rates and manual override form (Admin only).
+
+    Returns:
+        Rendered template with current exchange rates and form
+    """
+    form = KursManualOverrideForm()
+
+    # Fetch current exchange rates for all currencies
+    today = date_class.today()
+    supported_currencies = ['EUR', 'USD', 'GBP', 'CHF']
+
+    kursevi_data = {}
+    for valuta in supported_currencies:
+        kurs = get_kurs(valuta, today)
+        kursevi_data[valuta] = {
+            'kurs': str(kurs) if kurs else None,
+            'datum': str(today),
+            'available': kurs is not None
+        }
+
+    return render_template(
+        'admin/kursevi.html',
+        form=form,
+        kursevi=kursevi_data,
+        datum=today
+    )
+
+
+@admin_bp.route('/kursevi/override', methods=['POST'])
+@login_required
+@admin_required
+def kursevi_override():
+    """
+    Manually override exchange rate for a specific currency (Admin only).
+
+    Returns:
+        Redirect to kursevi page with success/error message
+    """
+    form = KursManualOverrideForm()
+
+    if form.validate_on_submit():
+        valuta = form.valuta.data
+        kurs = form.kurs.data
+        datum = form.datum.data
+
+        # Cache the manual override
+        cache_kurs(valuta, datum, kurs)
+
+        # Security logging
+        security_logger.info(
+            f"Admin manually set exchange rate: valuta={valuta}, kurs={kurs}, "
+            f"datum={datum}, admin={current_user.email}, ip={request.remote_addr}, "
+            f"timestamp={datetime.now(timezone.utc).isoformat()}"
+        )
+
+        flash(f'Kurs {valuta} ažuriran na {kurs} za datum {datum}.', 'success')
+        return redirect(url_for('admin.kursevi'))
+
+    # Form validation failed
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f'{field}: {error}', 'danger')
+
+    return redirect(url_for('admin.kursevi'))

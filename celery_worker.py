@@ -3,6 +3,7 @@ Celery worker entry point.
 Configures and runs the Celery worker for background tasks.
 """
 from celery import Celery
+from celery.schedules import crontab
 from app import create_app
 
 # Create Flask app
@@ -28,3 +29,17 @@ class ContextTask(celery.Task):
 
 
 celery.Task = ContextTask
+
+# Import tasks
+from app.tasks.nbs_kursna_tasks import update_daily_kursna_lista
+
+# Register tasks with Celery
+update_daily_kursna_lista_task = celery.task(update_daily_kursna_lista)
+
+# Configure Celery Beat schedule
+celery.conf.beat_schedule = {
+    'update-daily-kursna-lista': {
+        'task': 'app.tasks.nbs_kursna_tasks.update_daily_kursna_lista',
+        'schedule': crontab(hour=14, minute=0),  # Svaki dan u 14:00
+    },
+}

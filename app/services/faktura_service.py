@@ -5,6 +5,7 @@ from app import db
 from app.models.faktura import Faktura
 from app.models.faktura_stavka import FakturaStavka
 from app.models.pausaln_firma import PausalnFirma
+from app.services.nbs_kursna_service import get_kurs
 
 
 def generate_broj_fakture(firma):
@@ -86,6 +87,26 @@ def create_faktura(data, user):
         data.get('valuta_placanja')
     )
 
+    # Get currency from data (default to RSD for backward compatibility)
+    valuta_fakture = data.get('valuta_fakture', 'RSD')
+
+    # For foreign currency invoices, fetch NBS exchange rate
+    srednji_kurs = None
+    if valuta_fakture != 'RSD':
+        datum_prometa = data.get('datum_prometa')
+        srednji_kurs = get_kurs(valuta_fakture, datum_prometa)
+
+        # Check if srednji_kurs_override is provided (manual override)
+        if data.get('srednji_kurs_override'):
+            srednji_kurs = Decimal(str(data.get('srednji_kurs_override')))
+
+        # If no kurs available (neither from NBS nor manual override), raise error
+        if not srednji_kurs:
+            raise ValueError(
+                f"NBS kurs nije dostupan za {valuta_fakture} na datum {datum_prometa}. "
+                f"Molimo unesite kurs ručno."
+            )
+
     # Create faktura instance
     faktura = Faktura(
         firma_id=firma.id,
@@ -93,7 +114,7 @@ def create_faktura(data, user):
         user_id=user.id,
         broj_fakture=broj_fakture,
         tip_fakture=data.get('tip_fakture', 'standardna'),
-        valuta_fakture='RSD',  # Story 3.1 is only RSD
+        valuta_fakture=valuta_fakture,
         jezik='sr',  # Default Serbian
         datum_prometa=data.get('datum_prometa'),
         valuta_placanja=data.get('valuta_placanja'),
@@ -103,7 +124,9 @@ def create_faktura(data, user):
         broj_narudzbenice=data.get('broj_narudzbenice'),
         poziv_na_broj=data.get('poziv_na_broj'),
         model=data.get('model'),
+        srednji_kurs=srednji_kurs,  # Store NBS exchange rate for foreign currency
         ukupan_iznos_rsd=Decimal('0.00'),  # Will be calculated below
+        ukupan_iznos_originalna_valuta=Decimal('0.00'),  # Will be calculated below
         status='draft'
     )
 
@@ -131,8 +154,15 @@ def create_faktura(data, user):
         db.session.add(stavka)
         ukupan_iznos += ukupno
 
-    # Update faktura total amount
-    faktura.ukupan_iznos_rsd = ukupan_iznos
+    # Update faktura total amounts
+    if valuta_fakture == 'RSD':
+        # Domestic invoice - only RSD amount
+        faktura.ukupan_iznos_rsd = ukupan_iznos
+        faktura.ukupan_iznos_originalna_valuta = None
+    else:
+        # Foreign currency invoice - calculate both amounts
+        faktura.ukupan_iznos_originalna_valuta = ukupan_iznos
+        faktura.ukupan_iznos_rsd = ukupan_iznos * srednji_kurs
 
     db.session.commit()
 
