@@ -248,3 +248,131 @@ class TestAdminKursevi:
         mock_cache_kurs.assert_called_once()
         call_args = mock_cache_kurs.call_args[0]
         assert call_args[1] == past_date
+
+    @patch('app.routes.admin.cache_kurs')
+    @patch('app.routes.admin.fetch_kursna_lista_soap')
+    def test_admin_can_refresh_kursevi_from_nbs(self, mock_fetch_soap, mock_cache_kurs, client, admin_user):
+        """Test admin can manually trigger NBS API refresh."""
+        # Login as admin
+        client.post('/login', data={
+            'email': 'admin@test.com',
+            'password': 'password123'
+        })
+
+        # Mock NBS SOAP response
+        mock_fetch_soap.return_value = {
+            'EUR': Decimal('117.2516'),
+            'USD': Decimal('100.5157'),
+            'GBP': Decimal('134.3242'),
+            'CHF': Decimal('126.6626')
+        }
+
+        # Trigger refresh
+        response = client.post('/admin/kursevi/refresh', follow_redirects=True)
+
+        # Assertions
+        assert response.status_code == 200
+        # Check for success message (encoding-agnostic)
+        assert b'4 valuta' in response.data or b'4' in response.data
+
+        # Verify fetch_kursna_lista_soap was called
+        mock_fetch_soap.assert_called_once()
+
+        # Verify cache_kurs was called 4 times (EUR, USD, GBP, CHF)
+        assert mock_cache_kurs.call_count == 4
+
+    def test_pausalac_cannot_access_refresh_route(self, client, pausalac_user):
+        """Test pausalac cannot trigger kursevi refresh."""
+        # Login as pausalac
+        client.post('/login', data={
+            'email': 'pausalac@test.com',
+            'password': 'password123'
+        })
+
+        # Try to trigger refresh
+        response = client.post('/admin/kursevi/refresh')
+
+        # Assertions - should get 403 Forbidden
+        assert response.status_code == 403
+
+    @patch('app.routes.admin.fetch_kursna_lista_soap')
+    def test_refresh_logs_security_event(self, mock_fetch_soap, client, admin_user, caplog):
+        """Test refresh action is logged in security log."""
+        import logging
+
+        # Login as admin
+        client.post('/login', data={
+            'email': 'admin@test.com',
+            'password': 'password123'
+        })
+
+        # Mock NBS SOAP response
+        mock_fetch_soap.return_value = {
+            'EUR': Decimal('117.2516'),
+            'USD': Decimal('100.5157'),
+            'GBP': Decimal('134.3242'),
+            'CHF': Decimal('126.6626')
+        }
+
+        # Trigger refresh with logging
+        with caplog.at_level(logging.INFO, logger='security'):
+            response = client.post('/admin/kursevi/refresh', follow_redirects=True)
+
+        # Assertions
+        assert response.status_code == 200
+
+        # Check security log
+        security_logs = [record for record in caplog.records if record.name == 'security']
+        assert len(security_logs) > 0
+
+        # Check log message contains required info
+        refresh_log = next((log for log in security_logs if 'manually refreshed exchange rates' in log.message), None)
+        assert refresh_log is not None
+        assert 'cached=4' in refresh_log.message
+        assert 'admin=admin@test.com' in refresh_log.message
+
+    @patch('app.routes.admin.fetch_kursna_lista_soap')
+    def test_refresh_handles_nbs_api_failure(self, mock_fetch_soap, client, admin_user):
+        """Test refresh handles NBS API failure gracefully."""
+        # Login as admin
+        client.post('/login', data={
+            'email': 'admin@test.com',
+            'password': 'password123'
+        })
+
+        # Mock NBS SOAP to raise exception
+        mock_fetch_soap.side_effect = Exception("NBS API timeout")
+
+        # Trigger refresh
+        response = client.post('/admin/kursevi/refresh', follow_redirects=True)
+
+        # Assertions
+        assert response.status_code == 200
+        assert b'Gre' in response.data  # "Greška"
+        assert b'NBS servisa' in response.data
+
+    @patch('app.routes.admin.cache_kurs')
+    @patch('app.routes.admin.fetch_kursna_lista_soap')
+    def test_refresh_handles_partial_response(self, mock_fetch_soap, mock_cache_kurs, client, admin_user):
+        """Test refresh handles partial NBS response (not all currencies available)."""
+        # Login as admin
+        client.post('/login', data={
+            'email': 'admin@test.com',
+            'password': 'password123'
+        })
+
+        # Mock NBS SOAP to return only 2 currencies
+        mock_fetch_soap.return_value = {
+            'EUR': Decimal('117.2516'),
+            'USD': Decimal('100.5157')
+        }
+
+        # Trigger refresh
+        response = client.post('/admin/kursevi/refresh', follow_redirects=True)
+
+        # Assertions
+        assert response.status_code == 200
+        assert b'2 valuta' in response.data
+
+        # Verify cache_kurs was called only 2 times
+        assert mock_cache_kurs.call_count == 2

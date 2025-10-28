@@ -1,0 +1,794 @@
+<ExchangeRateDataSet>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>2</CurrencyGroupID>
+    <CurrencyCode>978</CurrencyCode>
+    <CurrencyCodeNumChar>978</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>EUR</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Евро</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Evro</CurrencyNameSerLat>
+    <CurrencyNameEng>Euro</CurrencyNameEng>
+    <CountryNameSerCyrl>ЕМУ</CountryNameSerCyrl>
+    <CountryNameSerLat>EMU</CountryNameSerLat>
+    <CountryNameEng>EMU</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>117.2516</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>36</CurrencyCode>
+    <CurrencyCodeNumChar>036</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>AUD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Аустралијски долар</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Australijski dolar</CurrencyNameSerLat>
+    <CurrencyNameEng>Australian Dollar</CurrencyNameEng>
+    <CountryNameSerCyrl>Аустралија</CountryNameSerCyrl>
+    <CountryNameSerLat>Australija</CountryNameSerLat>
+    <CountryNameEng>Australia</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>65.8976</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>124</CurrencyCode>
+    <CurrencyCodeNumChar>124</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>CAD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Канадски долар</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Kanadski dolar</CurrencyNameSerLat>
+    <CurrencyNameEng>Canadian Dollar</CurrencyNameEng>
+    <CountryNameSerCyrl>Канада</CountryNameSerCyrl>
+    <CountryNameSerLat>Kanada</CountryNameSerLat>
+    <CountryNameEng>Canada</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>71.8365</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>156</CurrencyCode>
+    <CurrencyCodeNumChar>156</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>CNY</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Јуан</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Juan</CurrencyNameSerLat>
+    <CurrencyNameEng>Yuan Renminbi</CurrencyNameEng>
+    <CountryNameSerCyrl>Кина</CountryNameSerCyrl>
+    <CountryNameSerLat>Kina</CountryNameSerLat>
+    <CountryNameEng>China</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>14.1588</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>203</CurrencyCode>
+    <CurrencyCodeNumChar>203</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>CZK</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Чешка круна</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Češka kruna</CurrencyNameSerLat>
+    <CurrencyNameEng>Czech Koruna</CurrencyNameEng>
+    <CountryNameSerCyrl>Чешка Република</CountryNameSerCyrl>
+    <CountryNameSerLat>Češka Republika</CountryNameSerLat>
+    <CountryNameEng>Czech Republic</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>4.8184</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>208</CurrencyCode>
+    <CurrencyCodeNumChar>208</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>DKK</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Данска круна</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Danska kruna</CurrencyNameSerLat>
+    <CurrencyNameEng>Danish Krone</CurrencyNameEng>
+    <CountryNameSerCyrl>Данска</CountryNameSerCyrl>
+    <CountryNameSerLat>Danska</CountryNameSerLat>
+    <CountryNameEng>Denmark</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>15.6970</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>348</CurrencyCode>
+    <CurrencyCodeNumChar>348</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>HUF</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Форинта</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Forinta</CurrencyNameSerLat>
+    <CurrencyNameEng>Hungarian Forint</CurrencyNameEng>
+    <CountryNameSerCyrl>Мађарска</CountryNameSerCyrl>
+    <CountryNameSerLat>Mađarska</CountryNameSerLat>
+    <CountryNameEng>Hungary</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>30.1635</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>356</CurrencyCode>
+    <CurrencyCodeNumChar>356</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>INR</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Индијска рупија</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Indijska rupija</CurrencyNameSerLat>
+    <CurrencyNameEng>Indian Rupee</CurrencyNameEng>
+    <CountryNameSerCyrl>Индија</CountryNameSerCyrl>
+    <CountryNameSerLat>Indija</CountryNameSerLat>
+    <CountryNameEng>India</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>1.1387</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>392</CurrencyCode>
+    <CurrencyCodeNumChar>392</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>JPY</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Јен</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Jen</CurrencyNameSerLat>
+    <CurrencyNameEng>Yen</CurrencyNameEng>
+    <CountryNameSerCyrl>Јапан</CountryNameSerCyrl>
+    <CountryNameSerLat>Japan</CountryNameSerLat>
+    <CountryNameEng>Japan</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>66.1429</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>414</CurrencyCode>
+    <CurrencyCodeNumChar>414</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>KWD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Кувајтски динар</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Kuvajtski dinar</CurrencyNameSerLat>
+    <CurrencyNameEng>Kuwaiti Dinar</CurrencyNameEng>
+    <CountryNameSerCyrl>Кувајт</CountryNameSerCyrl>
+    <CountryNameSerLat>Kuvajt</CountryNameSerLat>
+    <CountryNameEng>Kuwait</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>327.7931</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>578</CurrencyCode>
+    <CurrencyCodeNumChar>578</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>NOK</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Норвешка круна</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Norveška kruna</CurrencyNameSerLat>
+    <CurrencyNameEng>Norwegian Krone</CurrencyNameEng>
+    <CountryNameSerCyrl>Норвешка</CountryNameSerCyrl>
+    <CountryNameSerLat>Norveška</CountryNameSerLat>
+    <CountryNameEng>Norway</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>10.0756</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>643</CurrencyCode>
+    <CurrencyCodeNumChar>643</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>RUB</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Руска рубља</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Ruska rublja</CurrencyNameSerLat>
+    <CurrencyNameEng>Russian Ruble</CurrencyNameEng>
+    <CountryNameSerCyrl>Руска Федерација</CountryNameSerCyrl>
+    <CountryNameSerLat>Ruska Federacija</CountryNameSerLat>
+    <CountryNameEng>Russian Federation</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>1.2595</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>752</CurrencyCode>
+    <CurrencyCodeNumChar>752</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>SEK</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Шведска круна</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Švedska kruna</CurrencyNameSerLat>
+    <CurrencyNameEng>Swedish Krona</CurrencyNameEng>
+    <CountryNameSerCyrl>Шведска</CountryNameSerCyrl>
+    <CountryNameSerLat>Švedska</CountryNameSerLat>
+    <CountryNameEng>Sweden</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>10.7302</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>756</CurrencyCode>
+    <CurrencyCodeNumChar>756</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>CHF</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Швајцарски франак</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Švajcarski franak</CurrencyNameSerLat>
+    <CurrencyNameEng>Swiss Franc</CurrencyNameEng>
+    <CountryNameSerCyrl>Швајцарска</CountryNameSerCyrl>
+    <CountryNameSerLat>Švajcarska</CountryNameSerLat>
+    <CountryNameEng>Switzerland</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>126.6626</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>784</CurrencyCode>
+    <CurrencyCodeNumChar>784</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>AED</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>УАЕ дирхам</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>UAE dirham</CurrencyNameSerLat>
+    <CurrencyNameEng>U.A.E. Dirham</CurrencyNameEng>
+    <CountryNameSerCyrl>Уједињени Арапски Емирати</CountryNameSerCyrl>
+    <CountryNameSerLat>Ujedinjeni Arapski Emirati</CountryNameSerLat>
+    <CountryNameEng>United Arab Emirates</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>27.3703</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>807</CurrencyCode>
+    <CurrencyCodeNumChar>807</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>MKD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Денар</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Denar</CurrencyNameSerLat>
+    <CurrencyNameEng>Denar</CurrencyNameEng>
+    <CountryNameSerCyrl>Република Северна Македонија</CountryNameSerCyrl>
+    <CountryNameSerLat>Republika Severna Makedonija</CountryNameSerLat>
+    <CountryNameEng>Republic of North Macedonia</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>1.8890</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>826</CurrencyCode>
+    <CurrencyCodeNumChar>826</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>GBP</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Фунта стерлинга</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Funta sterlinga</CurrencyNameSerLat>
+    <CurrencyNameEng>Pound Sterling</CurrencyNameEng>
+    <CountryNameSerCyrl>Велика Британија</CountryNameSerCyrl>
+    <CountryNameSerLat>Velika Britanija</CountryNameSerLat>
+    <CountryNameEng>United Kingdom</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>134.3242</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>840</CurrencyCode>
+    <CurrencyCodeNumChar>840</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>USD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Амерички долар</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Američki dolar</CurrencyNameSerLat>
+    <CurrencyNameEng>US Dollar</CurrencyNameEng>
+    <CountryNameSerCyrl>САД</CountryNameSerCyrl>
+    <CountryNameSerLat>SAD</CountryNameSerLat>
+    <CountryNameEng>United States </CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>100.5157</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>933</CurrencyCode>
+    <CurrencyCodeNumChar>933</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>BYN</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Белоруска рубља</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Beloruska rublja</CurrencyNameSerLat>
+    <CurrencyNameEng>Belarussian Ruble</CurrencyNameEng>
+    <CountryNameSerCyrl>Белорусија</CountryNameSerCyrl>
+    <CountryNameSerLat>Belorusija</CountryNameSerLat>
+    <CountryNameEng>Belarus</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>29.4461</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>946</CurrencyCode>
+    <CurrencyCodeNumChar>946</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>RON</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Леј</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Lej</CurrencyNameSerLat>
+    <CurrencyNameEng>Leu</CurrencyNameEng>
+    <CountryNameSerCyrl>Румунија</CountryNameSerCyrl>
+    <CountryNameSerLat>Rumunija</CountryNameSerLat>
+    <CountryNameEng>Romania</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>23.0574</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>949</CurrencyCode>
+    <CurrencyCodeNumChar>949</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>TRY</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Турска лира</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Turska lira</CurrencyNameSerLat>
+    <CurrencyNameEng>Turkish Lira</CurrencyNameEng>
+    <CountryNameSerCyrl>Турска</CountryNameSerCyrl>
+    <CountryNameSerLat>Turska</CountryNameSerLat>
+    <CountryNameEng>Turkey</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>2.3959</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>975</CurrencyCode>
+    <CurrencyCodeNumChar>975</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>BGN</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Лев</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Bugarski lev</CurrencyNameSerLat>
+    <CurrencyNameEng>Bulgarian Lev</CurrencyNameEng>
+    <CountryNameSerCyrl>Бугарска</CountryNameSerCyrl>
+    <CountryNameSerLat>Bugarska</CountryNameSerLat>
+    <CountryNameEng>Bulgaria</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>59.9498</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>977</CurrencyCode>
+    <CurrencyCodeNumChar>977</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>BAM</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Конвертибилна марка </CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Konvertibilna marka </CurrencyNameSerLat>
+    <CurrencyNameEng>Convertible Marks</CurrencyNameEng>
+    <CountryNameSerCyrl>Босна и Херцеговина</CountryNameSerCyrl>
+    <CountryNameSerLat>Bosna i Hercegovina</CountryNameSerLat>
+    <CountryNameEng>Bosnia and Herzegovina</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>59.9498</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>3</CurrencyGroupID>
+    <CurrencyCode>985</CurrencyCode>
+    <CurrencyCodeNumChar>985</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>PLN</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Злот</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Zlot</CurrencyNameSerLat>
+    <CurrencyNameEng>Zloty</CurrencyNameEng>
+    <CountryNameSerCyrl>Пољска</CountryNameSerCyrl>
+    <CountryNameSerLat>Poljska</CountryNameSerLat>
+    <CountryNameEng>Poland</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>27.6955</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>40</CurrencyCode>
+    <CurrencyCodeNumChar>040</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>ATS</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Шилинг</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Šiling</CurrencyNameSerLat>
+    <CurrencyNameEng>Austrian Schilling</CurrencyNameEng>
+    <CountryNameSerCyrl>Аустрија</CountryNameSerCyrl>
+    <CountryNameSerLat>Austrija</CountryNameSerLat>
+    <CountryNameEng>Austria</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>8.5210</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>13.760300</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>56</CurrencyCode>
+    <CurrencyCodeNumChar>056</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>BEF</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Белгијски франак</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Belgijski franak</CurrencyNameSerLat>
+    <CurrencyNameEng>Belgian Franc</CurrencyNameEng>
+    <CountryNameSerCyrl>Белгија</CountryNameSerCyrl>
+    <CountryNameSerLat>Belgija</CountryNameSerLat>
+    <CountryNameEng>Belgium</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>290.6591</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>40.339900</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>246</CurrencyCode>
+    <CurrencyCodeNumChar>246</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>FIM</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Финска марка</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Finska marka</CurrencyNameSerLat>
+    <CurrencyNameEng>Finnish Marka</CurrencyNameEng>
+    <CountryNameSerCyrl>Финска</CountryNameSerCyrl>
+    <CountryNameSerLat>Finska</CountryNameSerLat>
+    <CountryNameEng>Finland</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>19.7203</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>5.945730</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>250</CurrencyCode>
+    <CurrencyCodeNumChar>250</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>FRF</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Француски франак</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Francuski franak</CurrencyNameSerLat>
+    <CurrencyNameEng>French Franc</CurrencyNameEng>
+    <CountryNameSerCyrl>Француска</CountryNameSerCyrl>
+    <CountryNameSerLat>Francuska</CountryNameSerLat>
+    <CountryNameEng>France</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>17.8749</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>6.559570</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>280</CurrencyCode>
+    <CurrencyCodeNumChar>280</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>DEM</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Немачка марка</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Nemačka marka</CurrencyNameSerLat>
+    <CurrencyNameEng>German Mark</CurrencyNameEng>
+    <CountryNameSerCyrl>Немачка</CountryNameSerCyrl>
+    <CountryNameSerLat>Nemačka</CountryNameSerLat>
+    <CountryNameEng>Germany</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>59.9498</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>1.955830</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>300</CurrencyCode>
+    <CurrencyCodeNumChar>300</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>GRD</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Драхма</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Drahma</CurrencyNameSerLat>
+    <CurrencyNameEng>Greek Drachma</CurrencyNameEng>
+    <CountryNameSerCyrl>Грчка</CountryNameSerCyrl>
+    <CountryNameSerLat>Grčka</CountryNameSerLat>
+    <CountryNameEng>Greece</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>34.4099</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>340.750000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>372</CurrencyCode>
+    <CurrencyCodeNumChar>372</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>IEP</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Ирска фунта</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Irska funta</CurrencyNameSerLat>
+    <CurrencyNameEng>Irish Punt</CurrencyNameEng>
+    <CountryNameSerCyrl>Ирска</CountryNameSerCyrl>
+    <CountryNameSerLat>Irska</CountryNameSerLat>
+    <CountryNameEng>Ireland</CountryNameEng>
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>148.8788</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.787564</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>380</CurrencyCode>
+    <CurrencyCodeNumChar>380</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>ITL</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Италијанска лира</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Italijanska lira</CurrencyNameSerLat>
+    <CurrencyNameEng>Italian Lira</CurrencyNameEng>
+    <CountryNameSerCyrl>Италија</CountryNameSerCyrl>
+    <CountryNameSerLat>Italija</CountryNameSerLat>
+    <CountryNameEng>Italy</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>6.0555</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>1936.270000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>442</CurrencyCode>
+    <CurrencyCodeNumChar>442</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>LUF</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Луксембуршки франак</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Luksemburški franak</CurrencyNameSerLat>
+    <CurrencyNameEng>Luxembourg Franc</CurrencyNameEng>
+    <CountryNameSerCyrl>Луксембург</CountryNameSerCyrl>
+    <CountryNameSerLat>Luksemburg</CountryNameSerLat>
+    <CountryNameEng>Luxembourg</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>290.6591</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>40.339900</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>620</CurrencyCode>
+    <CurrencyCodeNumChar>620</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>PTE</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Португалски ескудо</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Portugalski eskudo</CurrencyNameSerLat>
+    <CurrencyNameEng>Portuguese Escudo</CurrencyNameEng>
+    <CountryNameSerCyrl>Португалија</CountryNameSerCyrl>
+    <CountryNameSerLat>Portugalija</CountryNameSerLat>
+    <CountryNameEng>Portugal</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>58.4849</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>200.482000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>4</CurrencyGroupID>
+    <CurrencyCode>724</CurrencyCode>
+    <CurrencyCodeNumChar>724</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>ESP</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>Шпанска пезета</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>Španska pezeta</CurrencyNameSerLat>
+    <CurrencyNameEng>Spanish Peseta</CurrencyNameEng>
+    <CountryNameSerCyrl>Шпанија</CountryNameSerCyrl>
+    <CountryNameSerLat>Španija</CountryNameSerLat>
+    <CountryNameEng>Spain</CountryNameEng>
+    <Unit>100</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>70.4696</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>166.386000</FixingRate>
+  </ExchangeRate>
+  <ExchangeRate>
+    <ExchangeRateListNumber>206</ExchangeRateListNumber>
+    <Date>28.10.2025</Date>
+    <CreateDate>28.10.2025</CreateDate>
+    <DateTo>31.12.4172</DateTo>
+    <ExchangeRateListTypeID>3</ExchangeRateListTypeID>
+    <CurrencyGroupID>5</CurrencyGroupID>
+    <CurrencyCode>960</CurrencyCode>
+    <CurrencyCodeNumChar>960</CurrencyCodeNumChar>
+    <CurrencyCodeAlfaChar>XDR</CurrencyCodeAlfaChar>
+    <CurrencyNameSerCyrl>СДР</CurrencyNameSerCyrl>
+    <CurrencyNameSerLat>SDR</CurrencyNameSerLat>
+    <CurrencyNameEng>SDR</CurrencyNameEng>
+    <CountryNameSerCyrl />
+    <CountryNameSerLat />
+    <CountryNameEng />
+    <Unit>1</Unit>
+    <BuyingRate>0.0000</BuyingRate>
+    <MiddleRate>137.1346</MiddleRate>
+    <SellingRate>0.0000</SellingRate>
+    <FixingRate>0.000000</FixingRate>
+  </ExchangeRate>
+</ExchangeRateDataSet>

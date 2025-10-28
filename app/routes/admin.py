@@ -1,5 +1,5 @@
 """Admin Blueprint for User Management and PausalnFirma CRUD operations."""
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, make_response
 from flask_login import login_required, current_user
 from app import db
 from app.models.user import User
@@ -630,12 +630,19 @@ def kursevi():
             'available': kurs is not None
         }
 
-    return render_template(
+    response = make_response(render_template(
         'admin/kursevi.html',
         form=form,
         kursevi=kursevi_data,
         datum=today
-    )
+    ))
+
+    # Prevent browser caching to ensure fresh data display
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+
+    return response
 
 
 @admin_bp.route('/kursevi/override', methods=['POST'])
