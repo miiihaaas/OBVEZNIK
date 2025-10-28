@@ -626,7 +626,7 @@ function recalculateUkupanIznos() {
     // Calculate total in original currency
     let ukupanIznosOriginalna = 0;
     document.querySelectorAll('.stavka-row').forEach(row => {
-        const ukupno = parseFloat(row.querySelector('.ukupno-input').value || 0);
+        const ukupno = parseFloat(row.querySelector('.stavka-ukupno').textContent || 0);
         ukupanIznosOriginalna += ukupno;
     });
 
