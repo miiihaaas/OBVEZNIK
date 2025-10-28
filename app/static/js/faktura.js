@@ -61,7 +61,7 @@ function initializeKomitentAutocomplete() {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`/api/komitenti/search?q=${encodeURIComponent(query)}`)
+            fetch(`../api/komitenti/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     renderKomitentResults(data);
@@ -276,7 +276,7 @@ function initializeArtikalAutocomplete(stavkaRow) {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`/api/artikli/search?q=${encodeURIComponent(query)}`)
+            fetch(`../api/artikli/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     renderArtikalResults(data, resultsDiv, searchInput, artikalIdInput, nazivInput, kolicinaInput, jedinicaInput, cenaInput);
@@ -546,7 +546,7 @@ function fetchNBSKurs() {
     document.getElementById('kurs_error').style.display = 'none';
 
     // AJAX call to NBS kursna API
-    fetch(`/api/kursevi?valuta=${valuta}&datum=${datum}`)
+    fetch(`../api/kursevi?valuta=${valuta}&datum=${datum}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('NBS kurs not available');
