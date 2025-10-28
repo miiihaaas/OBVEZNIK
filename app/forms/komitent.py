@@ -115,6 +115,25 @@ class KomitentCreateForm(FlaskForm):
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
     )
 
+    iban = StringField(
+        'IBAN',
+        validators=[
+            Optional(),
+            Length(max=34, message='IBAN može imati maksimalno 34 karaktera.'),
+            Regexp(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]+$', message='IBAN mora biti u formatu: 2 slova + 2 broja + alfanumerički.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'RS35260005601001611379 (obavezno za devizne fakture)'}
+    )
+
+    swift = StringField(
+        'SWIFT/BIC',
+        validators=[
+            Optional(),
+            Length(max=11, message='SWIFT/BIC može imati maksimalno 11 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'BEOBBGRXXX (obavezno za devizne fakture)'}
+    )
+
     kontakt_osoba = StringField(
         'Kontakt Osoba',
         validators=[
@@ -240,6 +259,25 @@ class KomitentEditForm(FlaskForm):
             validate_email_format
         ],
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
+    )
+
+    iban = StringField(
+        'IBAN',
+        validators=[
+            Optional(),
+            Length(max=34, message='IBAN može imati maksimalno 34 karaktera.'),
+            Regexp(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]+$', message='IBAN mora biti u formatu: 2 slova + 2 broja + alfanumerički.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'RS35260005601001611379 (obavezno za devizne fakture)'}
+    )
+
+    swift = StringField(
+        'SWIFT/BIC',
+        validators=[
+            Optional(),
+            Length(max=11, message='SWIFT/BIC može imati maksimalno 11 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'BEOBBGRXXX (obavezno za devizne fakture)'}
     )
 
     kontakt_osoba = StringField(

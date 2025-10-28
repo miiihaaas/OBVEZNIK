@@ -38,10 +38,59 @@
                     <label class="btn btn-outline-primary" for="tip_avansna">
                         <i class="fa-solid fa-file-contract me-2"></i> Avansna
                     </label>
+
+                    <input type="radio" class="btn-check" name="tip_fakture" id="tip_devizna" value="devizna">
+                    <label class="btn btn-outline-primary" for="tip_devizna">
+                        <i class="fa-solid fa-globe me-2"></i> Devizna (EUR/USD/GBP/CHF)
+                    </label>
                 </div>
                 {% if form.tip_fakture.errors %}
                     <div class="text-danger mt-2">{{ form.tip_fakture.errors[0] }}</div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Foreign Currency Fields (Conditional - Only for Devizna) -->
+        <div class="card border-0 shadow-sm mb-4" id="devizni_fieldset" style="display: none;">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-money-bill-transfer me-2 text-warning"></i> Devizni Podaci</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> Izabrani komitent mora imati IBAN i SWIFT kod za devizne fakture.
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="valuta_fakture" class="form-label fw-semibold">
+                            <i class="fa-solid fa-dollar-sign me-1 text-muted"></i> Valuta Fakture *
+                        </label>
+                        {{ form.valuta_fakture(class="form-control form-control-lg" ~ (" is-invalid" if form.valuta_fakture.errors else ""), id="valuta_fakture") }}
+                        {% if form.valuta_fakture.errors %}
+                            <div class="invalid-feedback">{{ form.valuta_fakture.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Valuta u kojoj se izdaje faktura.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="srednji_kurs" class="form-label fw-semibold">
+                            <i class="fa-solid fa-exchange-alt me-1 text-muted"></i> Srednji Kurs NBS *
+                        </label>
+                        <div class="input-group input-group-lg">
+                            {{ form.srednji_kurs(class="form-control" ~ (" is-invalid" if form.srednji_kurs.errors else ""), id="srednji_kurs", readonly=true) }}
+                            <button class="btn btn-outline-secondary" type="button" id="manualKursToggle" title="Ručno unesi kurs">
+                                <i class="fa-solid fa-lock"></i>
+                            </button>
+                        </div>
+                        {% if form.srednji_kurs.errors %}
+                            <div class="invalid-feedback d-block">{{ form.srednji_kurs.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted" id="kurs_info">
+                            <span id="kurs_loading" style="display: none;"><i class="fa-solid fa-spinner fa-spin"></i> Učitavam kurs...</span>
+                            <span id="kurs_success" style="display: none;"><i class="fa-solid fa-check-circle text-success"></i> Srednji kurs NBS za <span id="kurs_datum"></span></span>
+                            <span id="kurs_error" style="display: none;"><i class="fa-solid fa-exclamation-triangle text-warning"></i> Kurs nije dostupan, unesite ručno</span>
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 

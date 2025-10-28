@@ -275,3 +275,166 @@ class TestFakturaCreateForm:
             )
             assert not form.validate()
             assert 'stavke' in form.errors
+
+    def test_devizna_faktura_requires_valuta(self, app, pausalac_user):
+        """Test that devizna faktura requires valuta_fakture."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                # Create komitent with IBAN and SWIFT
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib='12345678',
+                    maticni_broj='87654321',
+                    naziv='Foreign Komitent',
+                    adresa='Main Street',
+                    broj='100',
+                    postanski_broj='10000',
+                    mesto='Berlin',
+                    drzava='Germany',
+                    email='test@foreign.com',
+                    iban='DE89370400440532013000',
+                    swift='COBADEFFXXX'
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test devizna faktura without valuta_fakture
+                form = FakturaCreateForm(
+                    tip_fakture='devizna',
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    valuta_fakture='',  # Empty valuta
+                    srednji_kurs=Decimal('117.5432'),
+                    stavke=[{
+                        'naziv': 'Consulting',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }]
+                )
+                assert not form.validate()
+                assert 'valuta_fakture' in form.errors
+
+    def test_devizna_faktura_requires_srednji_kurs(self, app, pausalac_user):
+        """Test that devizna faktura requires srednji_kurs."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib='12345678',
+                    maticni_broj='87654321',
+                    naziv='Foreign Komitent',
+                    adresa='Main Street',
+                    broj='100',
+                    postanski_broj='10000',
+                    mesto='Berlin',
+                    drzava='Germany',
+                    email='test@foreign.com',
+                    iban='DE89370400440532013000',
+                    swift='COBADEFFXXX'
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test devizna faktura without srednji_kurs
+                form = FakturaCreateForm(
+                    tip_fakture='devizna',
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    valuta_fakture='EUR',
+                    srednji_kurs=None,  # No kurs
+                    stavke=[{
+                        'naziv': 'Consulting',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }]
+                )
+                assert not form.validate()
+                assert 'srednji_kurs' in form.errors
+
+    def test_devizna_faktura_requires_komitent_iban_swift(self, app, pausalac_user):
+        """Test that devizna faktura requires komitent with IBAN and SWIFT."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                # Create komitent WITHOUT IBAN and SWIFT
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib='12345678',
+                    maticni_broj='87654321',
+                    naziv='Domestic Komitent',
+                    adresa='Test',
+                    broj='1',
+                    postanski_broj='11000',
+                    mesto='Beograd',
+                    drzava='Srbija',
+                    email='test@domestic.rs'
+                    # No IBAN, no SWIFT
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test devizna faktura with komitent without IBAN/SWIFT
+                form = FakturaCreateForm(
+                    tip_fakture='devizna',
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    valuta_fakture='EUR',
+                    srednji_kurs=Decimal('117.5432'),
+                    stavke=[{
+                        'naziv': 'Consulting',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }]
+                )
+                assert not form.validate()
+                assert 'komitent_id' in form.errors
+
+    def test_standardna_faktura_cannot_have_valuta(self, app, pausalac_user):
+        """Test that standardna faktura cannot have valuta_fakture."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib='12345678',
+                    maticni_broj='87654321',
+                    naziv='Test Komitent',
+                    adresa='Test',
+                    broj='1',
+                    postanski_broj='11000',
+                    mesto='Beograd',
+                    drzava='Srbija',
+                    email='test@test.rs'
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test standardna faktura WITH valuta_fakture (should fail)
+                form = FakturaCreateForm(
+                    tip_fakture='standardna',
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    valuta_fakture='EUR',  # Should not be allowed
+                    srednji_kurs=Decimal('117.5432'),  # Should not be allowed
+                    stavke=[{
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('5000.00')
+                    }]
+                )
+                assert not form.validate()
+                assert 'valuta_fakture' in form.errors or 'srednji_kurs' in form.errors

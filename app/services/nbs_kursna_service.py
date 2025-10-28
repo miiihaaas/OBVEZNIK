@@ -51,7 +51,9 @@ def fetch_kursna_lista_soap(datum: date) -> Dict[str, Decimal]:
         )
 
         # Call GetCurrentExchangeRate method
+        # exchangeRateListTypeID=3 is for official middle exchange rate list
         xml_response = client.service.GetCurrentExchangeRate(
+            exchangeRateListTypeID=3,
             _soapheaders=[auth_value]
         )
 
@@ -98,22 +100,13 @@ def _parse_xml_kursna_lista(xml_string: str) -> Dict[str, Decimal]:
         root = ET.fromstring(xml_string)
         kursevi = {}
 
-        # Parse ExchangeRate elements (adjust XPath based on actual XML structure)
-        # Namespace-aware search
-        namespace = "http://communicationoffice.nbs.rs"
-
-        # Try with namespace first
-        exchange_rate_elements = root.findall(f'.//{{{namespace}}}ExchangeRate')
-
-        # Fallback: try without namespace
-        if not exchange_rate_elements:
-            exchange_rate_elements = root.findall('.//ExchangeRate')
+        # Parse ExchangeRate elements
+        # NBS returns <ExchangeRateDataSet> root with <ExchangeRate> children
+        exchange_rate_elements = root.findall('.//ExchangeRate')
 
         for row in exchange_rate_elements:
-            # Extract currency code (try with namespace first, then without)
-            valuta_elem = row.find(f'{{{namespace}}}CurrencyCode')
-            if valuta_elem is None:
-                valuta_elem = row.find('CurrencyCode')
+            # Extract currency code (alpha char - EUR, USD, GBP, CHF)
+            valuta_elem = row.find('CurrencyCodeAlfaChar')
 
             if valuta_elem is None or not valuta_elem.text:
                 continue
@@ -122,16 +115,14 @@ def _parse_xml_kursna_lista(xml_string: str) -> Dict[str, Decimal]:
             if valuta not in ['EUR', 'USD', 'GBP', 'CHF']:
                 continue
 
-            # Extract middle rate (try with namespace first, then without)
-            kurs_elem = row.find(f'{{{namespace}}}MiddleRate')
-            if kurs_elem is None:
-                kurs_elem = row.find('MiddleRate')
+            # Extract middle rate
+            kurs_elem = row.find('MiddleRate')
 
             if kurs_elem is None or not kurs_elem.text:
                 current_app.logger.warning(f"MiddleRate not found for {valuta}")
                 continue
 
-            # Convert comma to dot for decimal parsing
+            # Convert comma to dot for decimal parsing (if needed)
             kurs_value = kurs_elem.text.replace(',', '.')
             kursevi[valuta] = Decimal(kurs_value)
 

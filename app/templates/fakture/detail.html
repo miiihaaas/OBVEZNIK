@@ -9,22 +9,35 @@
     <div class="card mb-3">
         <div class="card-body">
             <h5>Status: <span class="badge bg-{{ 'warning' if faktura.status == 'draft' else 'success' }}">{{ faktura.status }}</span></h5>
+            <p><strong>Tip fakture:</strong> {{ faktura.tip_fakture|capitalize }}</p>
             <p><strong>Komitent:</strong> {{ faktura.komitent.naziv }}</p>
             <p><strong>Datum prometa:</strong> {{ faktura.datum_prometa }}</p>
             <p><strong>Datum dospeća:</strong> {{ faktura.datum_dospeca }}</p>
-            <p><strong>Ukupan iznos:</strong> {{ faktura.ukupan_iznos_rsd }} RSD</p>
+
+            {% if faktura.tip_fakture == 'devizna' %}
+            <!-- Foreign Currency Invoice Info -->
+            <p><strong>Valuta fakture:</strong> {{ faktura.valuta_fakture }}</p>
+            <p><strong>Srednji kurs NBS:</strong> {{ "%.4f"|format(faktura.srednji_kurs) }} RSD</p>
+            <p><strong>Ukupan iznos:</strong>
+                <span class="text-primary fw-bold">{{ "%.2f"|format(faktura.ukupan_iznos_originalna_valuta) }} {{ faktura.valuta_fakture }}</span>
+                <span class="text-muted">(RSD: {{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }})</span>
+            </p>
+            {% else %}
+            <!-- Domestic Invoice Info (RSD only) -->
+            <p><strong>Ukupan iznos:</strong> {{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD</p>
+            {% endif %}
         </div>
     </div>
 
     <h4>Stavke</h4>
-    <table class="table">
-        <thead>
+    <table class="table table-striped table-hover">
+        <thead class="table-light">
             <tr>
                 <th>#</th>
                 <th>Naziv</th>
                 <th>Količina</th>
-                <th>Cena</th>
-                <th>Ukupno</th>
+                <th>Cena{% if faktura.tip_fakture == 'devizna' %} ({{ faktura.valuta_fakture }}){% endif %}</th>
+                <th>Ukupno{% if faktura.tip_fakture == 'devizna' %} ({{ faktura.valuta_fakture }}){% endif %}</th>
             </tr>
         </thead>
         <tbody>
@@ -33,11 +46,37 @@
                 <td>{{ stavka.redni_broj }}</td>
                 <td>{{ stavka.naziv }}</td>
                 <td>{{ stavka.kolicina }} {{ stavka.jedinica_mere }}</td>
-                <td>{{ stavka.cena }} RSD</td>
-                <td>{{ stavka.ukupno }} RSD</td>
+                <td>
+                    {% if faktura.tip_fakture == 'devizna' %}
+                        {{ "%.2f"|format(stavka.cena) }} {{ faktura.valuta_fakture }}
+                    {% else %}
+                        {{ "%.2f"|format(stavka.cena) }} RSD
+                    {% endif %}
+                </td>
+                <td>
+                    {% if faktura.tip_fakture == 'devizna' %}
+                        <strong>{{ "%.2f"|format(stavka.ukupno) }} {{ faktura.valuta_fakture }}</strong>
+                        <br><small class="text-muted">({{ "{:,.2f}"|format(stavka.ukupno * faktura.srednji_kurs) }} RSD)</small>
+                    {% else %}
+                        <strong>{{ "{:,.2f}"|format(stavka.ukupno) }} RSD</strong>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
+        <tfoot class="table-light">
+            <tr>
+                <td colspan="4" class="text-end"><strong>UKUPNO:</strong></td>
+                <td>
+                    {% if faktura.tip_fakture == 'devizna' %}
+                        <strong class="text-primary">{{ "%.2f"|format(faktura.ukupan_iznos_originalna_valuta) }} {{ faktura.valuta_fakture }}</strong>
+                        <br><small class="text-muted">({{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD)</small>
+                    {% else %}
+                        <strong class="text-success">{{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD</strong>
+                    {% endif %}
+                </td>
+            </tr>
+        </tfoot>
     </table>
 
     {% if faktura.status == 'draft' %}

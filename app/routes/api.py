@@ -78,7 +78,9 @@ def komitenti_search():
             'id': k.id,
             'naziv': k.naziv,
             'pib': k.pib,
-            'adresa': f"{k.adresa} {k.broj}, {k.postanski_broj} {k.mesto}"
+            'adresa': f"{k.adresa} {k.broj}, {k.postanski_broj} {k.mesto}",
+            'iban': k.iban,  # Required for foreign currency invoices
+            'swift': k.swift  # Required for foreign currency invoices
         }
         for k in komitenti
     ]

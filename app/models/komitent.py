@@ -28,6 +28,10 @@ class Komitent(db.Model):
     kontakt_osoba = db.Column(db.String(255), nullable=True)  # Optional contact person
     napomene = db.Column(db.Text, nullable=True)  # Optional notes
 
+    # Banking information (required for foreign currency invoices)
+    iban = db.Column(db.String(34), nullable=True)  # IBAN format for international payments
+    swift = db.Column(db.String(11), nullable=True)  # SWIFT/BIC code
+
     # Timestamp
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 

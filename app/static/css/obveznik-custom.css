@@ -699,7 +699,7 @@ footer p {
 
 .table-hover tbody tr:hover {
     background-color: var(--color-neutral-bg-gray);
-    transform: translateX(2px);
+    /* transform: translateX(2px); */
     box-shadow: var(--shadow-light);
 }
 

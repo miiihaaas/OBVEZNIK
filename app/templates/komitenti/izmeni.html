@@ -156,6 +156,41 @@
             </div>
         </div>
 
+        <!-- Banking Info (Required for Foreign Currency Invoices) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-university me-2 text-warning"></i> Bankarske Informacije</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> IBAN i SWIFT/BIC su obavezni za kreiranje deviznih faktura.
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="iban" class="form-label fw-semibold">
+                            <i class="fa-solid fa-credit-card me-1 text-muted"></i> IBAN
+                        </label>
+                        {{ form.iban(class="form-control form-control-lg" ~ (" is-invalid" if form.iban.errors else ""), id="iban", placeholder="RS35260005601001611379") }}
+                        {% if form.iban.errors %}
+                            <div class="invalid-feedback">{{ form.iban.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">IBAN broj računa (obavezno za devizne fakture).</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="swift" class="form-label fw-semibold">
+                            <i class="fa-solid fa-globe me-1 text-muted"></i> SWIFT/BIC
+                        </label>
+                        {{ form.swift(class="form-control form-control-lg" ~ (" is-invalid" if form.swift.errors else ""), id="swift", placeholder="BEOBBGRXXX") }}
+                        {% if form.swift.errors %}
+                            <div class="invalid-feedback">{{ form.swift.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">SWIFT/BIC kod banke (obavezno za devizne fakture).</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Submit Buttons -->
         <div class="card border-0 shadow-sm">
             <div class="card-body p-4">

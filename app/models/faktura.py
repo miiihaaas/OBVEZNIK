@@ -18,7 +18,7 @@ class Faktura(db.Model):
     # Invoice identification and type
     broj_fakture = db.Column(db.String(50), nullable=False, index=True)
     tip_fakture = db.Column(
-        db.Enum('standardna', 'profaktura', 'avansna', name='tip_fakture'),
+        db.Enum('standardna', 'profaktura', 'avansna', 'devizna', name='tip_fakture'),
         nullable=False
     )
     valuta_fakture = db.Column(

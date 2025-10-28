@@ -87,25 +87,33 @@ def create_faktura(data, user):
         data.get('valuta_placanja')
     )
 
-    # Get currency from data (default to RSD for backward compatibility)
-    valuta_fakture = data.get('valuta_fakture', 'RSD')
+    # Determine if this is a foreign currency invoice
+    tip_fakture = data.get('tip_fakture', 'standardna')
+    valuta_fakture = data.get('valuta_fakture', 'RSD') if tip_fakture == 'devizna' else 'RSD'
 
     # For foreign currency invoices, fetch NBS exchange rate
     srednji_kurs = None
-    if valuta_fakture != 'RSD':
+    jezik = 'sr'  # Default to Serbian
+
+    if tip_fakture == 'devizna' and valuta_fakture != 'RSD':
         datum_prometa = data.get('datum_prometa')
-        srednji_kurs = get_kurs(valuta_fakture, datum_prometa)
 
-        # Check if srednji_kurs_override is provided (manual override)
-        if data.get('srednji_kurs_override'):
-            srednji_kurs = Decimal(str(data.get('srednji_kurs_override')))
+        # Check if manual srednji_kurs is provided in form (user override)
+        if data.get('srednji_kurs'):
+            srednji_kurs = Decimal(str(data.get('srednji_kurs')))
+        else:
+            # Fetch from NBS
+            srednji_kurs = get_kurs(valuta_fakture, datum_prometa)
 
-        # If no kurs available (neither from NBS nor manual override), raise error
-        if not srednji_kurs:
+        # If no kurs available (neither from form nor NBS), raise error
+        if not srednji_kurs or srednji_kurs <= 0:
             raise ValueError(
                 f"NBS kurs nije dostupan za {valuta_fakture} na datum {datum_prometa}. "
                 f"Molimo unesite kurs ručno."
             )
+
+        # Foreign currency invoices are always in English
+        jezik = 'en'
 
     # Create faktura instance
     faktura = Faktura(
@@ -113,9 +121,9 @@ def create_faktura(data, user):
         komitent_id=data.get('komitent_id'),
         user_id=user.id,
         broj_fakture=broj_fakture,
-        tip_fakture=data.get('tip_fakture', 'standardna'),
+        tip_fakture=tip_fakture,
         valuta_fakture=valuta_fakture,
-        jezik='sr',  # Default Serbian
+        jezik=jezik,  # 'sr' for domestic, 'en' for foreign currency
         datum_prometa=data.get('datum_prometa'),
         valuta_placanja=data.get('valuta_placanja'),
         datum_dospeca=datum_dospeca,

@@ -86,7 +86,8 @@ class FakturaCreateForm(FlaskForm):
         choices=[
             ('standardna', 'Domaća (RSD)'),
             ('profaktura', 'Profaktura'),
-            ('avansna', 'Avansna')
+            ('avansna', 'Avansna'),
+            ('devizna', 'Devizna (EUR/USD/GBP/CHF)')
         ],
         default='standardna',
         validators=[DataRequired(message='Tip fakture je obavezan.')],
@@ -105,6 +106,26 @@ class FakturaCreateForm(FlaskForm):
         default=date.today,
         format='%Y-%m-%d',
         render_kw={'class': 'form-control', 'type': 'date'}
+    )
+
+    # Foreign currency fields (conditional - only for devizna fakture)
+    valuta_fakture = SelectField(
+        'Valuta fakture',
+        choices=[
+            ('', 'Izaberite valutu...'),
+            ('EUR', 'EUR - Euro'),
+            ('USD', 'USD - Američki dolar'),
+            ('GBP', 'GBP - Britanska funta'),
+            ('CHF', 'CHF - Švajcarski franak')
+        ],
+        default='',
+        render_kw={'class': 'form-control'}
+    )
+
+    srednji_kurs = DecimalField(
+        'Srednji kurs NBS',
+        places=4,
+        render_kw={'class': 'form-control', 'placeholder': '0.0000', 'step': '0.0001'}
     )
 
     valuta_placanja = IntegerField(
@@ -174,12 +195,14 @@ class FakturaCreateForm(FlaskForm):
     def validate_komitent_id(self, field):
         """
         Validate that komitent exists and belongs to current user's firma.
+        For devizna fakture, also validate that komitent has IBAN and SWIFT.
 
         Args:
             field: komitent_id field to validate
 
         Raises:
-            ValidationError: If komitent doesn't exist or doesn't belong to firma
+            ValidationError: If komitent doesn't exist, doesn't belong to firma,
+                           or doesn't have IBAN/SWIFT for devizna fakture
         """
         if not field.data:
             raise ValidationError('Komitent je obavezan.')
@@ -189,6 +212,14 @@ class FakturaCreateForm(FlaskForm):
 
         if not komitent:
             raise ValidationError('Izabrani komitent ne postoji ili ne pripada vašoj firmi.')
+
+        # For devizna fakture, check that komitent has IBAN and SWIFT
+        if self.tip_fakture.data == 'devizna':
+            if not komitent.iban or not komitent.swift:
+                raise ValidationError(
+                    'Komitent mora imati IBAN i SWIFT kod za devizne fakture. '
+                    'Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.'
+                )
 
     def validate_stavke(self, field):
         """
@@ -212,3 +243,39 @@ class FakturaCreateForm(FlaskForm):
 
         if not has_valid_stavka:
             raise ValidationError('Mora postojati bar jedna popunjena stavka fakture.')
+
+    def validate_valuta_fakture(self, field):
+        """
+        Validate that valuta_fakture is required for devizna fakture.
+
+        Args:
+            field: valuta_fakture field to validate
+
+        Raises:
+            ValidationError: If devizna faktura doesn't have valuta or
+                           if non-devizna faktura has valuta
+        """
+        if self.tip_fakture.data == 'devizna':
+            if not field.data or field.data == '':
+                raise ValidationError('Valuta fakture je obavezna za devizne fakture.')
+        else:
+            if field.data and field.data != '':
+                raise ValidationError('Valuta fakture može biti izabrana samo za devizne fakture.')
+
+    def validate_srednji_kurs(self, field):
+        """
+        Validate that srednji_kurs is required for devizna fakture.
+
+        Args:
+            field: srednji_kurs field to validate
+
+        Raises:
+            ValidationError: If devizna faktura doesn't have valid srednji_kurs or
+                           if non-devizna faktura has srednji_kurs
+        """
+        if self.tip_fakture.data == 'devizna':
+            if not field.data or field.data <= 0:
+                raise ValidationError('Srednji kurs NBS je obavezan za devizne fakture i mora biti veći od 0.')
+        else:
+            if field.data and field.data > 0:
+                raise ValidationError('Srednji kurs može biti unet samo za devizne fakture.')

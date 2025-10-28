@@ -310,6 +310,85 @@ class TestKomitentModel:
             assert firma1.komitenti[0].naziv == 'Komitent 1'
             assert firma2.komitenti[0].naziv == 'Komitent 2'
 
+    def test_komitent_with_iban_and_swift(self, app):
+        """Test Komitent can be created with IBAN and SWIFT fields."""
+        with app.app_context():
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Foreign Komitent Ltd.',
+                adresa='Main Street',
+                broj='100',
+                postanski_broj='10000',
+                mesto='Berlin',
+                drzava='Germany',
+                email='contact@foreignkomitent.com',
+                iban='DE89370400440532013000',
+                swift='COBADEFFXXX'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            assert komitent.id is not None
+            assert komitent.iban == 'DE89370400440532013000'
+            assert komitent.swift == 'COBADEFFXXX'
+
+    def test_komitent_iban_and_swift_optional_for_domestic(self, app):
+        """Test IBAN and SWIFT are optional for domestic komitenti."""
+        with app.app_context():
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Domestic Komitent d.o.o.',
+                adresa='Njegoševa',
+                broj='15',
+                postanski_broj='21000',
+                mesto='Novi Sad',
+                drzava='Srbija',
+                email='kontakt@domestic.rs'
+                # iban and swift not provided
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            assert komitent.id is not None
+            assert komitent.iban is None
+            assert komitent.swift is None
+
 
 class TestArtikalModel:
     """Tests for Artikal model."""

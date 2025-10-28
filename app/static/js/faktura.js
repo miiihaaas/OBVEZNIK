@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeKomitentAutocomplete();
     initializeDatumCalculation();
     initializeFormSubmit();
+    initializeDeviznaFaktura(); // NEW: Initialize foreign currency functionality
 
     // Add first stavka by default
     addStavka();
@@ -119,6 +120,11 @@ function renderKomitentResults(komitenti) {
  * Select a komitent
  */
 function selectKomitent(komitent) {
+    // Validate komitent for devizna fakture (IBAN/SWIFT check)
+    if (!validateKomitentForDevizna(komitent)) {
+        return; // Don't select if validation fails
+    }
+
     selectedKomitent = komitent;
 
     // Set hidden input
@@ -447,4 +453,203 @@ function createHiddenInput(name, value) {
     input.name = name;
     input.value = value;
     form.appendChild(input);
+}
+
+/**
+ * ========================================
+ * FOREIGN CURRENCY (DEVIZNA) FUNCTIONALITY
+ * ========================================
+ */
+
+/**
+ * Initialize devizna faktura functionality
+ */
+function initializeDeviznaFaktura() {
+    // Event listener on tip_fakture radio buttons
+    const tipRadios = document.querySelectorAll('input[name="tip_fakture"]');
+    tipRadios.forEach(radio => {
+        radio.addEventListener('change', handleTipFaktureChange);
+    });
+
+    // Event listener on valuta dropdown
+    const valutaSelect = document.getElementById('valuta_fakture');
+    if (valutaSelect) {
+        valutaSelect.addEventListener('change', fetchNBSKurs);
+    }
+
+    // Event listener on datum_prometa (refresh kurs when date changes)
+    const datumPrometa = document.getElementById('datum_prometa');
+    if (datumPrometa) {
+        datumPrometa.addEventListener('change', function() {
+            const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+            if (tipFakture === 'devizna') {
+                fetchNBSKurs();
+            }
+        });
+    }
+
+    // Manual kurs toggle button
+    const manualKursToggle = document.getElementById('manualKursToggle');
+    if (manualKursToggle) {
+        manualKursToggle.addEventListener('click', toggleManualKurs);
+    }
+
+    // Event listener on srednji_kurs input (for manual override)
+    const srednjiKursInput = document.getElementById('srednji_kurs');
+    if (srednjiKursInput) {
+        srednjiKursInput.addEventListener('input', recalculateUkupanIznos);
+    }
+}
+
+/**
+ * Handle tip fakture change (show/hide devizni fieldset)
+ */
+function handleTipFaktureChange(event) {
+    const selectedTip = event.target.value;
+    const devizniFieldset = document.getElementById('devizni_fieldset');
+
+    if (selectedTip === 'devizna') {
+        devizniFieldset.style.display = 'block';
+        // Fetch NBS kurs if valuta is selected
+        const valuta = document.getElementById('valuta_fakture').value;
+        if (valuta && valuta !== '') {
+            fetchNBSKurs();
+        }
+    } else {
+        devizniFieldset.style.display = 'none';
+        // Clear devizna fields
+        document.getElementById('valuta_fakture').value = '';
+        document.getElementById('srednji_kurs').value = '';
+    }
+}
+
+/**
+ * Fetch NBS exchange rate via AJAX
+ */
+function fetchNBSKurs() {
+    const valuta = document.getElementById('valuta_fakture').value;
+    const datum = document.getElementById('datum_prometa').value;
+    const srednjiKursInput = document.getElementById('srednji_kurs');
+
+    // Don't fetch if manual mode is enabled
+    if (!srednjiKursInput.readOnly) {
+        return;
+    }
+
+    if (!valuta || valuta === '' || !datum) {
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('kurs_loading').style.display = 'inline';
+    document.getElementById('kurs_success').style.display = 'none';
+    document.getElementById('kurs_error').style.display = 'none';
+
+    // AJAX call to NBS kursna API
+    fetch(`/api/kursevi?valuta=${valuta}&datum=${datum}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('NBS kurs not available');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('kurs_loading').style.display = 'none';
+
+            // API returns kurs as property with valuta name (e.g., data.EUR)
+            const kursValue = parseFloat(data[valuta]);
+
+            if (kursValue && kursValue > 0) {
+                // Success - populate kurs
+                srednjiKursInput.value = kursValue.toFixed(4);
+                document.getElementById('kurs_datum').textContent = data.datum || datum;
+                document.getElementById('kurs_success').style.display = 'inline';
+
+                // Recalculate total amount
+                recalculateUkupanIznos();
+            } else {
+                // Error - NBS kurs not available
+                srednjiKursInput.value = '';
+                document.getElementById('kurs_error').style.display = 'inline';
+            }
+        })
+        .catch(error => {
+            console.error('NBS kurs fetch error:', error);
+            document.getElementById('kurs_loading').style.display = 'none';
+            document.getElementById('kurs_error').style.display = 'inline';
+            srednjiKursInput.value = '';
+        });
+}
+
+/**
+ * Toggle manual kurs input mode
+ */
+function toggleManualKurs() {
+    const srednjiKursInput = document.getElementById('srednji_kurs');
+    const toggleButton = document.getElementById('manualKursToggle');
+    const icon = toggleButton.querySelector('i');
+
+    if (srednjiKursInput.readOnly) {
+        // Enable manual mode
+        srednjiKursInput.readOnly = false;
+        srednjiKursInput.classList.add('bg-warning', 'bg-opacity-10');
+        icon.className = 'fa-solid fa-unlock';
+        toggleButton.title = 'Automatski NBS kurs';
+
+        // Hide kurs info messages
+        document.getElementById('kurs_success').style.display = 'none';
+        document.getElementById('kurs_error').style.display = 'none';
+    } else {
+        // Disable manual mode - fetch from NBS again
+        srednjiKursInput.readOnly = true;
+        srednjiKursInput.classList.remove('bg-warning', 'bg-opacity-10');
+        icon.className = 'fa-solid fa-lock';
+        toggleButton.title = 'Ručno unesi kurs';
+
+        // Fetch NBS kurs
+        fetchNBSKurs();
+    }
+}
+
+/**
+ * Recalculate ukupan iznos (for devizna fakture with dual-currency display)
+ */
+function recalculateUkupanIznos() {
+    const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+
+    if (tipFakture !== 'devizna') {
+        return;
+    }
+
+    const srednjiKurs = parseFloat(document.getElementById('srednji_kurs').value || 0);
+
+    // Calculate total in original currency
+    let ukupanIznosOriginalna = 0;
+    document.querySelectorAll('.stavka-row').forEach(row => {
+        const ukupno = parseFloat(row.querySelector('.ukupno-input').value || 0);
+        ukupanIznosOriginalna += ukupno;
+    });
+
+    // Calculate RSD equivalent
+    const ukupanIznosRSD = ukupanIznosOriginalna * srednjiKurs;
+
+    // Display dual-currency total (this would be in the UI somewhere)
+    // TODO: Update UI to show both amounts
+    console.log(`Total: ${ukupanIznosOriginalna.toFixed(2)} (original) = ${ukupanIznosRSD.toFixed(2)} RSD`);
+}
+
+/**
+ * Validate komitent has IBAN and SWIFT for devizna fakture
+ */
+function validateKomitentForDevizna(komitent) {
+    const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+
+    if (tipFakture === 'devizna') {
+        if (!komitent.iban || !komitent.swift) {
+            alert('UPOZORENJE: Izabrani komitent nema IBAN i SWIFT kod.\n\nDevizne fakture zahtevaju da komitent ima IBAN i SWIFT kod. Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.');
+            return false;
+        }
+    }
+
+    return true;
 }

@@ -9,6 +9,14 @@
             <h1 class="mb-2"><i class="fa-solid fa-money-bill-transfer me-2 text-primary"></i> NBS Kursna Lista</h1>
             <p class="text-muted mb-0">Pregled trenutnih kurseva i ručno podešavanje.</p>
         </div>
+        <div>
+            <form method="POST" action="{{ url_for('admin.kursevi_refresh') }}" style="display: inline;">
+                {{ form.hidden_tag() }}
+                <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                    <i class="fa-solid fa-arrows-rotate me-2"></i> Osvježi kurseve sa NBS-a
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- Current Exchange Rates -->

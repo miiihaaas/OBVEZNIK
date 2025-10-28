@@ -10,7 +10,7 @@ from app.forms.kursevi import KursManualOverrideForm
 from app.utils.decorators import admin_required
 from app.utils.query_helpers import set_admin_firm_context, clear_admin_firm_context
 from app.services import nbs_komitent_service
-from app.services.nbs_kursna_service import get_kurs, cache_kurs
+from app.services.nbs_kursna_service import get_kurs, cache_kurs, fetch_kursna_lista_soap
 from datetime import datetime, timezone, date as date_class
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc, func, or_
@@ -672,5 +672,64 @@ def kursevi_override():
     for field, errors in form.errors.items():
         for error in errors:
             flash(f'{field}: {error}', 'danger')
+
+    return redirect(url_for('admin.kursevi'))
+
+
+@admin_bp.route('/kursevi/refresh', methods=['POST'])
+@login_required
+@admin_required
+def kursevi_refresh():
+    """
+    Manually trigger NBS API call to refresh exchange rates (Admin only).
+
+    Returns:
+        Redirect to kursevi page with success/error message
+    """
+    today = date_class.today()
+    supported_currencies = ['EUR', 'USD', 'GBP', 'CHF']
+
+    try:
+        # Fetch exchange rates from NBS SOAP API
+        kursevi = fetch_kursna_lista_soap(today)
+
+        # Cache each currency
+        cached_count = 0
+        for valuta in supported_currencies:
+            if valuta in kursevi:
+                cache_kurs(valuta, today, kursevi[valuta])
+                cached_count += 1
+
+        # Security logging
+        security_logger.info(
+            f"Admin manually refreshed exchange rates from NBS: cached={cached_count}, "
+            f"datum={today}, admin={current_user.email}, ip={request.remote_addr}, "
+            f"timestamp={datetime.now(timezone.utc).isoformat()}"
+        )
+
+        if cached_count > 0:
+            flash(
+                f'Kursevi uspešno osvježeni sa NBS servisa! Ažurirano {cached_count} valuta.',
+                'success'
+            )
+        else:
+            flash(
+                'NBS servis je odgovorio, ali nisu pronađeni kursevi za podržane valute.',
+                'warning'
+            )
+
+    except Exception as e:
+        # Log error
+        security_logger.error(
+            f"Admin attempted to refresh exchange rates but NBS API failed: "
+            f"error={str(e)}, admin={current_user.email}, ip={request.remote_addr}, "
+            f"timestamp={datetime.now(timezone.utc).isoformat()}"
+        )
+
+        flash(
+            f'Greška pri osvježavanju kurseva sa NBS servisa: {str(e)}. '
+            f'Molimo pokušajte ponovo ili unesite kurs ručno.',
+            'danger'
+        )
 
     return redirect(url_for('admin.kursevi'))

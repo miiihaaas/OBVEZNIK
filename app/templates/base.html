@@ -75,6 +75,9 @@
                             <li><h6 class="dropdown-header text-uppercase small fw-bold text-muted"><i class="fa-solid fa-building me-1"></i> Paušalne Firme</h6></li>
                             <li><a class="dropdown-item py-2" href="{{ url_for('admin.firme') }}"><i class="fa-solid fa-list me-2"></i> Lista Firmi</a></li>
                             <li><a class="dropdown-item py-2" href="{{ url_for('admin.firma_create') }}"><i class="fa-solid fa-plus me-2"></i> Dodaj Firmu</a></li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li><h6 class="dropdown-header text-uppercase small fw-bold text-muted"><i class="fa-solid fa-money-bill-transfer me-1"></i> Kursna Lista</h6></li>
+                            <li><a class="dropdown-item py-2" href="{{ url_for('admin.kursevi') }}"><i class="fa-solid fa-chart-line me-2"></i> NBS Kursevi</a></li>
                         </ul>
                     </li>
                     {% endif %}
