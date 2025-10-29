@@ -276,3 +276,57 @@ class TestCreateDeviznaFaktura:
             assert faktura.ukupan_iznos_originalna_valuta is None
             assert faktura.srednji_kurs is None
             assert faktura.jezik == 'sr'  # Serbian for domestic invoices
+
+    def test_create_devizna_faktura_without_valuta_raises_error(self, app, pausalac_with_firma):
+        """Test that devizna faktura without valuta raises ValidationError."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+            komitent = create_foreign_komitent(firma.id)
+
+            data = {
+                'tip_fakture': 'devizna',
+                # No valuta_fakture provided
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Consulting',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                create_faktura(data, user)
+
+            assert 'Devizna faktura mora imati valutu' in str(exc_info.value)
+
+    def test_create_devizna_faktura_with_rsd_raises_error(self, app, pausalac_with_firma):
+        """Test that devizna faktura with RSD valuta raises ValidationError."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+            komitent = create_foreign_komitent(firma.id)
+
+            data = {
+                'tip_fakture': 'devizna',
+                'valuta_fakture': 'RSD',  # Invalid for devizna
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Consulting',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                create_faktura(data, user)
+
+            assert 'Devizna faktura mora imati valutu' in str(exc_info.value)

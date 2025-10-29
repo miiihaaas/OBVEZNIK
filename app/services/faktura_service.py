@@ -72,14 +72,17 @@ def create_faktura(data, user):
 
     Business Rules:
         - Invoice is created with status='draft'
-        - Invoice number is generated but counter is NOT incremented yet
+        - Draft invoices get temporary number DRAFT-{id} (allows multiple drafts)
+        - Final invoice number is assigned during finalization
+        - Counter is NOT incremented until finalization
         - Due date is calculated with weekend adjustment
         - Total amount is calculated as sum of all line items
     """
     firma = user.firma
 
-    # Generate invoice number (without incrementing counter)
-    broj_fakture = generate_broj_fakture(firma)
+    # Draft invoices get temporary number (will be replaced with DRAFT-{id} after flush)
+    # Final number is assigned during finalization
+    broj_fakture = "DRAFT-TEMP"
 
     # Calculate due date
     datum_dospeca = calculate_datum_dospeca(
@@ -89,18 +92,31 @@ def create_faktura(data, user):
 
     # Determine if this is a foreign currency invoice
     tip_fakture = data.get('tip_fakture', 'standardna')
-    valuta_fakture = data.get('valuta_fakture', 'RSD') if tip_fakture == 'devizna' else 'RSD'
+
+    # Validate devizna fakture MUST have valid foreign currency
+    if tip_fakture == 'devizna':
+        valuta_fakture = data.get('valuta_fakture')
+        if not valuta_fakture or valuta_fakture not in ['EUR', 'USD', 'GBP', 'CHF']:
+            raise ValueError(
+                "Devizna faktura mora imati valutu (EUR, USD, GBP ili CHF). "
+                "Molimo izaberite valutu."
+            )
+    else:
+        valuta_fakture = 'RSD'
 
     # For foreign currency invoices, fetch NBS exchange rate
     srednji_kurs = None
     jezik = 'sr'  # Default to Serbian
 
-    if tip_fakture == 'devizna' and valuta_fakture != 'RSD':
+    if tip_fakture == 'devizna':
         # Validate komitent has at least one devizni račun for foreign currency invoices
         from app.models.komitent import Komitent
         komitent = db.session.get(Komitent, data.get('komitent_id'))
         if not komitent:
             raise ValueError("Komitent nije pronađen.")
+        # SEC-001: Tenant isolation - validate komitent belongs to user's firma
+        if komitent.firma_id != firma.id:
+            raise ValueError("Komitent ne pripada vašoj firmi.")
         if not komitent.devizni_racuni or len(komitent.devizni_racuni) == 0:
             raise ValueError(
                 "Komitent mora imati bar jedan devizni račun za devizne fakture. "
@@ -152,6 +168,9 @@ def create_faktura(data, user):
     db.session.add(faktura)
     db.session.flush()  # Get faktura.id
 
+    # Set unique draft number using faktura ID
+    faktura.broj_fakture = f"DRAFT-{faktura.id}"
+
     # Create faktura stavke (line items)
     ukupan_iznos = Decimal('0.00')
     for i, stavka_data in enumerate(data.get('stavke', []), start=1):
@@ -181,7 +200,8 @@ def create_faktura(data, user):
     else:
         # Foreign currency invoice - calculate both amounts
         faktura.ukupan_iznos_originalna_valuta = ukupan_iznos
-        faktura.ukupan_iznos_rsd = ukupan_iznos * srednji_kurs
+        # CODE-001: Use quantize to ensure proper decimal precision (2 decimals for currency)
+        faktura.ukupan_iznos_rsd = (ukupan_iznos * srednji_kurs).quantize(Decimal('0.01'))
 
     db.session.commit()
 
@@ -248,6 +268,7 @@ def finalize_faktura(faktura_id):
         ValueError: If faktura doesn't exist or is not in draft status
 
     Business Rules:
+        - Generates final invoice number from firma's counter
         - Changes status from 'draft' to 'izdata'
         - Increments firma's invoice counter (with year rollover check)
         - Sets finalized_at timestamp
@@ -260,6 +281,9 @@ def finalize_faktura(faktura_id):
 
     if faktura.status != 'draft':
         raise ValueError(f"Cannot finalize faktura with status '{faktura.status}'. Only draft invoices can be finalized.")
+
+    # Generate final invoice number (replacing DRAFT-{id} with real number)
+    faktura.broj_fakture = generate_broj_fakture(faktura.firma)
 
     # Change status to 'izdata' (issued)
     faktura.status = 'izdata'

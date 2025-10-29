@@ -124,6 +124,7 @@ class FakturaCreateForm(FlaskForm):
 
     srednji_kurs = DecimalField(
         'Srednji kurs NBS',
+        validators=[Optional()],  # Optional - can be empty for non-devizna or when NBS auto-fetch
         places=4,
         render_kw={'class': 'form-control', 'placeholder': '0.0000', 'step': '0.0001'}
     )
@@ -195,14 +196,15 @@ class FakturaCreateForm(FlaskForm):
     def validate_komitent_id(self, field):
         """
         Validate that komitent exists and belongs to current user's firma.
-        For devizna fakture, also validate that komitent has at least one devizni račun.
 
         Args:
             field: komitent_id field to validate
 
         Raises:
-            ValidationError: If komitent doesn't exist, doesn't belong to firma,
-                           or doesn't have devizni račun for devizna fakture
+            ValidationError: If komitent doesn't exist or doesn't belong to firma
+
+        Note:
+            MAINT-001: Devizni račun validation moved to service layer to avoid duplication
         """
         if not field.data:
             raise ValidationError('Komitent je obavezan.')
@@ -212,14 +214,6 @@ class FakturaCreateForm(FlaskForm):
 
         if not komitent:
             raise ValidationError('Izabrani komitent ne postoji ili ne pripada vašoj firmi.')
-
-        # For devizna fakture, check that komitent has at least one devizni račun
-        if self.tip_fakture.data == 'devizna':
-            if not komitent.devizni_racuni or len(komitent.devizni_racuni) == 0:
-                raise ValidationError(
-                    'Komitent mora imati bar jedan devizni račun za devizne fakture. '
-                    'Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.'
-                )
 
     def validate_stavke(self, field):
         """
@@ -253,7 +247,7 @@ class FakturaCreateForm(FlaskForm):
 
         Raises:
             ValidationError: If devizna faktura doesn't have valuta or
-                           if non-devizna faktura has valuta
+                            if non-devizna faktura has valuta
         """
         if self.tip_fakture.data == 'devizna':
             if not field.data or field.data == '':

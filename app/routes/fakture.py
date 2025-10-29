@@ -36,42 +36,60 @@ def nova_faktura():
     """
     form = FakturaCreateForm()
 
-    if request.method == 'POST' and form.validate_on_submit():
-        try:
-            # Extract form data
-            data = {
-                'tip_fakture': form.tip_fakture.data,
-                'komitent_id': form.komitent_id.data,
-                'datum_prometa': form.datum_prometa.data,
-                'valuta_placanja': form.valuta_placanja.data,
-                'broj_ugovora': form.broj_ugovora.data,
-                'broj_odluke': form.broj_odluke.data,
-                'broj_narudzbenice': form.broj_narudzbenice.data,
-                'poziv_na_broj': form.poziv_na_broj.data,
-                'model': form.model.data,
-                'stavke': []
-            }
+    if request.method == 'POST':
+        print(f'POST request received')
+        print(f'Form errors before validation: {form.errors}')
 
-            # Extract stavke data
-            for stavka_form in form.stavke:
-                stavka_data = {
-                    'artikal_id': stavka_form.artikal_id.data,
-                    'naziv': stavka_form.naziv.data,
-                    'kolicina': stavka_form.kolicina.data,
-                    'jedinica_mere': stavka_form.jedinica_mere.data,
-                    'cena': stavka_form.cena.data
+        if form.validate_on_submit():
+            print(f'Form validation passed')
+            try:
+                # Extract form data
+                data = {
+                    'tip_fakture': form.tip_fakture.data,
+                    'valuta_fakture': form.valuta_fakture.data,  # For devizna fakture
+                    'srednji_kurs': form.srednji_kurs.data,  # For devizna fakture
+                    'komitent_id': form.komitent_id.data,
+                    'datum_prometa': form.datum_prometa.data,
+                    'valuta_placanja': form.valuta_placanja.data,
+                    'broj_ugovora': form.broj_ugovora.data,
+                    'broj_odluke': form.broj_odluke.data,
+                    'broj_narudzbenice': form.broj_narudzbenice.data,
+                    'poziv_na_broj': form.poziv_na_broj.data,
+                    'model': form.model.data,
+                    'stavke': []
                 }
-                data['stavke'].append(stavka_data)
 
-            # Create faktura using service
-            faktura = create_faktura(data, current_user)
+                # Extract stavke data
+                for stavka_form in form.stavke:
+                    stavka_data = {
+                        'artikal_id': stavka_form.artikal_id.data,
+                        'naziv': stavka_form.naziv.data,
+                        'kolicina': stavka_form.kolicina.data,
+                        'jedinica_mere': stavka_form.jedinica_mere.data,
+                        'cena': stavka_form.cena.data
+                    }
+                    data['stavke'].append(stavka_data)
+                print(f'Form data: {data}')
+                # Create faktura using service
+                faktura = create_faktura(data, current_user)
 
-            flash('Faktura kreirana kao nacrt.', 'success')
-            return redirect(url_for('fakture.detail', faktura_id=faktura.id))
+                flash('Faktura kreirana kao nacrt.', 'success')
+                return redirect(url_for('fakture.detail', faktura_id=faktura.id))
 
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Greška pri kreiranju fakture: {str(e)}', 'danger')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Greška pri kreiranju fakture: {str(e)}', 'danger')
+                print(f'Exception during creation: {str(e)}')
+                # Return form with existing data so user can fix errors
+        else:
+            # Form validation failed
+            print(f'Form validation FAILED')
+            print(f'Form errors: {form.errors}')
+            flash('Forma sadrži greške. Molimo proverite unete podatke.', 'danger')
+            # Display specific errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f'{field}: {error}', 'warning')
 
     # Load komitenti for dropdown (filtered by firma)
     komitenti = filter_by_firma(Komitent.query).all()
