@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}OBVEZNIK{% endblock %}</title>
+    <script>
+        // Flask automatski ubacuje root putanju (npr. "" ili "/obveznik")
+        const BASE_URL = {{ request.script_root | tojson | safe }};
+        console.log('BASE_URL je:', BASE_URL);
+
+    </script>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
@@ -200,8 +206,7 @@
 
         // Load firme from API
         function loadFirme(searchQuery = '') {
-            const basePath = window.location.pathname.includes('/obveznik') ? '/obveznik' : '';
-            const url = `${basePath}/api/admin/firme/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
+            const url = `${BASE_URL}/api/admin/firme/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
 
             fetch(url)
                 .then(response => response.json())
@@ -225,7 +230,7 @@
                 const isActive = selectedFirmaId === firma.id ? 'active fw-semibold' : '';
                 return `
                     <li>
-                        <form method="POST" action="/admin/switch-firma/${firma.id}" style="display: inline; width: 100%;">
+                        <form method="POST" action="${BASE_URL}/admin/switch-firma/${firma.id}" style="display: inline; width: 100%;">
                             <input type="hidden" name="csrf_token" value="${csrfToken}"/>
                             <button type="submit" class="dropdown-item py-2 ${isActive}">
                                 <i class="fa-solid fa-building me-2 ${isActive ? '' : 'text-muted'}"></i>
