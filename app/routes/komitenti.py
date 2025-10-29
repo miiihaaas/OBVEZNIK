@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import asc, desc, or_
 import logging
+import json
 
 security_logger = logging.getLogger('security')
 
@@ -101,6 +102,21 @@ def novi():
                 flash('Greška: Admin mora prvo selektovati firmu (koristi dropdown u navigation bar-u).', 'danger')
                 return render_template('komitenti/novi.html', form=form)
 
+            # Process JSON fields
+            dinarski_racuni = None
+            if form.dinarski_racuni_json.data:
+                try:
+                    dinarski_racuni = json.loads(form.dinarski_racuni_json.data)
+                except json.JSONDecodeError:
+                    dinarski_racuni = None
+
+            devizni_racuni = None
+            if form.devizni_racuni_json.data:
+                try:
+                    devizni_racuni = json.loads(form.devizni_racuni_json.data)
+                except json.JSONDecodeError:
+                    devizni_racuni = None
+
             # Create new Komitent
             komitent = Komitent(
                 firma_id=firma_id,
@@ -114,7 +130,9 @@ def novi():
                 drzava=form.drzava.data,
                 email=form.email.data,
                 kontakt_osoba=form.kontakt_osoba.data or None,
-                napomene=form.napomene.data or None
+                napomene=form.napomene.data or None,
+                dinarski_racuni=dinarski_racuni,
+                devizni_racuni=devizni_racuni
             )
 
             db.session.add(komitent)
@@ -183,6 +201,21 @@ def izmeni(id):
             return render_template('komitenti/izmeni.html', form=form, komitent=komitent)
 
         try:
+            # Process JSON fields
+            dinarski_racuni = None
+            if form.dinarski_racuni_json.data:
+                try:
+                    dinarski_racuni = json.loads(form.dinarski_racuni_json.data)
+                except json.JSONDecodeError:
+                    dinarski_racuni = None
+
+            devizni_racuni = None
+            if form.devizni_racuni_json.data:
+                try:
+                    devizni_racuni = json.loads(form.devizni_racuni_json.data)
+                except json.JSONDecodeError:
+                    devizni_racuni = None
+
             # Update komitent with new data (PIB remains unchanged)
             komitent.naziv = form.naziv.data
             komitent.maticni_broj = form.maticni_broj.data
@@ -194,6 +227,8 @@ def izmeni(id):
             komitent.email = form.email.data
             komitent.kontakt_osoba = form.kontakt_osoba.data or None
             komitent.napomene = form.napomene.data or None
+            komitent.dinarski_racuni = dinarski_racuni
+            komitent.devizni_racuni = devizni_racuni
 
             db.session.commit()
 
@@ -225,6 +260,12 @@ def izmeni(id):
         form.email.data = komitent.email
         form.kontakt_osoba.data = komitent.kontakt_osoba
         form.napomene.data = komitent.napomene
+
+        # Prepopulate JSON fields
+        if komitent.dinarski_racuni:
+            form.dinarski_racuni_json.data = json.dumps(komitent.dinarski_racuni)
+        if komitent.devizni_racuni:
+            form.devizni_racuni_json.data = json.dumps(komitent.devizni_racuni)
 
     return render_template('komitenti/izmeni.html', form=form, komitent=komitent)
 

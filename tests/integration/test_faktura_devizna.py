@@ -45,7 +45,7 @@ def pausalac_user(app):
 
 @pytest.fixture
 def komitent(app, pausalac_user):
-    """Create a komitent with IBAN and SWIFT for foreign currency invoices."""
+    """Create a komitent with devizni računi for foreign currency invoices."""
     komitent = Komitent(
         firma_id=pausalac_user.firma_id,
         pib='987654321',
@@ -57,8 +57,12 @@ def komitent(app, pausalac_user):
         postanski_broj='11000',
         drzava='Srbija',
         email='test@komitent.com',
-        iban='RS35260005601001611379',
-        swift='BEOBBGRXXX'
+        devizni_racuni=[{
+            'banka': 'Test Banka',
+            'iban': 'RS35260005601001611379',
+            'swift': 'BEOBBGRXXX',
+            'valuta': 'EUR'
+        }]
     )
     db.session.add(komitent)
     db.session.commit()
@@ -66,13 +70,13 @@ def komitent(app, pausalac_user):
 
 
 @pytest.fixture
-def komitent_bez_iban_swift(app, pausalac_user):
-    """Create a komitent without IBAN and SWIFT for testing validation."""
+def komitent_bez_deviznih_racuna(app, pausalac_user):
+    """Create a komitent without devizni računi for testing validation."""
     komitent = Komitent(
         firma_id=pausalac_user.firma_id,
         pib='111222333',
         maticni_broj='11122233',
-        naziv='Test Komitent Bez IBAN',
+        naziv='Test Komitent Bez Deviznih Računa',
         adresa='Test Address',
         broj='5',
         mesto='Belgrade',
@@ -303,15 +307,15 @@ class TestDeviznaFaktura:
             assert faktura.ukupan_iznos_rsd == Decimal('1000.00') * Decimal('120.0000')
 
     @patch('app.services.faktura_service.get_kurs')
-    def test_devizna_faktura_requires_komitent_with_iban_swift(self, mock_get_kurs, app, pausalac_user, komitent_bez_iban_swift):
-        """Test that creating devizna faktura fails if komitent doesn't have IBAN and SWIFT."""
+    def test_devizna_faktura_requires_komitent_with_devizni_racun(self, mock_get_kurs, app, pausalac_user, komitent_bez_deviznih_racuna):
+        """Test that creating devizna faktura fails if komitent doesn't have devizni račun."""
         with app.app_context():
             # Mock NBS exchange rate
             mock_get_kurs.return_value = Decimal('117.5432')
 
-            # Invoice data with komitent that lacks IBAN/SWIFT
+            # Invoice data with komitent that lacks devizni računi
             data = {
-                'komitent_id': komitent_bez_iban_swift.id,
+                'komitent_id': komitent_bez_deviznih_racuna.id,
                 'tip_fakture': 'devizna',
                 'valuta_fakture': 'EUR',
                 'datum_prometa': date.today(),
@@ -331,7 +335,7 @@ class TestDeviznaFaktura:
                 create_faktura(data, pausalac_user)
 
             # Assertions
-            assert 'IBAN' in str(exc_info.value) or 'SWIFT' in str(exc_info.value)
+            assert 'devizni račun' in str(exc_info.value).lower()
 
     @patch('app.services.faktura_service.get_kurs')
     def test_devizna_faktura_displays_dual_currency_in_detail_view(self, mock_get_kurs, app, pausalac_user, komitent):

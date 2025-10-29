@@ -49,7 +49,7 @@ def pausalac_with_firma(app):
 
 
 def create_foreign_komitent(firma_id):
-    """Helper function to create a foreign komitent with IBAN and SWIFT."""
+    """Helper function to create a foreign komitent with devizni računi."""
     komitent = Komitent(
         firma_id=firma_id,
         pib='98765432',
@@ -61,8 +61,12 @@ def create_foreign_komitent(firma_id):
         mesto='Berlin',
         drzava='Germany',
         email='contact@foreignclient.com',
-        iban='DE89370400440532013000',
-        swift='COBADEFFXXX'
+        devizni_racuni=[{
+            'banka': 'Test Bank',
+            'iban': 'DE89370400440532013000',
+            'swift': 'COBADEFFXXX',
+            'valuta': 'EUR'
+        }]
     )
     db.session.add(komitent)
     db.session.commit()

@@ -28,9 +28,11 @@ class Komitent(db.Model):
     kontakt_osoba = db.Column(db.String(255), nullable=True)  # Optional contact person
     napomene = db.Column(db.Text, nullable=True)  # Optional notes
 
-    # Banking information (required for foreign currency invoices)
-    iban = db.Column(db.String(34), nullable=True)  # IBAN format for international payments
-    swift = db.Column(db.String(11), nullable=True)  # SWIFT/BIC code
+    # Banking information
+    # Dinarski računi - format: [{'banka': 'Komercijalna', 'racun': '160-12345-67'}]
+    dinarski_racuni = db.Column(db.JSON, nullable=True)
+    # Devizni računi - format: [{'banka': 'Komercijalna', 'iban': 'RS35...', 'swift': 'KOBSRSBG', 'valuta': 'EUR'}]
+    devizni_racuni = db.Column(db.JSON, nullable=True)
 
     # Timestamp
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

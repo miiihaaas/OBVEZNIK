@@ -156,40 +156,39 @@
             </div>
         </div>
 
-        <!-- Banking Info (Required for Foreign Currency Invoices) -->
+        <!-- Dinarski Računi -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                <h5 class="mb-0"><i class="fa-solid fa-university me-2 text-warning"></i> Bankarske Informacije</h5>
+                <h5 class="mb-0"><i class="fa-solid fa-money-bill me-2 text-warning"></i> Dinarski Računi (opciono)</h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="dinarskiRacuniContainer"></div>
+                <button type="button" id="addDinarskiRacun" class="btn btn-outline-primary mt-3">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Dinarski Račun
+                </button>
+            </div>
+        </div>
+
+        <!-- Devizni Računi -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-dollar-sign me-2 text-success"></i> Devizni Računi</h5>
             </div>
             <div class="card-body p-4">
                 <div class="alert alert-info">
                     <i class="fa-solid fa-info-circle me-2"></i>
-                    <strong>Napomena:</strong> IBAN i SWIFT/BIC su obavezni za kreiranje deviznih faktura.
+                    <strong>Napomena:</strong> Bar jedan devizni račun je obavezan za kreiranje deviznih faktura.
                 </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="iban" class="form-label fw-semibold">
-                            <i class="fa-solid fa-credit-card me-1 text-muted"></i> IBAN
-                        </label>
-                        {{ form.iban(class="form-control form-control-lg" ~ (" is-invalid" if form.iban.errors else ""), id="iban", placeholder="RS35260005601001611379") }}
-                        {% if form.iban.errors %}
-                            <div class="invalid-feedback">{{ form.iban.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">IBAN broj računa (obavezno za devizne fakture).</small>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="swift" class="form-label fw-semibold">
-                            <i class="fa-solid fa-globe me-1 text-muted"></i> SWIFT/BIC
-                        </label>
-                        {{ form.swift(class="form-control form-control-lg" ~ (" is-invalid" if form.swift.errors else ""), id="swift", placeholder="BEOBBGRXXX") }}
-                        {% if form.swift.errors %}
-                            <div class="invalid-feedback">{{ form.swift.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">SWIFT/BIC kod banke (obavezno za devizne fakture).</small>
-                    </div>
-                </div>
+                <div id="devizniRacuniContainer"></div>
+                <button type="button" id="addDevizniRacun" class="btn btn-outline-success mt-3">
+                    <i class="fa-solid fa-plus me-2"></i> Dodaj Devizni Račun
+                </button>
             </div>
         </div>
+
+        <!-- Hidden fields for JSON data -->
+        {{ form.dinarski_racuni_json }}
+        {{ form.devizni_racuni_json }}
 
         <!-- Submit Buttons -->
         <div class="card border-0 shadow-sm">
@@ -206,4 +205,144 @@
         </div>
     </form>
 </div>
+
+<script>
+// Dynamic Dinarski Računi Management
+let dinarskiRacuni = [];
+const dinarskiContainer = document.getElementById('dinarskiRacuniContainer');
+
+function renderDinarskiRacuni() {
+    dinarskiContainer.innerHTML = '';
+    dinarskiRacuni.forEach((racun, index) => {
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.innerHTML = `
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" placeholder="Naziv banke" value="${racun.banka}" onchange="updateDinarskiRacun(${index}, 'banka', this.value)">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" placeholder="Broj računa (###-###########-##)" value="${racun.racun}" onchange="updateDinarskiRacun(${index}, 'racun', this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger w-100" onclick="removeDinarskiRacun(${index})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        dinarskiContainer.appendChild(div);
+    });
+    document.getElementById('dinarski_racuni_json').value = JSON.stringify(dinarskiRacuni);
+}
+
+function addDinarskiRacun() {
+    dinarskiRacuni.push({ banka: '', racun: '' });
+    renderDinarskiRacuni();
+}
+
+function removeDinarskiRacun(index) {
+    dinarskiRacuni.splice(index, 1);
+    renderDinarskiRacuni();
+}
+
+function updateDinarskiRacun(index, field, value) {
+    dinarskiRacuni[index][field] = value;
+    document.getElementById('dinarski_racuni_json').value = JSON.stringify(dinarskiRacuni);
+}
+
+document.getElementById('addDinarskiRacun').addEventListener('click', addDinarskiRacun);
+
+// Dynamic Devizni Računi Management
+let devizniRacuni = [];
+const devizniContainer = document.getElementById('devizniRacuniContainer');
+
+function renderDevizniRacuni() {
+    devizniContainer.innerHTML = '';
+    devizniRacuni.forEach((racun, index) => {
+        const div = document.createElement('div');
+        div.className = 'card mb-2';
+        div.innerHTML = `
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="Naziv banke" value="${racun.banka}" onchange="updateDevizniRacun(${index}, 'banka', this.value)">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" placeholder="IBAN" value="${racun.iban}" onchange="updateDevizniRacun(${index}, 'iban', this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" placeholder="SWIFT" value="${racun.swift}" onchange="updateDevizniRacun(${index}, 'swift', this.value)">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" onchange="updateDevizniRacun(${index}, 'valuta', this.value)">
+                            <option value="EUR" ${racun.valuta === 'EUR' ? 'selected' : ''}>EUR</option>
+                            <option value="USD" ${racun.valuta === 'USD' ? 'selected' : ''}>USD</option>
+                            <option value="GBP" ${racun.valuta === 'GBP' ? 'selected' : ''}>GBP</option>
+                            <option value="CHF" ${racun.valuta === 'CHF' ? 'selected' : ''}>CHF</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger w-100" onclick="removeDevizniRacun(${index})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        devizniContainer.appendChild(div);
+    });
+    document.getElementById('devizni_racuni_json').value = JSON.stringify(devizniRacuni);
+}
+
+function addDevizniRacun() {
+    devizniRacuni.push({ banka: '', iban: '', swift: '', valuta: 'EUR' });
+    renderDevizniRacuni();
+}
+
+function removeDevizniRacun(index) {
+    devizniRacuni.splice(index, 1);
+    renderDevizniRacuni();
+}
+
+function updateDevizniRacun(index, field, value) {
+    devizniRacuni[index][field] = value;
+    document.getElementById('devizni_racuni_json').value = JSON.stringify(devizniRacuni);
+}
+
+document.getElementById('addDevizniRacun').addEventListener('click', addDevizniRacun);
+
+// Prepopulate existing data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Load existing dinarski računi
+    const dinarskiJsonField = document.getElementById('dinarski_racuni_json');
+    if (dinarskiJsonField && dinarskiJsonField.value) {
+        try {
+            const existingDinarski = JSON.parse(dinarskiJsonField.value);
+            if (Array.isArray(existingDinarski) && existingDinarski.length > 0) {
+                dinarskiRacuni = existingDinarski;
+                renderDinarskiRacuni();
+            }
+        } catch (e) {
+            console.error('Error parsing dinarski računi:', e);
+        }
+    }
+
+    // Load existing devizni računi
+    const devizniJsonField = document.getElementById('devizni_racuni_json');
+    if (devizniJsonField && devizniJsonField.value) {
+        try {
+            const existingDevizni = JSON.parse(devizniJsonField.value);
+            if (Array.isArray(existingDevizni) && existingDevizni.length > 0) {
+                devizniRacuni = existingDevizni;
+                renderDevizniRacuni();
+            }
+        } catch (e) {
+            console.error('Error parsing devizni računi:', e);
+        }
+    }
+});
+</script>
 {% endblock %}

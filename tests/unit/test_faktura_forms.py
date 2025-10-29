@@ -282,7 +282,7 @@ class TestFakturaCreateForm:
             with app.test_request_context():
                 login_user(pausalac_user)
 
-                # Create komitent with IBAN and SWIFT
+                # Create komitent with devizni računi
                 komitent = Komitent(
                     firma_id=pausalac_user.firma_id,
                     pib='12345678',
@@ -294,8 +294,12 @@ class TestFakturaCreateForm:
                     mesto='Berlin',
                     drzava='Germany',
                     email='test@foreign.com',
-                    iban='DE89370400440532013000',
-                    swift='COBADEFFXXX'
+                    devizni_racuni=[{
+                        'banka': 'Test Bank',
+                        'iban': 'DE89370400440532013000',
+                        'swift': 'COBADEFFXXX',
+                        'valuta': 'EUR'
+                    }]
                 )
                 db.session.add(komitent)
                 db.session.commit()
@@ -335,8 +339,12 @@ class TestFakturaCreateForm:
                     mesto='Berlin',
                     drzava='Germany',
                     email='test@foreign.com',
-                    iban='DE89370400440532013000',
-                    swift='COBADEFFXXX'
+                    devizni_racuni=[{
+                        'banka': 'Test Bank',
+                        'iban': 'DE89370400440532013000',
+                        'swift': 'COBADEFFXXX',
+                        'valuta': 'EUR'
+                    }]
                 )
                 db.session.add(komitent)
                 db.session.commit()
@@ -359,13 +367,13 @@ class TestFakturaCreateForm:
                 assert not form.validate()
                 assert 'srednji_kurs' in form.errors
 
-    def test_devizna_faktura_requires_komitent_iban_swift(self, app, pausalac_user):
-        """Test that devizna faktura requires komitent with IBAN and SWIFT."""
+    def test_devizna_faktura_requires_komitent_with_devizni_racun(self, app, pausalac_user):
+        """Test that devizna faktura requires komitent with devizni račun."""
         with app.app_context():
             with app.test_request_context():
                 login_user(pausalac_user)
 
-                # Create komitent WITHOUT IBAN and SWIFT
+                # Create komitent WITHOUT devizni računi
                 komitent = Komitent(
                     firma_id=pausalac_user.firma_id,
                     pib='12345678',
@@ -377,12 +385,12 @@ class TestFakturaCreateForm:
                     mesto='Beograd',
                     drzava='Srbija',
                     email='test@domestic.rs'
-                    # No IBAN, no SWIFT
+                    # No devizni_racuni
                 )
                 db.session.add(komitent)
                 db.session.commit()
 
-                # Test devizna faktura with komitent without IBAN/SWIFT
+                # Test devizna faktura with komitent without devizni računi
                 form = FakturaCreateForm(
                     tip_fakture='devizna',
                     komitent_id=komitent.id,

@@ -310,8 +310,8 @@ class TestKomitentModel:
             assert firma1.komitenti[0].naziv == 'Komitent 1'
             assert firma2.komitenti[0].naziv == 'Komitent 2'
 
-    def test_komitent_with_iban_and_swift(self, app):
-        """Test Komitent can be created with IBAN and SWIFT fields."""
+    def test_komitent_with_devizni_racuni(self, app):
+        """Test Komitent can be created with devizni računi."""
         with app.app_context():
             firma = PausalnFirma(
                 pib='12345678',
@@ -340,18 +340,25 @@ class TestKomitentModel:
                 mesto='Berlin',
                 drzava='Germany',
                 email='contact@foreignkomitent.com',
-                iban='DE89370400440532013000',
-                swift='COBADEFFXXX'
+                devizni_racuni=[{
+                    'banka': 'Deutsche Bank',
+                    'iban': 'DE89370400440532013000',
+                    'swift': 'COBADEFFXXX',
+                    'valuta': 'EUR'
+                }]
             )
             db.session.add(komitent)
             db.session.commit()
 
             assert komitent.id is not None
-            assert komitent.iban == 'DE89370400440532013000'
-            assert komitent.swift == 'COBADEFFXXX'
+            assert komitent.devizni_racuni is not None
+            assert len(komitent.devizni_racuni) == 1
+            assert komitent.devizni_racuni[0]['iban'] == 'DE89370400440532013000'
+            assert komitent.devizni_racuni[0]['swift'] == 'COBADEFFXXX'
+            assert komitent.devizni_racuni[0]['valuta'] == 'EUR'
 
-    def test_komitent_iban_and_swift_optional_for_domestic(self, app):
-        """Test IBAN and SWIFT are optional for domestic komitenti."""
+    def test_komitent_devizni_racuni_optional_for_domestic(self, app):
+        """Test devizni računi are optional for domestic komitenti."""
         with app.app_context():
             firma = PausalnFirma(
                 pib='12345678',
@@ -380,14 +387,13 @@ class TestKomitentModel:
                 mesto='Novi Sad',
                 drzava='Srbija',
                 email='kontakt@domestic.rs'
-                # iban and swift not provided
+                # devizni_racuni not provided
             )
             db.session.add(komitent)
             db.session.commit()
 
             assert komitent.id is not None
-            assert komitent.iban is None
-            assert komitent.swift is None
+            assert komitent.devizni_racuni is None
 
 
 class TestArtikalModel:

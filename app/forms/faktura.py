@@ -195,14 +195,14 @@ class FakturaCreateForm(FlaskForm):
     def validate_komitent_id(self, field):
         """
         Validate that komitent exists and belongs to current user's firma.
-        For devizna fakture, also validate that komitent has IBAN and SWIFT.
+        For devizna fakture, also validate that komitent has at least one devizni račun.
 
         Args:
             field: komitent_id field to validate
 
         Raises:
             ValidationError: If komitent doesn't exist, doesn't belong to firma,
-                           or doesn't have IBAN/SWIFT for devizna fakture
+                           or doesn't have devizni račun for devizna fakture
         """
         if not field.data:
             raise ValidationError('Komitent je obavezan.')
@@ -213,11 +213,11 @@ class FakturaCreateForm(FlaskForm):
         if not komitent:
             raise ValidationError('Izabrani komitent ne postoji ili ne pripada vašoj firmi.')
 
-        # For devizna fakture, check that komitent has IBAN and SWIFT
+        # For devizna fakture, check that komitent has at least one devizni račun
         if self.tip_fakture.data == 'devizna':
-            if not komitent.iban or not komitent.swift:
+            if not komitent.devizni_racuni or len(komitent.devizni_racuni) == 0:
                 raise ValidationError(
-                    'Komitent mora imati IBAN i SWIFT kod za devizne fakture. '
+                    'Komitent mora imati bar jedan devizni račun za devizne fakture. '
                     'Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.'
                 )
 

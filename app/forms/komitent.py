@@ -1,10 +1,49 @@
 """Forms for Komitent Management (CRUD)."""
 from flask_wtf import FlaskForm
-from wtforms import StringField, HiddenField, TextAreaField
+from wtforms import StringField, HiddenField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Email, ValidationError, Length, Regexp, Optional
 from app.models.komitent import Komitent
 from flask_login import current_user
 import re
+
+
+class DinarskiRacunForm(FlaskForm):
+    """Sub-form for dinarski račun (bank account)."""
+    banka = StringField(
+        'Banka',
+        validators=[DataRequired(message='Banka je obavezna.')],
+        render_kw={'class': 'form-control', 'placeholder': 'Naziv banke'}
+    )
+    racun = StringField(
+        'Broj računa',
+        validators=[DataRequired(message='Broj računa je obavezan.')],
+        render_kw={'class': 'form-control', 'placeholder': '###-###########-##'}
+    )
+
+
+class DevizniRacunForm(FlaskForm):
+    """Sub-form for devizni račun (foreign currency account)."""
+    banka = StringField(
+        'Banka',
+        validators=[Optional()],
+        render_kw={'class': 'form-control', 'placeholder': 'Naziv banke'}
+    )
+    iban = StringField(
+        'IBAN',
+        validators=[Optional()],
+        render_kw={'class': 'form-control', 'placeholder': 'RS35260005601001611379'}
+    )
+    swift = StringField(
+        'SWIFT',
+        validators=[Optional()],
+        render_kw={'class': 'form-control', 'placeholder': 'BEOBBGRXXX'}
+    )
+    valuta = SelectField(
+        'Valuta',
+        choices=[('EUR', 'EUR'), ('USD', 'USD'), ('GBP', 'GBP'), ('CHF', 'CHF')],
+        validators=[Optional()],
+        render_kw={'class': 'form-control'}
+    )
 
 
 def validate_email_format(form, field):
@@ -115,24 +154,11 @@ class KomitentCreateForm(FlaskForm):
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
     )
 
-    iban = StringField(
-        'IBAN',
-        validators=[
-            Optional(),
-            Length(max=34, message='IBAN može imati maksimalno 34 karaktera.'),
-            Regexp(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]+$', message='IBAN mora biti u formatu: 2 slova + 2 broja + alfanumerički.')
-        ],
-        render_kw={'class': 'form-control', 'placeholder': 'RS35260005601001611379 (obavezno za devizne fakture)'}
-    )
+    # Dinarski računi (JSON list)
+    dinarski_racuni_json = HiddenField('Dinarski računi')
 
-    swift = StringField(
-        'SWIFT/BIC',
-        validators=[
-            Optional(),
-            Length(max=11, message='SWIFT/BIC može imati maksimalno 11 karaktera.')
-        ],
-        render_kw={'class': 'form-control', 'placeholder': 'BEOBBGRXXX (obavezno za devizne fakture)'}
-    )
+    # Devizni računi (JSON list)
+    devizni_racuni_json = HiddenField('Devizni računi')
 
     kontakt_osoba = StringField(
         'Kontakt Osoba',
@@ -261,24 +287,11 @@ class KomitentEditForm(FlaskForm):
         render_kw={'class': 'form-control', 'placeholder': 'komitent@primer.rs'}
     )
 
-    iban = StringField(
-        'IBAN',
-        validators=[
-            Optional(),
-            Length(max=34, message='IBAN može imati maksimalno 34 karaktera.'),
-            Regexp(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]+$', message='IBAN mora biti u formatu: 2 slova + 2 broja + alfanumerički.')
-        ],
-        render_kw={'class': 'form-control', 'placeholder': 'RS35260005601001611379 (obavezno za devizne fakture)'}
-    )
+    # Dinarski računi (JSON list)
+    dinarski_racuni_json = HiddenField('Dinarski računi')
 
-    swift = StringField(
-        'SWIFT/BIC',
-        validators=[
-            Optional(),
-            Length(max=11, message='SWIFT/BIC može imati maksimalno 11 karaktera.')
-        ],
-        render_kw={'class': 'form-control', 'placeholder': 'BEOBBGRXXX (obavezno za devizne fakture)'}
-    )
+    # Devizni računi (JSON list)
+    devizni_racuni_json = HiddenField('Devizni računi')
 
     kontakt_osoba = StringField(
         'Kontakt Osoba',
