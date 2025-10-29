@@ -96,6 +96,17 @@ def create_faktura(data, user):
     jezik = 'sr'  # Default to Serbian
 
     if tip_fakture == 'devizna' and valuta_fakture != 'RSD':
+        # Validate komitent has IBAN and SWIFT for foreign currency invoices
+        from app.models.komitent import Komitent
+        komitent = db.session.get(Komitent, data.get('komitent_id'))
+        if not komitent:
+            raise ValueError("Komitent nije pronađen.")
+        if not komitent.iban or not komitent.swift:
+            raise ValueError(
+                "Komitent mora imati IBAN i SWIFT kod za devizne fakture. "
+                "Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture."
+            )
+
         datum_prometa = data.get('datum_prometa')
 
         # Check if manual srednji_kurs is provided in form (user override)

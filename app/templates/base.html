@@ -200,7 +200,8 @@
 
         // Load firme from API
         function loadFirme(searchQuery = '') {
-            const url = `/api/admin/firme/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
+            const basePath = window.location.pathname.includes('/obveznik') ? '/obveznik' : '';
+            const url = `${basePath}/api/admin/firme/search?q=${encodeURIComponent(searchQuery)}&limit=50`;
 
             fetch(url)
                 .then(response => response.json())

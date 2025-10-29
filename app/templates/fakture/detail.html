@@ -17,14 +17,14 @@
             {% if faktura.tip_fakture == 'devizna' %}
             <!-- Foreign Currency Invoice Info -->
             <p><strong>Valuta fakture:</strong> {{ faktura.valuta_fakture }}</p>
-            <p><strong>Srednji kurs NBS:</strong> {{ "%.4f"|format(faktura.srednji_kurs) }} RSD</p>
+            <p><strong>Srednji kurs NBS:</strong> {{ "%.4f"|format(faktura.srednji_kurs) }}</p>
             <p><strong>Ukupan iznos:</strong>
                 <span class="text-primary fw-bold">{{ "%.2f"|format(faktura.ukupan_iznos_originalna_valuta) }} {{ faktura.valuta_fakture }}</span>
-                <span class="text-muted">(RSD: {{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }})</span>
+                <span class="text-muted">(RSD: {{ "%.2f"|format(faktura.ukupan_iznos_rsd) }})</span>
             </p>
             {% else %}
             <!-- Domestic Invoice Info (RSD only) -->
-            <p><strong>Ukupan iznos:</strong> {{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD</p>
+            <p><strong>Ukupan iznos:</strong> {{ "%.2f"|format(faktura.ukupan_iznos_rsd) }} RSD</p>
             {% endif %}
         </div>
     </div>
@@ -56,9 +56,9 @@
                 <td>
                     {% if faktura.tip_fakture == 'devizna' %}
                         <strong>{{ "%.2f"|format(stavka.ukupno) }} {{ faktura.valuta_fakture }}</strong>
-                        <br><small class="text-muted">({{ "{:,.2f}"|format(stavka.ukupno * faktura.srednji_kurs) }} RSD)</small>
+                        <br><small class="text-muted">({{ "%.2f"|format(stavka.ukupno * faktura.srednji_kurs) }} RSD)</small>
                     {% else %}
-                        <strong>{{ "{:,.2f}"|format(stavka.ukupno) }} RSD</strong>
+                        <strong>{{ "%.2f"|format(stavka.ukupno) }} RSD</strong>
                     {% endif %}
                 </td>
             </tr>
@@ -70,9 +70,9 @@
                 <td>
                     {% if faktura.tip_fakture == 'devizna' %}
                         <strong class="text-primary">{{ "%.2f"|format(faktura.ukupan_iznos_originalna_valuta) }} {{ faktura.valuta_fakture }}</strong>
-                        <br><small class="text-muted">({{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD)</small>
+                        <br><small class="text-muted">({{ "%.2f"|format(faktura.ukupan_iznos_rsd) }} RSD)</small>
                     {% else %}
-                        <strong class="text-success">{{ "{:,.2f}"|format(faktura.ukupan_iznos_rsd) }} RSD</strong>
+                        <strong class="text-success">{{ "%.2f"|format(faktura.ukupan_iznos_rsd) }} RSD</strong>
                     {% endif %}
                 </td>
             </tr>

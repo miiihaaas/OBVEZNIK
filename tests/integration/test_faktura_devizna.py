@@ -45,7 +45,7 @@ def pausalac_user(app):
 
 @pytest.fixture
 def komitent(app, pausalac_user):
-    """Create a komitent for testing."""
+    """Create a komitent with IBAN and SWIFT for foreign currency invoices."""
     komitent = Komitent(
         firma_id=pausalac_user.firma_id,
         pib='987654321',
@@ -56,7 +56,29 @@ def komitent(app, pausalac_user):
         mesto='Belgrade',
         postanski_broj='11000',
         drzava='Srbija',
-        email='test@komitent.com'
+        email='test@komitent.com',
+        iban='RS35260005601001611379',
+        swift='BEOBBGRXXX'
+    )
+    db.session.add(komitent)
+    db.session.commit()
+    return komitent
+
+
+@pytest.fixture
+def komitent_bez_iban_swift(app, pausalac_user):
+    """Create a komitent without IBAN and SWIFT for testing validation."""
+    komitent = Komitent(
+        firma_id=pausalac_user.firma_id,
+        pib='111222333',
+        maticni_broj='11122233',
+        naziv='Test Komitent Bez IBAN',
+        adresa='Test Address',
+        broj='5',
+        mesto='Belgrade',
+        postanski_broj='11000',
+        drzava='Srbija',
+        email='test2@komitent.com'
     )
     db.session.add(komitent)
     db.session.commit()
@@ -76,7 +98,7 @@ class TestDeviznaFaktura:
             # Invoice data
             data = {
                 'komitent_id': komitent.id,
-                'tip_fakture': 'standardna',
+                'tip_fakture': 'devizna',  # Must be 'devizna' for foreign currency
                 'valuta_fakture': 'EUR',  # Foreign currency
                 'datum_prometa': date.today(),
                 'valuta_placanja': 30,
@@ -113,11 +135,11 @@ class TestDeviznaFaktura:
             # Invoice data with manual kurs override
             data = {
                 'komitent_id': komitent.id,
-                'tip_fakture': 'standardna',
+                'tip_fakture': 'devizna',  # Must be 'devizna' for foreign currency
                 'valuta_fakture': 'EUR',
                 'datum_prometa': date.today(),
                 'valuta_placanja': 30,
-                'srednji_kurs_override': '118.0000',  # Manual override
+                'srednji_kurs': '118.0000',  # Manual override (not srednji_kurs_override)
                 'stavke': [
                     {
                         'naziv': 'Test Product',
@@ -148,7 +170,7 @@ class TestDeviznaFaktura:
             # Invoice data WITHOUT manual kurs override
             data = {
                 'komitent_id': komitent.id,
-                'tip_fakture': 'standardna',
+                'tip_fakture': 'devizna',  # Must be 'devizna' for foreign currency
                 'valuta_fakture': 'USD',
                 'datum_prometa': date.today(),
                 'valuta_placanja': 30,
@@ -214,7 +236,7 @@ class TestDeviznaFaktura:
             # Invoice data with multiple stavke
             data = {
                 'komitent_id': komitent.id,
-                'tip_fakture': 'standardna',
+                'tip_fakture': 'devizna',  # Must be 'devizna' for foreign currency
                 'valuta_fakture': 'GBP',
                 'datum_prometa': date.today(),
                 'valuta_placanja': 30,
@@ -258,11 +280,11 @@ class TestDeviznaFaktura:
             # Invoice data with manual override (should use this instead of NBS)
             data = {
                 'komitent_id': komitent.id,
-                'tip_fakture': 'standardna',
+                'tip_fakture': 'devizna',  # Must be 'devizna' for foreign currency
                 'valuta_fakture': 'EUR',
                 'datum_prometa': date.today(),
                 'valuta_placanja': 30,
-                'srednji_kurs_override': '120.0000',  # Manual override
+                'srednji_kurs': '120.0000',  # Manual override (not srednji_kurs_override)
                 'stavke': [
                     {
                         'naziv': 'Test Product',
@@ -279,3 +301,111 @@ class TestDeviznaFaktura:
             # Assertions - should use manual override, not NBS rate
             assert faktura.srednji_kurs == Decimal('120.0000')  # Not 117.5432
             assert faktura.ukupan_iznos_rsd == Decimal('1000.00') * Decimal('120.0000')
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_devizna_faktura_requires_komitent_with_iban_swift(self, mock_get_kurs, app, pausalac_user, komitent_bez_iban_swift):
+        """Test that creating devizna faktura fails if komitent doesn't have IBAN and SWIFT."""
+        with app.app_context():
+            # Mock NBS exchange rate
+            mock_get_kurs.return_value = Decimal('117.5432')
+
+            # Invoice data with komitent that lacks IBAN/SWIFT
+            data = {
+                'komitent_id': komitent_bez_iban_swift.id,
+                'tip_fakture': 'devizna',
+                'valuta_fakture': 'EUR',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 1,
+                        'jedinica_mere': 'kom',
+                        'cena': 100.00
+                    }
+                ]
+            }
+
+            # Attempt to create invoice - should raise ValueError
+            with pytest.raises(ValueError) as exc_info:
+                create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert 'IBAN' in str(exc_info.value) or 'SWIFT' in str(exc_info.value)
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_devizna_faktura_displays_dual_currency_in_detail_view(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test that devizna faktura has dual currency data for display."""
+        with app.app_context():
+            # Mock NBS exchange rate
+            mock_get_kurs.return_value = Decimal('117.5432')
+
+            # Invoice data
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'devizna',
+                'valuta_fakture': 'EUR',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Test Product',
+                        'kolicina': 10,
+                        'jedinica_mere': 'kom',
+                        'cena': 100.00  # 100 EUR
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+            db.session.commit()
+
+            # Assertions - verify dual currency data is stored
+            assert faktura.valuta_fakture == 'EUR'
+            assert faktura.srednji_kurs == Decimal('117.5432')
+            assert faktura.ukupan_iznos_originalna_valuta == Decimal('1000.00')
+            # RSD equivalent: 1000 * 117.5432 = 117543.20
+            expected_rsd = (Decimal('1000.00') * Decimal('117.5432')).quantize(Decimal('0.01'))
+            assert faktura.ukupan_iznos_rsd == expected_rsd
+            assert faktura.jezik == 'en'  # Should be English for foreign currency
+
+    @patch('app.services.faktura_service.get_kurs')
+    def test_dual_currency_display_in_ukupan_iznos(self, mock_get_kurs, app, pausalac_user, komitent):
+        """Test that ukupan iznos shows both currencies correctly."""
+        with app.app_context():
+            # Mock NBS exchange rate for USD
+            mock_get_kurs.return_value = Decimal('108.2345')
+
+            # Invoice data
+            data = {
+                'komitent_id': komitent.id,
+                'tip_fakture': 'devizna',
+                'valuta_fakture': 'USD',
+                'datum_prometa': date.today(),
+                'valuta_placanja': 30,
+                'stavke': [
+                    {
+                        'naziv': 'Consulting Services',
+                        'kolicina': 20,
+                        'jedinica_mere': 'h',
+                        'cena': 50.00  # 50 USD per hour
+                    }
+                ]
+            }
+
+            # Create invoice
+            faktura = create_faktura(data, pausalac_user)
+
+            # Assertions
+            assert faktura.valuta_fakture == 'USD'
+            assert faktura.ukupan_iznos_originalna_valuta == Decimal('1000.00')  # 20 * 50 USD
+            # RSD calculation: 1000 * 108.2345 = 108234.50
+            expected_rsd = (Decimal('1000.00') * Decimal('108.2345')).quantize(Decimal('0.01'))
+            assert faktura.ukupan_iznos_rsd == expected_rsd
+            assert faktura.srednji_kurs == Decimal('108.2345')
+
+            # Verify both amounts are stored correctly
+            assert faktura.ukupan_iznos_originalna_valuta is not None
+            assert faktura.ukupan_iznos_rsd is not None
+            assert faktura.ukupan_iznos_rsd > faktura.ukupan_iznos_originalna_valuta  # RSD should be larger
