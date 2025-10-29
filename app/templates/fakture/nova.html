@@ -58,7 +58,7 @@
             <div class="card-body p-4">
                 <div class="alert alert-info">
                     <i class="fa-solid fa-info-circle me-2"></i>
-                    <strong>Napomena:</strong> Izabrani komitent mora imati IBAN i SWIFT kod za devizne fakture.
+                    <strong>Napomena:</strong> Izabrani komitent mora imati bar jedan devizni račun za devizne fakture.
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -247,8 +247,17 @@
                     <div class="col-md-4">
                         <div class="card bg-light">
                             <div class="card-body">
-                                <h5 class="text-end mb-2">Ukupan Iznos:</h5>
-                                <h3 class="text-end mb-0" id="ukupan_iznos">0.00 RSD</h3>
+                                <!-- Iznos u originalnoj valuti (for devizna faktura) -->
+                                <div id="ukupan_iznos_originalna_container" style="display: none;">
+                                    <h5 class="text-end mb-2">Ukupan Iznos:</h5>
+                                    <h3 class="text-end mb-2 text-primary" id="ukupan_iznos_originalna">0.00</h3>
+                                    <p class="text-end text-muted mb-2">
+                                        <small>Kurs: <span id="display_kurs">1.0000</span></small>
+                                    </p>
+                                </div>
+                                <!-- Iznos u RSD (always shown) -->
+                                <h5 class="text-end mb-2" id="ukupan_iznos_label">Ukupan Iznos:</h5>
+                                <h3 class="text-end mb-0" id="ukupan_iznos_rsd">0.00 RSD</h3>
                             </div>
                         </div>
                     </div>
@@ -313,6 +322,9 @@
             <div class="row mt-2">
                 <div class="col-md-12 text-end">
                     <strong>Ukupno: <span class="stavka-ukupno">0.00</span> RSD</strong>
+                    <span class="stavka-ukupno-foreign ms-3 text-muted" style="display: none;">
+                        (<span class="stavka-ukupno-foreign-value">0.00</span> <span class="stavka-ukupno-foreign-currency">EUR</span>)
+                    </span>
                 </div>
             </div>
         </div>

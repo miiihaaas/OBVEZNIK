@@ -61,7 +61,7 @@ function initializeKomitentAutocomplete() {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`../api/komitenti/search?q=${encodeURIComponent(query)}`)
+            fetch(`/api/komitenti/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     renderKomitentResults(data);
@@ -276,7 +276,7 @@ function initializeArtikalAutocomplete(stavkaRow) {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`../api/artikli/search?q=${encodeURIComponent(query)}`)
+            fetch(`/api/artikli/search?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     renderArtikalResults(data, resultsDiv, searchInput, artikalIdInput, nazivInput, kolicinaInput, jedinicaInput, cenaInput);
@@ -355,14 +355,41 @@ function initializeStavkaCalculation(stavkaRow) {
 }
 
 /**
- * Calculate stavka ukupno
+ * Calculate stavka ukupno (in RSD and foreign currency if applicable)
  */
 function calculateStavkaUkupno(stavkaRow) {
     const kolicina = parseFloat(stavkaRow.querySelector('.stavka-kolicina').value) || 0;
     const cena = parseFloat(stavkaRow.querySelector('.stavka-cena').value) || 0;
-    const ukupno = kolicina * cena;
+    const ukupnoRSD = kolicina * cena;
 
-    stavkaRow.querySelector('.stavka-ukupno').textContent = ukupno.toFixed(2);
+    // Always show RSD amount
+    stavkaRow.querySelector('.stavka-ukupno').textContent = ukupnoRSD.toFixed(2);
+
+    // Show foreign currency amount if devizna faktura
+    const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+    if (tipFakture === 'devizna') {
+        const valuta = document.getElementById('valuta_fakture').value || 'EUR';
+        const srednjiKurs = parseFloat(document.getElementById('srednji_kurs').value || 0);
+
+        const foreignContainer = stavkaRow.querySelector('.stavka-ukupno-foreign');
+        const foreignValue = stavkaRow.querySelector('.stavka-ukupno-foreign-value');
+        const foreignCurrency = stavkaRow.querySelector('.stavka-ukupno-foreign-currency');
+
+        if (srednjiKurs > 0) {
+            const ukupnoForeign = ukupnoRSD / srednjiKurs;
+            foreignValue.textContent = ukupnoForeign.toFixed(2);
+            foreignCurrency.textContent = valuta;
+            foreignContainer.style.display = 'inline';
+        } else {
+            foreignContainer.style.display = 'none';
+        }
+    } else {
+        // Hide foreign currency for standard invoices
+        const foreignContainer = stavkaRow.querySelector('.stavka-ukupno-foreign');
+        if (foreignContainer) {
+            foreignContainer.style.display = 'none';
+        }
+    }
 
     // Update total
     calculateUkupanIznos();
@@ -370,16 +397,51 @@ function calculateStavkaUkupno(stavkaRow) {
 
 /**
  * Calculate ukupan iznos fakture (sum of all stavke)
+ * Handles both standard (RSD) and devizna (dual-currency) invoices
+ *
+ * LOGIC: Prices are ALWAYS entered in RSD
+ * - For standard invoices: show total in RSD only
+ * - For foreign currency invoices: show total in RSD, then divide by exchange rate to get foreign amount
  */
 function calculateUkupanIznos() {
-    let total = 0;
+    const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+    let totalRSD = 0;
 
+    // Sum all stavke (always in RSD)
     document.querySelectorAll('.stavka-row').forEach(stavka => {
         const ukupno = parseFloat(stavka.querySelector('.stavka-ukupno').textContent) || 0;
-        total += ukupno;
+        totalRSD += ukupno;
     });
 
-    document.getElementById('ukupan_iznos').textContent = total.toFixed(2) + ' RSD';
+    if (tipFakture === 'devizna') {
+        // Devizna faktura - show dual currency
+        const valuta = document.getElementById('valuta_fakture').value || 'EUR';
+        const srednjiKurs = parseFloat(document.getElementById('srednji_kurs').value || 0);
+
+        if (srednjiKurs > 0) {
+            // Calculate foreign currency amount: RSD / kurs = foreign
+            const totalForeign = totalRSD / srednjiKurs;
+
+            // Show foreign currency amount (primary display for devizna)
+            document.getElementById('ukupan_iznos_originalna_container').style.display = 'block';
+            document.getElementById('ukupan_iznos_originalna').textContent = totalForeign.toFixed(2) + ' ' + valuta;
+            document.getElementById('display_kurs').textContent = srednjiKurs.toFixed(4);
+            document.getElementById('ukupan_iznos_label').textContent = 'Iznos u RSD:';
+
+            // Show RSD equivalent (secondary display)
+            document.getElementById('ukupan_iznos_rsd').textContent = totalRSD.toFixed(2) + ' RSD';
+        } else {
+            // No kurs available - just show RSD
+            document.getElementById('ukupan_iznos_originalna_container').style.display = 'none';
+            document.getElementById('ukupan_iznos_label').textContent = 'Ukupan Iznos:';
+            document.getElementById('ukupan_iznos_rsd').textContent = totalRSD.toFixed(2) + ' RSD';
+        }
+    } else {
+        // Standardna faktura - show only RSD
+        document.getElementById('ukupan_iznos_originalna_container').style.display = 'none';
+        document.getElementById('ukupan_iznos_label').textContent = 'Ukupan Iznos:';
+        document.getElementById('ukupan_iznos_rsd').textContent = totalRSD.toFixed(2) + ' RSD';
+    }
 }
 
 /**
@@ -474,7 +536,11 @@ function initializeDeviznaFaktura() {
     // Event listener on valuta dropdown
     const valutaSelect = document.getElementById('valuta_fakture');
     if (valutaSelect) {
-        valutaSelect.addEventListener('change', fetchNBSKurs);
+        valutaSelect.addEventListener('change', function() {
+            fetchNBSKurs();
+            // Update currency display in all stavke
+            recalculateUkupanIznos();
+        });
     }
 
     // Event listener on datum_prometa (refresh kurs when date changes)
@@ -521,6 +587,9 @@ function handleTipFaktureChange(event) {
         document.getElementById('valuta_fakture').value = '';
         document.getElementById('srednji_kurs').value = '';
     }
+
+    // Recalculate and update display (all stavke and total)
+    recalculateUkupanIznos();
 }
 
 /**
@@ -546,7 +615,7 @@ function fetchNBSKurs() {
     document.getElementById('kurs_error').style.display = 'none';
 
     // AJAX call to NBS kursna API
-    fetch(`../api/kursevi?valuta=${valuta}&datum=${datum}`)
+    fetch(`/api/kursevi?valuta=${valuta}&datum=${datum}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('NBS kurs not available');
@@ -565,7 +634,7 @@ function fetchNBSKurs() {
                 document.getElementById('kurs_datum').textContent = data.datum || datum;
                 document.getElementById('kurs_success').style.display = 'inline';
 
-                // Recalculate total amount
+                // Recalculate all stavke and total with dual-currency display
                 recalculateUkupanIznos();
             } else {
                 // Error - NBS kurs not available
@@ -613,40 +682,27 @@ function toggleManualKurs() {
 
 /**
  * Recalculate ukupan iznos (for devizna fakture with dual-currency display)
+ * This is called when kurs changes or tip fakture changes
  */
 function recalculateUkupanIznos() {
-    const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
-
-    if (tipFakture !== 'devizna') {
-        return;
-    }
-
-    const srednjiKurs = parseFloat(document.getElementById('srednji_kurs').value || 0);
-
-    // Calculate total in original currency
-    let ukupanIznosOriginalna = 0;
-    document.querySelectorAll('.stavka-row').forEach(row => {
-        const ukupno = parseFloat(row.querySelector('.stavka-ukupno').textContent || 0);
-        ukupanIznosOriginalna += ukupno;
+    // Recalculate all stavke to update foreign currency display
+    document.querySelectorAll('.stavka-row').forEach(stavkaRow => {
+        calculateStavkaUkupno(stavkaRow);
     });
 
-    // Calculate RSD equivalent
-    const ukupanIznosRSD = ukupanIznosOriginalna * srednjiKurs;
-
-    // Display dual-currency total (this would be in the UI somewhere)
-    // TODO: Update UI to show both amounts
-    console.log(`Total: ${ukupanIznosOriginalna.toFixed(2)} (original) = ${ukupanIznosRSD.toFixed(2)} RSD`);
+    // Main total is updated by calculateStavkaUkupno calls above
 }
 
 /**
- * Validate komitent has IBAN and SWIFT for devizna fakture
+ * Validate komitent has devizni računi for devizna fakture
  */
 function validateKomitentForDevizna(komitent) {
     const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
 
     if (tipFakture === 'devizna') {
-        if (!komitent.iban || !komitent.swift) {
-            alert('UPOZORENJE: Izabrani komitent nema IBAN i SWIFT kod.\n\nDevizne fakture zahtevaju da komitent ima IBAN i SWIFT kod. Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.');
+        // Check if komitent has at least one devizni račun
+        if (!komitent.devizni_racuni || komitent.devizni_racuni.length === 0) {
+            alert('UPOZORENJE: Izabrani komitent nema devizni račun.\n\nDevizne fakture zahtevaju da komitent ima bar jedan devizni račun (IBAN, SWIFT, valuta). Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture.');
             return false;
         }
     }
