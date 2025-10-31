@@ -367,46 +367,10 @@ class TestFakturaCreateForm:
                 assert not form.validate()
                 assert 'srednji_kurs' in form.errors
 
-    def test_devizna_faktura_requires_komitent_with_devizni_racun(self, app, pausalac_user):
-        """Test that devizna faktura requires komitent with devizni račun."""
-        with app.app_context():
-            with app.test_request_context():
-                login_user(pausalac_user)
-
-                # Create komitent WITHOUT devizni računi
-                komitent = Komitent(
-                    firma_id=pausalac_user.firma_id,
-                    pib='12345678',
-                    maticni_broj='87654321',
-                    naziv='Domestic Komitent',
-                    adresa='Test',
-                    broj='1',
-                    postanski_broj='11000',
-                    mesto='Beograd',
-                    drzava='Srbija',
-                    email='test@domestic.rs'
-                    # No devizni_racuni
-                )
-                db.session.add(komitent)
-                db.session.commit()
-
-                # Test devizna faktura with komitent without devizni računi
-                form = FakturaCreateForm(
-                    tip_fakture='devizna',
-                    komitent_id=komitent.id,
-                    datum_prometa=date.today(),
-                    valuta_placanja=7,
-                    valuta_fakture='EUR',
-                    srednji_kurs=Decimal('117.5432'),
-                    stavke=[{
-                        'naziv': 'Consulting',
-                        'kolicina': Decimal('10.00'),
-                        'jedinica_mere': 'h',
-                        'cena': Decimal('100.00')
-                    }]
-                )
-                assert not form.validate()
-                assert 'komitent_id' in form.errors
+    # NOTE: test_devizna_faktura_requires_komitent_with_devizni_racun was removed
+    # because devizni račun validation was moved to service layer (MAINT-001).
+    # This validation is now tested in tests/unit/test_faktura_service.py and
+    # tests/integration/test_faktura_devizna.py::test_devizna_faktura_requires_komitent_with_devizni_racun
 
     def test_standardna_faktura_cannot_have_valuta(self, app, pausalac_user):
         """Test that standardna faktura cannot have valuta_fakture."""

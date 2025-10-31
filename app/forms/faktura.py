@@ -119,12 +119,13 @@ class FakturaCreateForm(FlaskForm):
             ('CHF', 'CHF - Švajcarski franak')
         ],
         default='',
+        validators=[],  # Conditional validation handled by validate_valuta_fakture() method
         render_kw={'class': 'form-control'}
     )
 
     srednji_kurs = DecimalField(
         'Srednji kurs NBS',
-        validators=[Optional()],  # Optional - can be empty for non-devizna or when NBS auto-fetch
+        validators=[],  # Conditional validation handled by validate_srednji_kurs() method
         places=4,
         render_kw={'class': 'form-control', 'placeholder': '0.0000', 'step': '0.0001'}
     )
