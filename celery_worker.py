@@ -38,8 +38,8 @@ from app.tasks.pdf_tasks import generate_faktura_pdf_task
 update_daily_kursna_lista_task = celery.task(update_daily_kursna_lista)
 generate_faktura_pdf_task_async = celery.task(generate_faktura_pdf_task)
 
-# Configure Celery Beat schedule (using old format)
-celery.conf.CELERYBEAT_SCHEDULE = {
+# Configure Celery Beat schedule (using new format for Celery 5+)
+celery.conf.beat_schedule = {
     'update-daily-kursna-lista': {
         'task': 'app.tasks.nbs_kursna_tasks.update_daily_kursna_lista',
         'schedule': crontab(hour=14, minute=0),  # Svaki dan u 14:00
