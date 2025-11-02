@@ -161,7 +161,13 @@ def download_pdf(faktura_id):
         return redirect(url_for('fakture.detail', faktura_id=faktura_id))
 
     # Convert relative path to absolute path (relative to project root)
-    pdf_path = os.path.abspath(faktura.pdf_url)
+    # If pdf_url is already absolute, use it directly
+    if os.path.isabs(faktura.pdf_url):
+        pdf_path = faktura.pdf_url
+    else:
+        # Create absolute path relative to project root (parent of app folder)
+        project_root = os.path.dirname(current_app.root_path)
+        pdf_path = os.path.join(project_root, faktura.pdf_url)
 
     # Check if file exists on disk
     if not os.path.exists(pdf_path):
