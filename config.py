@@ -53,9 +53,9 @@ class Config:
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
 
     # Celery (using new format for Celery 5+)
-    broker_url = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
-    result_backend = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
-    broker_connection_retry_on_startup = True
+    CELERY_BROKER_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
+    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
+    CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
     # NBS Komitent API
     NBS_USERNAME = os.environ.get('NBS_USERNAME') or ''
