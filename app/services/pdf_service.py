@@ -103,7 +103,33 @@ def generate_pdf(faktura):
     # Try WeasyPrint first (works on Linux production)
     try:
         from weasyprint import HTML
-        pdf_bytes = HTML(string=html_string).write_pdf()
+        from flask import current_app
+
+        # WeasyPrint requires @font-face for custom fonts
+        # Inject @font-face CSS before <style> tag
+        fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts')
+        font_normal = os.path.join(fonts_dir, 'DejaVuSansCondensed.ttf')
+        font_bold = os.path.join(fonts_dir, 'DejaVuSansCondensed-Bold.ttf')
+
+        font_face_css = f"""
+        @font-face {{
+            font-family: 'DejaVuSans';
+            src: url('file://{font_normal.replace(os.sep, '/')}');
+            font-weight: normal;
+            font-style: normal;
+        }}
+        @font-face {{
+            font-family: 'DejaVuSans';
+            src: url('file://{font_bold.replace(os.sep, '/')}');
+            font-weight: bold;
+            font-style: normal;
+        }}
+        """
+
+        # Inject font-face CSS after <style> tag
+        html_with_fonts = html_string.replace('<style>', f'<style>\n{font_face_css}')
+
+        pdf_bytes = HTML(string=html_with_fonts).write_pdf()
         return pdf_bytes
 
     except (ImportError, OSError) as weasy_error:
@@ -141,32 +167,18 @@ def generate_pdf(faktura):
                 """
                 Handle file loading for xhtml2pdf (fonts, images, etc.).
 
-                This callback resolves relative URIs to absolute file paths.
+                xhtml2pdf has a known bug with @font-face embedding. Instead of using
+                @font-face, we rely on reportlab font registration (lines 128-135 above).
+                Returning None tells xhtml2pdf to skip @font-face and use registered fonts.
                 """
                 current_app.logger.debug(f"link_callback called: uri={uri}, rel={rel}")
 
-                # Remove file:// protocol if present
-                if uri.startswith('file://'):
-                    uri = uri[7:]
+                # For font files: ignore @font-face and use reportlab-registered fonts
+                if uri.endswith('.ttf') or uri.endswith('.otf'):
+                    current_app.logger.info(f"Ignoring @font-face for {uri}, using reportlab fonts")
+                    return None
 
-                # Handle relative font paths (from @font-face declarations)
-                if uri.endswith('.ttf'):
-                    # Try direct filename in fonts directory
-                    font_path = os.path.join(fonts_dir, os.path.basename(uri))
-                    current_app.logger.debug(f"Checking font path: {font_path}, exists={os.path.exists(font_path)}")
-                    if os.path.exists(font_path):
-                        current_app.logger.info(f"Font found: {font_path}")
-                        return font_path
-
-                # Handle app/static/fonts paths (if specified with full path)
-                if uri.startswith('app/static/fonts/'):
-                    font_filename = uri.replace('app/static/fonts/', '')
-                    font_path = os.path.join(fonts_dir, font_filename)
-                    if os.path.exists(font_path):
-                        return font_path
-
-                # Return as-is if not found
-                current_app.logger.warning(f"Font NOT found for URI: {uri}")
+                # Handle other resources (images, CSS, etc.) if needed in future
                 return uri
 
             # Create PDF with UTF-8 encoding and font callback
