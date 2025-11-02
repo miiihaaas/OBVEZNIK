@@ -9,16 +9,21 @@ from app import create_app
 # Create Flask app
 flask_app = create_app()
 
+# # Create Celery instance
+# celery = Celery(
+#     flask_app.import_name,
+#     broker=flask_app.config['broker_url'],
+#     backend=flask_app.config['result_backend']
+# )
+
+# # Update Celery config from Flask config
+# celery.conf.update(flask_app.config)
+
 # Create Celery instance
-celery = Celery(
-    flask_app.import_name,
-    broker=flask_app.config['broker_url'],
-    backend=flask_app.config['result_backend']
-)
+celery = Celery(flask_app.import_name)
 
-# Update Celery config from Flask config
-celery.conf.update(flask_app.config)
-
+# Load config from Flask app - this will find lowercase broker_url and result_backend
+celery.config_from_object(flask_app.config, namespace='')
 
 class ContextTask(celery.Task):
     """Make celery tasks work with Flask app context."""
