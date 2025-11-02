@@ -1,6 +1,6 @@
 """Routes for Fakture (Invoices) management."""
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.models.faktura import Faktura
@@ -38,11 +38,11 @@ def nova_faktura():
     form = FakturaCreateForm()
 
     if request.method == 'POST':
-        print(f'POST request received')
-        print(f'Form errors before validation: {form.errors}')
+        current_app.logger.debug('POST request received for nova faktura')
+        current_app.logger.debug(f'Form errors before validation: {form.errors}')
 
         if form.validate_on_submit():
-            print(f'Form validation passed')
+            current_app.logger.info('Form validation passed for nova faktura')
             try:
                 # Extract form data
                 data = {
@@ -70,7 +70,7 @@ def nova_faktura():
                         'cena': stavka_form.cena.data
                     }
                     data['stavke'].append(stavka_data)
-                print(f'Form data: {data}')
+                current_app.logger.info(f'Creating faktura with {len(data["stavke"])} stavke')
                 # Create faktura using service
                 faktura = create_faktura(data, current_user)
 
@@ -80,12 +80,12 @@ def nova_faktura():
             except Exception as e:
                 db.session.rollback()
                 flash(f'Greška pri kreiranju fakture: {str(e)}', 'danger')
-                print(f'Exception during creation: {str(e)}')
+                current_app.logger.error(f'Exception during faktura creation: {str(e)}', exc_info=True)
                 # Return form with existing data so user can fix errors
         else:
             # Form validation failed
-            print(f'Form validation FAILED')
-            print(f'Form errors: {form.errors}')
+            current_app.logger.warning('Form validation FAILED for nova faktura')
+            current_app.logger.warning(f'Form errors: {form.errors}')
             flash('Forma sadrži greške. Molimo proverite unete podatke.', 'danger')
             # Display specific errors
             for field, errors in form.errors.items():
