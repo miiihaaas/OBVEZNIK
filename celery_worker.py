@@ -19,11 +19,13 @@ flask_app = create_app()
 # # Update Celery config from Flask config
 # celery.conf.update(flask_app.config)
 
-# Create Celery instance
+# Create Celery instance  
 celery = Celery(flask_app.import_name)
 
-# Load config from Flask app - this will find lowercase broker_url and result_backend
-celery.config_from_object(flask_app.config, namespace='')
+# Set Celery config from Flask config (Flask uses UPPERCASE, Celery 5+ uses lowercase)
+celery.conf.broker_url = flask_app.config.get('BROKER_URL')
+celery.conf.result_backend = flask_app.config.get('RESULT_BACKEND')
+celery.conf.broker_connection_retry_on_startup = flask_app.config.get('BROKER_CONNECTION_RETRY_ON_STARTUP', True)
 
 class ContextTask(celery.Task):
     """Make celery tasks work with Flask app context."""
