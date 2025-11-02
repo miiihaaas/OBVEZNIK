@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Faktura {{ faktura.broj_fakture }}</title>
+    <style>
+        /* Marimar Branding Color Palette */
+        @page {
+            size: A4;
+            margin: 1.5cm 2cm 3cm 2cm;
+            @frame footer {
+                -pdf-frame-content: footerContent;
+                bottom: 1cm;
+                margin-left: 2cm;
+                margin-right: 2cm;
+                height: 2.5cm;
+            }
+        }
+
+        body {
+            font-family: DejaVuSans, sans-serif;
+            font-size: 9pt;
+            margin: 0;
+            padding: 0;
+            color: #4B4B4B;
+        }
+
+        .layout-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .layout-table td {
+            padding: 5px;
+            vertical-align: top;
+            border: none;
+        }
+
+        /* QR Code Placeholder */
+        .qr-placeholder {
+            width: 90px;
+            height: 90px;
+            border: 2px solid #8D696E;
+            text-align: center;
+            line-height: 90px;
+            font-size: 7pt;
+            background-color: #F5F5F5;
+            border-radius: 4px;
+        }
+
+        /* Header Info Sections */
+        .header-info {
+            text-align: left;
+            font-size: 9pt;
+            line-height: 1.3;
+        }
+
+        .header-info p {
+            margin: 0 0 8px 0;
+        }
+
+        .header-info strong {
+            font-weight: bold;
+            color: #8D696E;
+        }
+
+        /* Party Section */
+        .party-section {
+            padding: 5px;
+        }
+
+        .party-section h3 {
+            margin: 0 0 4px 0;
+            font-size: 10pt;
+            font-weight: bold;
+            color: #8D696E;
+        }
+
+        .party-section p {
+            margin: 1px 0;
+            font-size: 8.5pt;
+            line-height: 1.3;
+        }
+
+        .firma-section {
+            text-align: right;
+        }
+
+        .firma-section p {
+            text-align: right;
+        }
+
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .items-table th {
+            background-color: #8D696E;
+            color: #fff;
+            border: 1px solid #8D696E;
+            padding: 8px 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        .items-table td {
+            border: 1px solid #E0E0E0;
+            padding: 6px;
+            font-size: 9pt;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .items-table .text-right {
+            text-align: right;
+        }
+
+        /* Total Section */
+        .total-section {
+            text-align: right;
+            margin: 10px 0 20px 0;
+            font-size: 13pt;
+            font-weight: bold;
+            color: #8D696E;
+        }
+
+        /* Footer Section - Fixed at bottom of last page */
+        .footer-section {
+            font-size: 8pt;
+            line-height: 1.4;
+            color: #4B4B4B;
+        }
+
+        .footer-section h4 {
+            margin: 0 0 5px 0;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #8D696E;
+        }
+
+        .footer-section p {
+            margin: 3px 0;
+        }
+
+        .footer-section .italic {
+            font-style: italic;
+            color: #7A7A7A;
+        }
+
+        /* Page Number */
+        .page-number {
+            text-align: center;
+            font-size: 8pt;
+            color: #7A7A7A;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header: 3 columns - QR | Broj fakture + Datum i mesto prometa | Datum fakture + Datum valute -->
+    <table class="layout-table">
+        <tr>
+            <td style="width: 20%;">
+                <div class="qr-placeholder">
+                    NBS IPS QR
+                </div>
+            </td>
+            <td style="width: 40%;">
+                <div class="header-info">
+                    <p><strong>Broj fakture:</strong><br>{{ faktura.broj_fakture }}</p>
+                    <p><strong>Datum i mesto prometa:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}, {{ firma.mesto|upper }}</p>
+                </div>
+            </td>
+            <td style="width: 40%;">
+                <div class="header-info">
+                    <p><strong>Datum fakture:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}</p>
+                    <p><strong>Datum valute:</strong><br>{{ faktura.datum_dospeca.strftime('%d-%b-%Y') if faktura.datum_dospeca else 'N/A' }}</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Parties: Komitent levo, Firma desno (manji razmaci) -->
+    <table class="layout-table" style="margin-top: 15px;">
+        <tr>
+            <td style="width: 50%;">
+                <div class="party-section">
+                    <h3>Za:</h3>
+                    <p><strong>{{ komitent.naziv }}</strong></p>
+                    <p>{{ komitent.adresa }}, {{ komitent.mesto|upper }}</p>
+                    {% if komitent.email %}
+                    <p>Email: {{ komitent.email }}</p>
+                    {% endif %}
+                    {% if komitent.pib %}
+                    <p>PIB: {{ komitent.pib }}</p>
+                    {% endif %}
+                    {% if komitent.maticni_broj %}
+                    <p>Maticni broj: {{ komitent.maticni_broj }}</p>
+                    {% endif %}
+                </div>
+            </td>
+            <td style="width: 50%;">
+                <div class="party-section firma-section">
+                    <p><strong>{{ firma.naziv }}</strong></p>
+                    <p>{{ firma.adresa }}, {{ firma.mesto|upper }}</p>
+                    {% if firma.dinarski_racuni %}
+                    <p>TR: {{ firma.dinarski_racuni[0].broj if firma.dinarski_racuni[0] is mapping else firma.dinarski_racuni[0] }}</p>
+                    {% endif %}
+                    <p>PIB: {{ firma.pib }} | MB: {{ firma.maticni_broj }}</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Items Table sa word-wrap -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 40%;">Usluga / Proizvod</th>
+                <th style="width: 12%;">Kolicina</th>
+                <th style="width: 13%;">Jedinica mere</th>
+                <th style="width: 17.5%;" class="text-right">Cena</th>
+                <th style="width: 17.5%;" class="text-right">Ukupno</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stavka in stavke %}
+            <tr>
+                <td>{{ stavka.naziv }}</td>
+                <td>{{ stavka.kolicina }}</td>
+                <td>{{ stavka.jedinica_mere }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(stavka.cena).replace(',', ' ').replace('.', ',') }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(stavka.ukupno).replace(',', ' ').replace('.', ',') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Total -->
+    <div class="total-section">
+        Za uplatu: {{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD
+    </div>
+
+    <!-- Footer Content (fiksiran na dnu poslednje stranice) -->
+    <div id="footerContent">
+        <div class="footer-section">
+            <h4>Napomena</h4>
+            <p class="italic">
+                Nije u sistemu PDV-a. PDV nije obracunat na fakturi u skladu sa clanom 33. Zakona o porezu na dodatu vrednost.
+                Ovaj racun je izdat u elektronskom obliku i vazi bez pecata i potpisa.
+            </p>
+
+            {% if faktura.identifikacioni_broj %}
+            <p style="font-size: 7pt;"><strong>Identifikacioni broj:</strong> {{ faktura.identifikacioni_broj }}</p>
+            {% endif %}
+
+            <p>U koliko imate bilo kakvih pitanja slobodno nas kontaktirajte: {{ firma.email }}</p>
+        </div>
+
+        <div class="page-number">
+            Strana <pdf:pagenumber> od <pdf:pagecount>
+        </div>
+    </div>
+</body>
+</html>

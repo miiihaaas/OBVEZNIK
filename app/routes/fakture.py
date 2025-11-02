@@ -1,5 +1,6 @@
 """Routes for Fakture (Invoices) management."""
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from app import db
 from app.models.faktura import Faktura
@@ -137,3 +138,81 @@ def finalizuj(faktura_id):
         flash(f'Greška pri finalizaciji fakture: {str(e)}', 'danger')
 
     return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+
+@fakture_bp.route('/<int:faktura_id>/download-pdf')
+@login_required
+def download_pdf(faktura_id):
+    """
+    Download PDF file for a finalized invoice.
+
+    Args:
+        faktura_id: Invoice ID
+
+    Returns:
+        PDF file or error message
+    """
+    # Get faktura with tenant isolation
+    faktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first_or_404()
+
+    # Check if PDF exists
+    if not faktura.pdf_url or faktura.status_pdf != 'generated':
+        flash('PDF nije dostupan. Molimo pokušajte ponovo kasnije.', 'warning')
+        return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+    # Convert relative path to absolute path (relative to project root)
+    pdf_path = os.path.abspath(faktura.pdf_url)
+
+    # Check if file exists on disk
+    if not os.path.exists(pdf_path):
+        flash('PDF fajl nije pronađen. Molimo kontaktirajte podršku.', 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+    # Generate filename for download (sanitize broj_fakture)
+    safe_filename = faktura.broj_fakture.replace('/', '-')
+    download_name = f'Faktura_{safe_filename}.pdf'
+
+    # Serve PDF file
+    return send_file(
+        pdf_path,
+        as_attachment=True,
+        download_name=download_name,
+        mimetype='application/pdf'
+    )
+
+
+@fakture_bp.route('/<int:faktura_id>/retry-pdf', methods=['POST'])
+@login_required
+def retry_pdf(faktura_id):
+    """
+    Retry PDF generation for a failed invoice.
+
+    Args:
+        faktura_id: Invoice ID
+
+    Returns:
+        JSON response with status
+    """
+    try:
+        # Get faktura with tenant isolation
+        faktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first_or_404()
+
+        # Set PDF status to 'generating'
+        faktura.status_pdf = 'generating'
+        db.session.commit()
+
+        # Trigger background PDF generation
+        import celery_worker
+        celery_worker.generate_faktura_pdf_task_async.apply_async(args=[faktura_id])
+
+        return jsonify({
+            'success': True,
+            'message': 'PDF generisanje u toku...'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Greška: {str(e)}'
+        }), 500

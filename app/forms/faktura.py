@@ -14,6 +14,58 @@ from app.models.komitent import Komitent
 from app.utils.query_helpers import filter_by_firma
 
 
+class OptionalDecimalField(DecimalField):
+    """
+    DecimalField that accepts empty strings without validation errors.
+
+    Empty strings are converted to None during processing, allowing
+    the field to be optional without triggering 'Not a valid decimal value' errors.
+    """
+
+    def process_formdata(self, valuelist):
+        """
+        Process form data, converting empty strings to None.
+
+        Args:
+            valuelist: List of values from form submission
+        """
+        if valuelist:
+            # If empty string, set to None (will be accepted)
+            if valuelist[0] == '' or valuelist[0] is None:
+                self.data = None
+                return
+        # Otherwise, use parent's process_formdata
+        super().process_formdata(valuelist)
+
+
+class RequiredForDevizna:
+    """
+    Custom validator that requires a field to be filled for devizna fakture.
+
+    This validator checks the tip_fakture field and raises ValidationError
+    if the field is empty/None when tip_fakture is 'devizna'.
+    """
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __call__(self, form, field):
+        """
+        Validate that field has a value when tip_fakture is 'devizna'.
+
+        Args:
+            form: Parent form instance
+            field: Field being validated
+
+        Raises:
+            ValidationError: If devizna faktura and field is empty
+        """
+        if hasattr(form, 'tip_fakture') and form.tip_fakture.data == 'devizna':
+            if not field.data or field.data <= 0:
+                message = self.message or f'{field.label.text} je obavezan za devizne fakture.'
+                raise ValidationError(message)
+
+
 class FakturaStavkaForm(FlaskForm):
     """Form for a single faktura line item (stavka)."""
 
@@ -125,7 +177,10 @@ class FakturaCreateForm(FlaskForm):
 
     srednji_kurs = DecimalField(
         'Srednji kurs NBS',
-        validators=[],  # Conditional validation handled by validate_srednji_kurs() method
+        validators=[
+            Optional(),  # Allow empty values for non-devizna fakture
+            RequiredForDevizna(message='Srednji kurs NBS je obavezan za devizne fakture i mora biti veći od 0.')
+        ],
         places=4,
         render_kw={'class': 'form-control', 'placeholder': '0.0000', 'step': '0.0001'}
     )
@@ -257,20 +312,3 @@ class FakturaCreateForm(FlaskForm):
             if field.data and field.data != '':
                 raise ValidationError('Valuta fakture može biti izabrana samo za devizne fakture.')
 
-    def validate_srednji_kurs(self, field):
-        """
-        Validate that srednji_kurs is required for devizna fakture.
-
-        Args:
-            field: srednji_kurs field to validate
-
-        Raises:
-            ValidationError: If devizna faktura doesn't have valid srednji_kurs or
-                           if non-devizna faktura has srednji_kurs
-        """
-        if self.tip_fakture.data == 'devizna':
-            if not field.data or field.data <= 0:
-                raise ValidationError('Srednji kurs NBS je obavezan za devizne fakture i mora biti veći od 0.')
-        else:
-            if field.data and field.data > 0:
-                raise ValidationError('Srednji kurs može biti unet samo za devizne fakture.')

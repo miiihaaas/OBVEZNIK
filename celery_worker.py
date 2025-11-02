@@ -32,12 +32,14 @@ celery.Task = ContextTask
 
 # Import tasks
 from app.tasks.nbs_kursna_tasks import update_daily_kursna_lista
+from app.tasks.pdf_tasks import generate_faktura_pdf_task
 
 # Register tasks with Celery
 update_daily_kursna_lista_task = celery.task(update_daily_kursna_lista)
+generate_faktura_pdf_task_async = celery.task(generate_faktura_pdf_task)
 
-# Configure Celery Beat schedule
-celery.conf.beat_schedule = {
+# Configure Celery Beat schedule (using old format)
+celery.conf.CELERYBEAT_SCHEDULE = {
     'update-daily-kursna-lista': {
         'task': 'app.tasks.nbs_kursna_tasks.update_daily_kursna_lista',
         'schedule': crontab(hour=14, minute=0),  # Svaki dan u 14:00

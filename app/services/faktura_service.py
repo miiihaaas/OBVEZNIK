@@ -272,6 +272,7 @@ def finalize_faktura(faktura_id):
         - Changes status from 'draft' to 'izdata'
         - Increments firma's invoice counter (with year rollover check)
         - Sets finalized_at timestamp
+        - Triggers background PDF generation (Celery task)
         - Finalized invoices are immutable (cannot be edited)
     """
     faktura = db.session.get(Faktura, faktura_id)
@@ -294,6 +295,20 @@ def finalize_faktura(faktura_id):
     # Increment firma's invoice counter (with year rollover check)
     increment_brojac_with_year_check(faktura.firma)
 
+    # Set PDF status to 'generating' (Celery task will update to 'generated' or 'failed')
+    faktura.status_pdf = 'generating'
+
     db.session.commit()
+
+    # Trigger background PDF generation (async Celery task)
+    from flask import current_app
+    try:
+        # Lazy import to avoid circular dependency
+        import celery_worker
+        celery_worker.generate_faktura_pdf_task_async.apply_async(args=[faktura_id])
+        current_app.logger.info(f"PDF generation task queued for Faktura {faktura_id}")
+    except Exception as e:
+        current_app.logger.error(f"Failed to queue PDF task for Faktura {faktura_id}: {e}")
+        # Don't fail finalization - user can retry PDF from UI
 
     return faktura

@@ -43,3 +43,6 @@ migrations/versions/*.pyc
 # OS
 .DS_Store
 Thumbs.db
+
+# Storage - PDF files
+storage/fakture/**/*.pdf

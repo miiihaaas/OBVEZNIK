@@ -1,0 +1,29 @@
+/*
+ * Font CSS za xhtml2pdf PDF generisanje
+ *
+ * VA}NO: Ne koristiti @font-face jer xhtml2pdf ima bug sa embedovanjem
+ * Font DejaVuSans je registrovan u pdf_service.py kroz reportlab.pdfbase
+ */
+
+body {
+    font-family: DejaVuSans, sans-serif;
+    font-size: 10pt;
+    margin: 0;
+    padding: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: DejaVuSans, sans-serif;
+}
+
+table {
+    font-family: DejaVuSans, sans-serif;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.italic {
+    font-style: italic;
+}

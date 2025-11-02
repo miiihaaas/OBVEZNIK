@@ -1,0 +1,2 @@
+# This file ensures the storage/fakture folder is tracked in git
+# Actual PDF files will be ignored via .gitignore

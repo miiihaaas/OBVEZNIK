@@ -649,6 +649,135 @@ class TestFakturaModel:
             with pytest.raises(Exception):  # SQLAlchemy will raise IntegrityError
                 db.session.commit()
 
+    def test_faktura_pdf_status_default(self, app):
+        """Test Faktura can be created with default status_pdf = 'pending'."""
+        with app.app_context():
+            # Create dependencies
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Komitent',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='k@test.rs'
+            )
+            db.session.add(komitent)
+
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Create faktura without specifying status_pdf
+            faktura = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='001/2025',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 10, 12),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 11, 11),
+                ukupan_iznos_rsd=Decimal('100.00')
+            )
+            db.session.add(faktura)
+            db.session.commit()
+
+            # Should default to 'pending'
+            assert faktura.status_pdf == 'pending'
+            assert faktura.pdf_url is None
+
+    def test_faktura_pdf_url_nullable(self, app):
+        """Test pdf_url can be NULL or string path."""
+        with app.app_context():
+            # Create dependencies
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Komitent',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='k@test.rs'
+            )
+            db.session.add(komitent)
+
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Create faktura with pdf_url
+            faktura = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='001/2025',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 10, 12),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 11, 11),
+                ukupan_iznos_rsd=Decimal('100.00'),
+                pdf_url='storage/fakture/1/2025/01/001-2025.pdf',
+                status_pdf='generated'
+            )
+            db.session.add(faktura)
+            db.session.commit()
+
+            assert faktura.pdf_url == 'storage/fakture/1/2025/01/001-2025.pdf'
+            assert faktura.status_pdf == 'generated'
+
 
 class TestFakturaStavkaModel:
     """Tests for FakturaStavka model."""

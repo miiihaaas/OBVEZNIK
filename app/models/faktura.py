@@ -58,6 +58,11 @@ class Faktura(db.Model):
 
     # PDF storage
     pdf_url = db.Column(db.String(500), nullable=True)
+    status_pdf = db.Column(
+        db.Enum('pending', 'generating', 'generated', 'failed', name='status_pdf_fakture'),
+        default='pending',
+        nullable=False
+    )
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
