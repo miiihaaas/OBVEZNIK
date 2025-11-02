@@ -175,10 +175,9 @@ class FakturaCreateForm(FlaskForm):
         render_kw={'class': 'form-control'}
     )
 
-    srednji_kurs = DecimalField(
+    srednji_kurs = OptionalDecimalField(
         'Srednji kurs NBS',
         validators=[
-            Optional(),  # Allow empty values for non-devizna fakture
             RequiredForDevizna(message='Srednji kurs NBS je obavezan za devizne fakture i mora biti veći od 0.')
         ],
         places=4,

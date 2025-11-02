@@ -119,6 +119,9 @@
 </div>
 
 <script>
+// API URL-ovi generisani pomoću url_for za podršku subfolder deployments
+const RETRY_PDF_URL_TEMPLATE = "{{ url_for('fakture.retry_pdf', faktura_id=0) }}".replace('/0/', '/');
+
 // Auto-refresh countdown when PDF is generating
 {% if faktura.status == 'izdata' and faktura.status_pdf == 'generating' %}
 let countdown = 3;
@@ -147,7 +150,7 @@ function retryPdfGeneration(fakturaId) {
     statusDiv.innerHTML = '<div class="alert alert-info"><span class="spinner-border spinner-border-sm me-2"></span>Pokušaj u toku...</div>';
 
     // Make AJAX request
-    fetch('/fakture/' + fakturaId + '/retry-pdf', {
+    fetch(RETRY_PDF_URL_TEMPLATE + fakturaId + '/retry-pdf', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -331,5 +331,13 @@
     </div>
 </template>
 
+<script>
+    // API URL-ovi generisani pomoću url_for za podršku subfolder deployments
+    window.API_URLS = {
+        komitentiSearch: "{{ url_for('api.komitenti_search') }}",
+        artikliSearch: "{{ url_for('api.artikli_search') }}",
+        kursevi: "{{ url_for('api.get_kursevi') }}"
+    };
+</script>
 <script src="{{ url_for('static', filename='js/faktura.js') }}"></script>
 {% endblock %}

@@ -227,6 +227,9 @@
 </div>
 
 <script>
+// API URL-ovi generisani pomoću url_for za podršku subfolder deployments
+const NBS_FIRMA_LOOKUP_URL = "{{ url_for('komitenti.nbs_firma_lookup', pib='PLACEHOLDER') }}".replace('PLACEHOLDER', '');
+
 // Dynamic Dinarski Računi Management
 let dinarskiRacuni = [];
 const dinarskiContainer = document.getElementById('dinarskiRacuniContainer');
@@ -350,7 +353,7 @@ document.getElementById('nbsSearchBtn').addEventListener('click', function() {
     this.disabled = true;
     this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pretražujem...';
 
-    fetch(`/komitenti/api/nbs/firma/${pib}`)
+    fetch(`${NBS_FIRMA_LOOKUP_URL}${pib}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
