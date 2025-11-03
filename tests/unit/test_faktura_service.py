@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.models.komitent import Komitent
 from app.models.faktura import Faktura
-from app.services.faktura_service import create_faktura
+from app.services.faktura_service import create_faktura, update_faktura
 
 
 @pytest.fixture
@@ -330,3 +330,327 @@ class TestCreateDeviznaFaktura:
                 create_faktura(data, user)
 
             assert 'Devizna faktura mora imati valutu' in str(exc_info.value)
+
+
+class TestUpdateFaktura:
+    """Tests for updating draft invoices."""
+
+    def test_update_faktura_successfully_updates_draft(self, app, pausalac_with_firma):
+        """Test that update_faktura successfully updates a draft invoice."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+
+            # Create domestic komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='11111111',
+                maticni_broj='11111111',
+                naziv='Domestic Client d.o.o.',
+                adresa='Knez Mihailova',
+                broj='15',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='contact@domestic.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create draft faktura
+            data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga 1',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            faktura = create_faktura(data, user)
+            assert faktura.ukupan_iznos_rsd == Decimal('100.00')
+            assert faktura.valuta_placanja == 7
+
+            # Update faktura
+            updated_data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 14,  # Changed
+                'stavke': [
+                    {
+                        'naziv': 'Usluga 2',
+                        'kolicina': Decimal('2.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('200.00')
+                    }
+                ]
+            }
+            updated_faktura = update_faktura(faktura.id, updated_data, user)
+
+            assert updated_faktura.valuta_placanja == 14
+            assert updated_faktura.ukupan_iznos_rsd == Decimal('400.00')
+            assert len(updated_faktura.stavke) == 1
+            assert updated_faktura.stavke[0].naziv == 'Usluga 2'
+            assert updated_faktura.status == 'draft'  # Status unchanged
+
+    def test_update_faktura_raises_error_for_izdata_invoice(self, app, pausalac_with_firma):
+        """Test that update_faktura raises ValueError for issued invoices."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+
+            # Create domestic komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='22222222',
+                maticni_broj='22222222',
+                naziv='Client 2',
+                adresa='Adresa 2',
+                broj='2',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='client2@test.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create faktura
+            data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            faktura = create_faktura(data, user)
+
+            # Change status to 'izdata' manually (simulating finalization)
+            faktura.status = 'izdata'
+            db.session.commit()
+
+            # Try to update
+            updated_data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 14,
+                'stavke': [
+                    {
+                        'naziv': 'New Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('200.00')
+                    }
+                ]
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                update_faktura(faktura.id, updated_data, user)
+
+            assert "Cannot update faktura with status 'izdata'" in str(exc_info.value)
+            assert "Only draft invoices can be edited" in str(exc_info.value)
+
+    def test_update_faktura_raises_error_for_stornirana_invoice(self, app, pausalac_with_firma):
+        """Test that update_faktura raises ValueError for stornirane invoices."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+
+            # Create domestic komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='33333333',
+                maticni_broj='33333333',
+                naziv='Client 3',
+                adresa='Adresa 3',
+                broj='3',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='client3@test.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create faktura
+            data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            faktura = create_faktura(data, user)
+
+            # Change status to 'stornirana'
+            faktura.status = 'stornirana'
+            db.session.commit()
+
+            # Try to update
+            updated_data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 14,
+                'stavke': [
+                    {
+                        'naziv': 'New Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('200.00')
+                    }
+                ]
+            }
+
+            with pytest.raises(ValueError) as exc_info:
+                update_faktura(faktura.id, updated_data, user)
+
+            assert "Cannot update faktura with status 'stornirana'" in str(exc_info.value)
+
+    def test_update_faktura_recalculates_ukupan_iznos(self, app, pausalac_with_firma):
+        """Test that update_faktura recalculates total amount correctly."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+
+            # Create domestic komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='44444444',
+                maticni_broj='44444444',
+                naziv='Client 4',
+                adresa='Adresa 4',
+                broj='4',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='client4@test.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create draft faktura with one stavka
+            data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Stavka 1',
+                        'kolicina': Decimal('2.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            faktura = create_faktura(data, user)
+            assert faktura.ukupan_iznos_rsd == Decimal('200.00')
+
+            # Update with multiple stavke
+            updated_data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Stavka A',
+                        'kolicina': Decimal('3.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('150.00')
+                    },
+                    {
+                        'naziv': 'Stavka B',
+                        'kolicina': Decimal('5.00'),
+                        'jedinica_mere': 'kom',
+                        'cena': Decimal('50.00')
+                    }
+                ]
+            }
+            updated_faktura = update_faktura(faktura.id, updated_data, user)
+
+            # 3 * 150 + 5 * 50 = 450 + 250 = 700
+            assert updated_faktura.ukupan_iznos_rsd == Decimal('700.00')
+            assert len(updated_faktura.stavke) == 2
+
+    def test_update_faktura_recalculates_datum_dospeca(self, app, pausalac_with_firma):
+        """Test that update_faktura recalculates due date with weekend adjustment."""
+        with app.app_context():
+            user, firma = pausalac_with_firma
+
+            # Create domestic komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='55555555',
+                maticni_broj='55555555',
+                naziv='Client 5',
+                adresa='Adresa 5',
+                broj='5',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='client5@test.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create draft faktura
+            datum_prometa = date(2025, 11, 3)  # Monday
+            data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': datum_prometa,
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            faktura = create_faktura(data, user)
+
+            # datum_dospeca should be 7 days later: 2025-11-10 (Monday)
+            expected_dospeca = date(2025, 11, 10)
+            assert faktura.datum_dospeca == expected_dospeca
+
+            # Update with new valuta_placanja
+            updated_data = {
+                'tip_fakture': 'standardna',
+                'komitent_id': komitent.id,
+                'datum_prometa': datum_prometa,
+                'valuta_placanja': 14,  # Changed to 14 days
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+            updated_faktura = update_faktura(faktura.id, updated_data, user)
+
+            # datum_dospeca should be 14 days later: 2025-11-17 (Monday)
+            expected_dospeca_updated = date(2025, 11, 17)
+            assert updated_faktura.datum_dospeca == expected_dospeca_updated

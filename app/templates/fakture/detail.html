@@ -80,10 +80,17 @@
     </table>
 
     {% if faktura.status == 'draft' %}
-    <form method="POST" action="{{ url_for('fakture.finalizuj', faktura_id=faktura.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button type="submit" class="btn btn-success">Finalizuj Fakturu</button>
-    </form>
+    <div class="d-flex gap-2 mb-3">
+        <a href="{{ url_for('fakture.edit_faktura', faktura_id=faktura.id) }}" class="btn btn-primary">
+            <i class="bi bi-pencil-square"></i> Izmeni
+        </a>
+        <form method="POST" action="{{ url_for('fakture.finalizuj', faktura_id=faktura.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle"></i> Finalizuj Fakturu
+            </button>
+        </form>
+    </div>
     {% endif %}
 
     {% if faktura.status == 'izdata' %}

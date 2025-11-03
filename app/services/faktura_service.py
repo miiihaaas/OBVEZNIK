@@ -1,11 +1,16 @@
 """Business logic for Faktura (Invoice) management."""
 from datetime import datetime, timedelta
 from decimal import Decimal
+import logging
+from flask import request
 from app import db
 from app.models.faktura import Faktura
 from app.models.faktura_stavka import FakturaStavka
 from app.models.pausaln_firma import PausalnFirma
 from app.services.nbs_kursna_service import get_kurs
+
+# Security logger for audit trail
+security_logger = logging.getLogger('security')
 
 
 def generate_broj_fakture(firma):
@@ -252,6 +257,167 @@ def increment_brojac_with_year_check(firma):
             firma.brojac_fakture = 1
         else:
             firma.brojac_fakture += 1
+
+
+def update_faktura(faktura_id, data, user):
+    """
+    Update an existing draft invoice with new data.
+
+    Args:
+        faktura_id: int - ID of the faktura to update
+        data: dict - Form data containing updated invoice fields and stavke
+        user: User - Current user updating the invoice
+
+    Returns:
+        Faktura: Updated faktura instance (status remains 'draft')
+
+    Raises:
+        ValueError: If faktura doesn't exist or is not in draft status
+
+    Business Rules:
+        - Only draft invoices can be updated (izdate/stornirane are immutable)
+        - Broj fakture cannot be changed (remains DRAFT-{id})
+        - Existing stavke are deleted and replaced with new ones
+        - Total amount is recalculated as sum of all line items
+        - Due date is recalculated with weekend adjustment
+        - Status remains 'draft' after update
+    """
+    faktura = db.session.get(Faktura, faktura_id)
+
+    if not faktura:
+        raise ValueError(f"Faktura with ID {faktura_id} not found.")
+
+    # SEC-001: Tenant isolation - validate faktura belongs to user's firma
+    if faktura.firma_id != user.firma.id:
+        raise ValueError("Faktura ne pripada vašoj firmi.")
+
+    # Validation: Only draft invoices can be edited
+    if faktura.status != 'draft':
+        raise ValueError(
+            f"Cannot update faktura with status '{faktura.status}'. "
+            f"Only draft invoices can be edited."
+        )
+
+    # Determine if this is a foreign currency invoice
+    tip_fakture = data.get('tip_fakture', faktura.tip_fakture)
+
+    # Validate devizna fakture MUST have valid foreign currency
+    if tip_fakture == 'devizna':
+        valuta_fakture = data.get('valuta_fakture')
+        if not valuta_fakture or valuta_fakture not in ['EUR', 'USD', 'GBP', 'CHF']:
+            raise ValueError(
+                "Devizna faktura mora imati valutu (EUR, USD, GBP ili CHF). "
+                "Molimo izaberite valutu."
+            )
+    else:
+        valuta_fakture = 'RSD'
+
+    # For foreign currency invoices, fetch NBS exchange rate
+    srednji_kurs = None
+    jezik = 'sr'  # Default to Serbian
+
+    if tip_fakture == 'devizna':
+        # Validate komitent has at least one devizni račun for foreign currency invoices
+        from app.models.komitent import Komitent
+        komitent = db.session.get(Komitent, data.get('komitent_id'))
+        if not komitent:
+            raise ValueError("Komitent nije pronađen.")
+        # SEC-001: Tenant isolation - validate komitent belongs to user's firma
+        if komitent.firma_id != user.firma.id:
+            raise ValueError("Komitent ne pripada vašoj firmi.")
+        if not komitent.devizni_racuni or len(komitent.devizni_racuni) == 0:
+            raise ValueError(
+                "Komitent mora imati bar jedan devizni račun za devizne fakture. "
+                "Molimo ažurirajte podatke komitenta pre kreiranja devizne fakture."
+            )
+
+        datum_prometa = data.get('datum_prometa')
+
+        # Check if manual srednji_kurs is provided in form (user override)
+        if data.get('srednji_kurs'):
+            srednji_kurs = Decimal(str(data.get('srednji_kurs')))
+        else:
+            # Fetch from NBS
+            srednji_kurs = get_kurs(valuta_fakture, datum_prometa)
+
+        # If no kurs available (neither from form nor NBS), raise error
+        if not srednji_kurs or srednji_kurs <= 0:
+            raise ValueError(
+                f"NBS kurs nije dostupan za {valuta_fakture} na datum {datum_prometa}. "
+                f"Molimo unesite kurs ručno."
+            )
+
+        # Foreign currency invoices are always in English
+        jezik = 'en'
+
+    # Update faktura fields
+    faktura.tip_fakture = tip_fakture
+    faktura.valuta_fakture = valuta_fakture
+    faktura.jezik = jezik
+    faktura.komitent_id = data.get('komitent_id')
+    faktura.datum_prometa = data.get('datum_prometa')
+    faktura.valuta_placanja = data.get('valuta_placanja')
+    faktura.broj_ugovora = data.get('broj_ugovora')
+    faktura.broj_odluke = data.get('broj_odluke')
+    faktura.broj_narudzbenice = data.get('broj_narudzbenice')
+    faktura.poziv_na_broj = data.get('poziv_na_broj')
+    faktura.model = data.get('model')
+    faktura.srednji_kurs = srednji_kurs
+
+    # Recalculate datum_dospeca
+    faktura.datum_dospeca = calculate_datum_dospeca(
+        data.get('datum_prometa'),
+        data.get('valuta_placanja')
+    )
+
+    # Delete existing stavke (cascade will handle this)
+    db.session.query(FakturaStavka).filter_by(faktura_id=faktura_id).delete()
+
+    # Create new stavke from data
+    ukupan_iznos = Decimal('0.00')
+    for i, stavka_data in enumerate(data.get('stavke', []), start=1):
+        # Calculate ukupno for this stavka
+        kolicina = Decimal(str(stavka_data.get('kolicina', 0)))
+        cena = Decimal(str(stavka_data.get('cena', 0)))
+        ukupno = kolicina * cena
+
+        stavka = FakturaStavka(
+            faktura_id=faktura.id,
+            artikal_id=stavka_data.get('artikal_id'),
+            naziv=stavka_data.get('naziv'),
+            kolicina=kolicina,
+            jedinica_mere=stavka_data.get('jedinica_mere'),
+            cena=cena,
+            ukupno=ukupno,
+            redni_broj=i
+        )
+        db.session.add(stavka)
+        ukupan_iznos += ukupno
+
+    # Update faktura total amounts
+    if valuta_fakture == 'RSD':
+        # Domestic invoice - only RSD amount
+        faktura.ukupan_iznos_rsd = ukupan_iznos
+        faktura.ukupan_iznos_originalna_valuta = None
+    else:
+        # Foreign currency invoice - calculate both amounts
+        faktura.ukupan_iznos_originalna_valuta = ukupan_iznos
+        # CODE-001: Use quantize to ensure proper decimal precision (2 decimals for currency)
+        faktura.ukupan_iznos_rsd = (ukupan_iznos * srednji_kurs).quantize(Decimal('0.01'))
+
+    # Commit changes
+    db.session.commit()
+
+    # Security logging - audit trail for faktura updates
+    security_logger.info(
+        f"Faktura updated: faktura_id={faktura.id}, broj_fakture={faktura.broj_fakture}, "
+        f"tip={faktura.tip_fakture}, komitent_id={faktura.komitent_id}, "
+        f"iznos={faktura.ukupan_iznos_rsd}, stavke_count={len(faktura.stavke)}, "
+        f"updated_by={user.email}, ip={request.remote_addr if request else 'N/A'}, "
+        f"timestamp={datetime.now().isoformat()}"
+    )
+
+    return faktura
 
 
 def finalize_faktura(faktura_id):

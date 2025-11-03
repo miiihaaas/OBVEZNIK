@@ -15,11 +15,19 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeFormSubmit();
     initializeDeviznaFaktura(); // NEW: Initialize foreign currency functionality
 
-    // Add first stavka by default
-    addStavka();
+    // Check if we have initial stavke (for edit mode)
+    if (typeof window.INITIAL_STAVKE !== 'undefined' && window.INITIAL_STAVKE.length > 0) {
+        // Prepopulate stavke from existing faktura (edit mode)
+        window.INITIAL_STAVKE.forEach(stavkaData => {
+            addStavka(stavkaData);
+        });
+    } else {
+        // Add first empty stavka by default (new faktura mode)
+        addStavka();
+    }
 
     // Add stavka button handler
-    document.getElementById('addStavkaBtn').addEventListener('click', addStavka);
+    document.getElementById('addStavkaBtn').addEventListener('click', () => addStavka());
 });
 
 /**
@@ -183,8 +191,14 @@ function calculateDatumDospeca() {
 
 /**
  * Add a new stavka row
+ * @param {Object} initialData - Optional initial data for prepopulating stavka (edit mode)
+ * @param {number} initialData.artikal_id - Artikal ID
+ * @param {string} initialData.naziv - Naziv usluge/artikla
+ * @param {number} initialData.kolicina - Količina
+ * @param {string} initialData.jedinica_mere - Jedinica mere
+ * @param {number} initialData.cena - Cena
  */
-function addStavka() {
+function addStavka(initialData = null) {
     stavkaCounter++;
 
     // Clone template
@@ -202,6 +216,18 @@ function addStavka() {
     const stavkaRows = container.querySelectorAll('.stavka-row');
     const newRow = stavkaRows[stavkaRows.length - 1];
 
+    // Prepopulate with initial data if provided (edit mode)
+    if (initialData) {
+        if (initialData.artikal_id) {
+            newRow.querySelector('.artikal-id').value = initialData.artikal_id;
+        }
+        newRow.querySelector('.artikal-search').value = initialData.naziv;
+        newRow.querySelector('.stavka-naziv').value = initialData.naziv;
+        newRow.querySelector('.stavka-kolicina').value = initialData.kolicina;
+        newRow.querySelector('.stavka-jedinica').value = initialData.jedinica_mere;
+        newRow.querySelector('.stavka-cena').value = initialData.cena;
+    }
+
     // Initialize artikal autocomplete for this row
     initializeArtikalAutocomplete(newRow);
 
@@ -216,6 +242,12 @@ function addStavka() {
 
     // Update currency label for the new stavka
     updateStavkaCurrencyLabels();
+
+    // Trigger calculation if initial data provided (to update totals)
+    if (initialData) {
+        const kolicina = newRow.querySelector('.stavka-kolicina');
+        kolicina.dispatchEvent(new Event('input'));
+    }
 }
 
 /**
