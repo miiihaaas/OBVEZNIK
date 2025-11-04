@@ -321,3 +321,146 @@ def retry_pdf(faktura_id):
             'success': False,
             'message': f'Greška: {str(e)}'
         }), 500
+
+
+@fakture_bp.route('/<int:faktura_id>/send-email', methods=['POST'])
+@login_required
+def send_email(faktura_id):
+    """
+    Send invoice via email with PDF attachment.
+
+    Args:
+        faktura_id: Invoice ID
+
+    Returns:
+        JSON response with status
+    """
+    try:
+        # Get faktura with tenant isolation
+        faktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first_or_404()
+
+        # Validate that invoice is finalized
+        if faktura.status != 'izdata':
+            return jsonify({
+                'success': False,
+                'error': 'Samo izdate fakture mogu biti poslate'
+            }), 400
+
+        # Validate that PDF is generated
+        if not faktura.pdf_url or faktura.status_pdf != 'generated':
+            return jsonify({
+                'success': False,
+                'error': 'PDF nije dostupan. Molimo generišite PDF prvo.'
+            }), 400
+
+        # Get JSON payload
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Nedostaje JSON payload'
+            }), 400
+
+        recipient_email = data.get('recipient_email')
+        cc_email = data.get('cc_email')
+        custom_subject = data.get('subject')  # Get custom subject from user
+        custom_body = data.get('body')  # Get custom body from user
+
+        # Validate required fields
+        if not recipient_email:
+            return jsonify({
+                'success': False,
+                'error': 'Email primaoca je obavezan'
+            }), 400
+
+        # Use centralized email validation from email_service
+        from app.services.email_service import validate_email_format, InvalidEmailError
+        try:
+            validate_email_format(recipient_email)
+            if cc_email:
+                validate_email_format(cc_email)
+        except InvalidEmailError as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 400
+
+        # Update status to 'sending'
+        faktura.email_status = 'sending'
+        faktura.email_recipient = recipient_email
+        db.session.commit()
+
+        # Trigger background email sending with user customization
+        import celery_worker
+        celery_worker.send_faktura_email_task_async.apply_async(
+            args=[faktura_id, recipient_email, cc_email, custom_subject, custom_body]
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Email se šalje...',
+            'recipient_email': recipient_email
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Greška pri slanju email-a za fakturu {faktura_id}: {e}')
+        return jsonify({
+            'success': False,
+            'error': f'Greška: {str(e)}'
+        }), 500
+
+
+@fakture_bp.route('/<int:faktura_id>/retry-email', methods=['POST'])
+@login_required
+def retry_email(faktura_id):
+    """
+    Retry email sending for a failed invoice.
+
+    Args:
+        faktura_id: Invoice ID
+
+    Returns:
+        JSON response with status
+    """
+    try:
+        # Get faktura with tenant isolation
+        faktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first_or_404()
+
+        # Validate that invoice was previously attempted to be sent
+        if faktura.email_status not in ['failed', 'sent']:
+            return jsonify({
+                'success': False,
+                'message': 'Email može biti ponovo poslat samo ako je prethodno neuspešan'
+            }), 400
+
+        # Validate that we have recipient email
+        if not faktura.email_recipient:
+            return jsonify({
+                'success': False,
+                'message': 'Email primaoca nije poznat'
+            }), 400
+
+        # Reset status to 'sending'
+        faktura.email_status = 'sending'
+        faktura.email_error_message = None
+        db.session.commit()
+
+        # Trigger background email sending with same recipient
+        import celery_worker
+        celery_worker.send_faktura_email_task_async.apply_async(
+            args=[faktura_id, faktura.email_recipient, None, None, None]
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Email se ponovo šalje...'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Greška pri ponovnom slanju email-a za fakturu {faktura_id}: {e}')
+        return jsonify({
+            'success': False,
+            'message': f'Greška: {str(e)}'
+        }), 500

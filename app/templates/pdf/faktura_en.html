@@ -244,11 +244,16 @@
     <!-- Total -->
     <div class="total-section">
         {% if faktura.tip_fakture == 'devizna' %}
-        Amount Due: {{ "{:,.2f}".format(faktura.ukupan_iznos_originalna_valuta).replace(',', ' ').replace('.', ',') }} {{ faktura.valuta_fakture }}
+        Amount Due: {{ "{:,.2f}".format(faktura.ukupan_iznos_originalna_valuta).replace(',', ' ').replace('.', ',') }} {{ faktura.valuta_fakture }} ({{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD)
         {% else %}
         Amount Due: {{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD
         {% endif %}
     </div>
+    {% if faktura.tip_fakture == 'devizna' %}
+    <div style="text-align: right; font-size: 9pt; font-weight: normal; color: #7A7A7A; margin-top: 5px;">
+        Exchange Rate: 1 {{ faktura.valuta_fakture }} = {{ "{:,.2f}".format(faktura.srednji_kurs).replace(',', ' ').replace('.', ',') }} RSD
+    </div>
+    {% endif %}
 
     <!-- Footer Content (fixed at bottom of last page) -->
     <div id="footerContent">

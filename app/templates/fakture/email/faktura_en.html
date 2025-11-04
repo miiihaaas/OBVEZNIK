@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ faktura.broj_fakture }}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f5f5f5;">
+    <!-- Email Container -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+
+                    <!-- Header with Marimar Branding -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #8D696E 0%, #D98282 100%); padding: 32px; border-radius: 8px 8px 0 0; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 1px;">
+                                OBVEZNIK
+                            </h1>
+                            <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">
+                                Invoice
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 32px;">
+                            <!-- Greeting -->
+                            <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
+                                Dear Sir/Madam,
+                            </p>
+
+                            <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
+                                Please find attached invoice <strong style="color: #8D696E;">{{ faktura.broj_fakture }}</strong> for services rendered/goods sold.
+                            </p>
+
+                            <!-- Invoice Details Card -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #FCFCFC; border-radius: 8px; border: 1px solid #E0E0E0; margin-bottom: 32px;">
+                                <tr>
+                                    <td style="padding: 24px;">
+                                        <h2 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #8D696E; border-bottom: 2px solid #D98282; padding-bottom: 12px;">
+                                            📄 Invoice Details
+                                        </h2>
+
+                                        <!-- Invoice Details Table -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #7A7A7A; border-bottom: 1px solid #E0E0E0;">
+                                                    <strong>Invoice Number:</strong>
+                                                </td>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #4B4B4B; text-align: right; font-family: 'Courier New', monospace; font-weight: 600; border-bottom: 1px solid #E0E0E0;">
+                                                    {{ faktura.broj_fakture }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #7A7A7A; border-bottom: 1px solid #E0E0E0;">
+                                                    <strong>Invoice Date:</strong>
+                                                </td>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #4B4B4B; text-align: right; border-bottom: 1px solid #E0E0E0;">
+                                                    {{ faktura.datum_prometa.strftime('%d/%m/%Y') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #7A7A7A; border-bottom: 1px solid #E0E0E0;">
+                                                    <strong>Due Date:</strong>
+                                                </td>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #4B4B4B; text-align: right; border-bottom: 1px solid #E0E0E0;">
+                                                    {{ faktura.datum_dospeca.strftime('%d/%m/%Y') }}
+                                                </td>
+                                            </tr>
+                                            {% if faktura.poziv_na_broj %}
+                                            <tr>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #7A7A7A; border-bottom: 1px solid #E0E0E0;">
+                                                    <strong>Reference Number:</strong>
+                                                </td>
+                                                <td style="padding: 10px 0; font-size: 14px; color: #4B4B4B; text-align: right; font-family: 'Courier New', monospace; border-bottom: 1px solid #E0E0E0;">
+                                                    {{ faktura.poziv_na_broj }}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            <tr>
+                                                <td style="padding: 16px 0 0 0; font-size: 16px; color: #8D696E; font-weight: 700;">
+                                                    <strong>TOTAL AMOUNT:</strong>
+                                                </td>
+                                                <td style="padding: 16px 0 0 0; font-size: 20px; color: #8D696E; text-align: right; font-family: 'Courier New', monospace; font-weight: 700;">
+                                                    {% if faktura.ukupan_iznos_originalna_valuta %}
+                                                        {{ "%.2f"|format(faktura.ukupan_iznos_originalna_valuta) }} {{ faktura.valuta_fakture }}
+                                                        <br><span style="font-size: 14px; color: #7A7A7A;">({{ "%.2f"|format(faktura.ukupan_iznos_rsd) }} RSD)</span>
+                                                    {% else %}
+                                                        {{ "%.2f"|format(faktura.ukupan_iznos_rsd) }} RSD
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Call to Action -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 32px;">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #D98282 0%, #8D696E 100%); padding: 16px; border-radius: 8px; text-align: center;">
+                                        <p style="margin: 0; color: #ffffff; font-size: 15px; font-weight: 600;">
+                                            💳 Please arrange payment by the due date
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Thank You Message -->
+                            <p style="margin: 0 0 8px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
+                                Thank you for your business.
+                            </p>
+
+                            <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #7A7A7A;">
+                                Best regards,<br>
+                                <strong style="color: #8D696E;">{{ faktura.firma.naziv }}</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #FCFCFC; padding: 24px 32px; border-top: 1px solid #E0E0E0; border-radius: 0 0 8px 8px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <p style="margin: 0 0 8px 0; font-size: 14px; color: #8D696E; font-weight: 600;">
+                                            {{ faktura.firma.naziv }}
+                                        </p>
+                                        {% if faktura.firma.email %}
+                                        <p style="margin: 0 0 4px 0; font-size: 13px; color: #7A7A7A;">
+                                            📧 <a href="mailto:{{ faktura.firma.email }}" style="color: #D98282; text-decoration: none;">{{ faktura.firma.email }}</a>
+                                        </p>
+                                        {% endif %}
+                                        {% if faktura.firma.telefon %}
+                                        <p style="margin: 0 0 4px 0; font-size: 13px; color: #7A7A7A;">
+                                            📞 {{ faktura.firma.telefon }}
+                                        </p>
+                                        {% endif %}
+                                        <p style="margin: 16px 0 0 0; font-size: 12px; color: #7A7A7A; line-height: 1.4;">
+                                            This email was automatically generated from the <strong>OBVEZNIK</strong> system.<br>
+                                            Please do not reply directly to this email.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <!-- Footer Note -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 20px auto 0;">
+                    <tr>
+                        <td style="text-align: center; padding: 0 20px;">
+                            <p style="margin: 0; font-size: 12px; color: #7A7A7A; line-height: 1.4;">
+                                The invoice PDF is attached to this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

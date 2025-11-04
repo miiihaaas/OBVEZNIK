@@ -64,6 +64,16 @@ class Faktura(db.Model):
         nullable=False
     )
 
+    # Email sending status
+    email_status = db.Column(
+        db.Enum('not_sent', 'sending', 'sent', 'failed', name='email_status_fakture'),
+        default='not_sent',
+        nullable=False
+    )
+    email_sent_at = db.Column(db.DateTime, nullable=True)
+    email_recipient = db.Column(db.String(120), nullable=True)
+    email_error_message = db.Column(db.Text, nullable=True)
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     finalized_at = db.Column(db.DateTime, nullable=True)
