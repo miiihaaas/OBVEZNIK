@@ -478,3 +478,109 @@ def finalize_faktura(faktura_id):
         # Don't fail finalization - user can retry PDF from UI
 
     return faktura
+
+
+def list_fakture(user, filters=None, page=1, per_page=20, sort_by='datum_prometa', sort_order='desc'):
+    """
+    List and filter invoices with pagination and sorting.
+
+    This function implements tenant isolation (pausalac sees only their firma's fakture,
+    admin sees all fakture in god mode) and applies filters, search, sorting, and pagination.
+
+    Args:
+        user: User - Current user (for tenant isolation)
+        filters: dict - Optional filters:
+            - datum_od: date - Start date filter
+            - datum_do: date - End date filter
+            - komitent_id: int - Filter by komitent
+            - status: str - Filter by status ('draft', 'izdata', 'stornirana')
+            - valuta: str - Filter by currency ('RSD', 'EUR', 'USD', 'GBP', 'CHF')
+            - search: str - Search by invoice number (LIKE query)
+            - firma_id: int - Admin-only: Filter by specific firma
+        page: int - Page number (1-indexed)
+        per_page: int - Number of invoices per page (default: 20)
+        sort_by: str - Sort column ('broj_fakture', 'datum_prometa', 'ukupan_iznos_rsd')
+        sort_order: str - Sort order ('asc' or 'desc')
+
+    Returns:
+        Pagination object with .items, .total, .page, .pages, .has_prev, .has_next, etc.
+
+    Business Rules:
+        - Pausalac sees only fakture from their firma (automatic filtering)
+        - Admin sees all fakture (god mode) unless firma_id filter is provided
+        - All filters are optional and can be combined
+        - Search by broj_fakture uses LIKE query (case-insensitive)
+        - Default sorting: newest first (datum_prometa DESC)
+    """
+    from app.models.komitent import Komitent
+    from app.models.pausaln_firma import PausalnFirma
+
+    if filters is None:
+        filters = {}
+
+    # Input validation
+    if page < 1:
+        page = 1
+    if per_page < 1 or per_page > 100:  # Max limit to prevent memory exhaustion
+        per_page = 20  # Default
+
+    # Start with base query
+    # Use joinedload for eager loading relationships (komitent, firma)
+    from sqlalchemy.orm import joinedload
+    query = Faktura.query.options(
+        joinedload(Faktura.komitent),
+        joinedload(Faktura.firma)
+    )
+
+    # Apply tenant isolation (pausalac sees only their firma, admin sees all)
+    # Admin can optionally filter by specific firma_id using filters['firma_id']
+    if user.role == 'admin' and 'firma_id' in filters and filters['firma_id']:
+        # Admin filtering by specific firma
+        query = query.filter(Faktura.firma_id == filters['firma_id'])
+    elif user.role == 'pausalac':
+        # Pausalac sees only their firma's fakture
+        query = query.filter(Faktura.firma_id == user.firma_id)
+    # else: admin with no firma_id filter = god mode (no filtering)
+
+    # Apply filters
+    if filters.get('datum_od'):
+        query = query.filter(Faktura.datum_prometa >= filters['datum_od'])
+
+    if filters.get('datum_do'):
+        query = query.filter(Faktura.datum_prometa <= filters['datum_do'])
+
+    if filters.get('komitent_id'):
+        query = query.filter(Faktura.komitent_id == filters['komitent_id'])
+
+    if filters.get('status'):
+        query = query.filter(Faktura.status == filters['status'])
+
+    if filters.get('valuta'):
+        query = query.filter(Faktura.valuta_fakture == filters['valuta'])
+
+    # Search by invoice number (case-insensitive LIKE query)
+    if filters.get('search'):
+        search_term = f"%{filters['search']}%"
+        query = query.filter(Faktura.broj_fakture.ilike(search_term))
+
+    # Apply sorting
+    valid_sort_columns = {
+        'broj_fakture': Faktura.broj_fakture,
+        'datum_prometa': Faktura.datum_prometa,
+        'ukupan_iznos_rsd': Faktura.ukupan_iznos_rsd
+    }
+
+    if sort_by in valid_sort_columns:
+        sort_column = valid_sort_columns[sort_by]
+        if sort_order == 'asc':
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+    else:
+        # Default sort: newest first (datum_prometa DESC)
+        query = query.order_by(Faktura.datum_prometa.desc())
+
+    # Apply pagination (error_out=False means don't raise 404 if page is out of range)
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return pagination

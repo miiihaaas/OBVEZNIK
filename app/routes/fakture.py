@@ -1,29 +1,109 @@
 """Routes for Fakture (Invoices) management."""
 import os
+import logging
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, current_app
 from flask_login import login_required, current_user
-from app import db
+from app import db, limiter
 from app.models.faktura import Faktura
 from app.models.komitent import Komitent
 from app.forms.faktura import FakturaCreateForm
-from app.services.faktura_service import create_faktura, update_faktura, finalize_faktura
+from app.services.faktura_service import create_faktura, update_faktura, finalize_faktura, list_fakture
 from app.utils.query_helpers import filter_by_firma
 
 fakture_bp = Blueprint('fakture', __name__, url_prefix='/fakture')
+logger = logging.getLogger(__name__)
 
 
 @fakture_bp.route('/')
 @login_required
+@limiter.limit("100 per minute")  # Prevent DoS via complex filters
 def lista():
     """
-    Display list of all invoices for current user's firma.
+    Display list of all invoices for current user's firma with filters, search, sorting, and pagination.
 
-    Returns paginated list of invoices sorted by creation date (newest first).
+    Query Parameters:
+        - page: int - Page number (default: 1)
+        - datum_od: date - Filter by start date (YYYY-MM-DD)
+        - datum_do: date - Filter by end date (YYYY-MM-DD)
+        - komitent_id: int - Filter by komitent
+        - status: str - Filter by status ('draft', 'izdata', 'stornirana')
+        - valuta: str - Filter by currency ('RSD', 'EUR', 'USD', 'GBP', 'CHF')
+        - search: str - Search by invoice number
+        - sort_by: str - Sort column ('broj_fakture', 'datum_prometa', 'ukupan_iznos_rsd')
+        - sort_order: str - Sort order ('asc', 'desc')
+        - firma_id: int - Admin-only: Filter by specific firma
+
+    Returns:
+        Rendered HTML template with paginated list of invoices
     """
-    # Get all fakture for current firma (with tenant isolation)
-    fakture = filter_by_firma(Faktura.query).order_by(Faktura.created_at.desc()).all()
+    from datetime import datetime
 
-    return render_template('fakture/lista.html', fakture=fakture)
+    # Parse query parameters
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort_by', 'datum_prometa')
+    sort_order = request.args.get('sort_order', 'desc')
+
+    # Build filters dictionary
+    filters = {}
+
+    # Date filters
+    datum_od_str = request.args.get('datum_od')
+    if datum_od_str:
+        try:
+            filters['datum_od'] = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
+        except ValueError as e:
+            logger.warning(f"Invalid datum_od format: {datum_od_str}, user: {current_user.email}", exc_info=True)
+            flash('Neispravan format datuma "od". Koristite YYYY-MM-DD format.', 'warning')
+
+    datum_do_str = request.args.get('datum_do')
+    if datum_do_str:
+        try:
+            filters['datum_do'] = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
+        except ValueError as e:
+            logger.warning(f"Invalid datum_do format: {datum_do_str}, user: {current_user.email}", exc_info=True)
+            flash('Neispravan format datuma "do". Koristite YYYY-MM-DD format.', 'warning')
+
+    # Other filters
+    if request.args.get('komitent_id'):
+        filters['komitent_id'] = request.args.get('komitent_id', type=int)
+
+    if request.args.get('status'):
+        filters['status'] = request.args.get('status')
+
+    if request.args.get('valuta'):
+        filters['valuta'] = request.args.get('valuta')
+
+    if request.args.get('search'):
+        filters['search'] = request.args.get('search').strip()
+
+    # Admin-only: firma filter
+    if current_user.role == 'admin' and request.args.get('firma_id'):
+        filters['firma_id'] = request.args.get('firma_id', type=int)
+
+    # Call service layer to get paginated fakture
+    pagination = list_fakture(
+        user=current_user,
+        filters=filters,
+        page=page,
+        per_page=20,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+
+    # Get list of all pausaln firme for admin firma filter dropdown
+    from app.models.pausaln_firma import PausalnFirma
+    all_firme = []
+    if current_user.role == 'admin':
+        all_firme = PausalnFirma.query.filter_by(is_active=True).order_by(PausalnFirma.naziv).all()
+
+    return render_template(
+        'fakture/lista.html',
+        pagination=pagination,
+        filters=filters,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        all_firme=all_firme
+    )
 
 
 @fakture_bp.route('/nova', methods=['GET', 'POST'])
@@ -464,3 +544,45 @@ def retry_email(faktura_id):
             'success': False,
             'message': f'Greška: {str(e)}'
         }), 500
+
+
+@fakture_bp.route('/api/komitenti/search')
+@login_required
+def search_komitenti():
+    """
+    AJAX endpoint for komitent autocomplete search.
+
+    Query Parameters:
+        - q: str - Search query (searches in naziv and PIB)
+
+    Returns:
+        JSON array of matching komitenti: [{"id": 1, "naziv": "...", "pib": "..."}, ...]
+
+    Security:
+        - Tenant isolation applied (pausalac sees only their firma's komitenti)
+    """
+    query_str = request.args.get('q', '').strip()
+
+    if not query_str:
+        return jsonify([])
+
+    # Search with tenant isolation
+    search_term = f"%{query_str}%"
+    komitenti = filter_by_firma(Komitent.query).filter(
+        db.or_(
+            Komitent.naziv.ilike(search_term),
+            Komitent.pib.ilike(search_term)
+        )
+    ).limit(10).all()
+
+    # Format response as JSON
+    results = [
+        {
+            'id': k.id,
+            'naziv': k.naziv,
+            'pib': k.pib
+        }
+        for k in komitenti
+    ]
+
+    return jsonify(results)
