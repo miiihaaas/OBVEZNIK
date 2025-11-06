@@ -53,6 +53,18 @@
                             </select>
                         </div>
 
+                        <!-- Tip Fakture Filter (Story 4.1) -->
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Tip Fakture</label>
+                            <select name="tip_fakture" class="form-select">
+                                <option value="">Sve</option>
+                                <option value="standardna" {% if filters.get('tip_fakture') == 'standardna' %}selected{% endif %}>Standardna</option>
+                                <option value="profaktura" {% if filters.get('tip_fakture') == 'profaktura' %}selected{% endif %}>Profaktura</option>
+                                <option value="avansna" {% if filters.get('tip_fakture') == 'avansna' %}selected{% endif %}>Avansna</option>
+                                <option value="devizna" {% if filters.get('tip_fakture') == 'devizna' %}selected{% endif %}>Devizna</option>
+                            </select>
+                        </div>
+
                         <!-- Valuta Filter -->
                         <div class="col-md-2">
                             <label class="form-label small text-muted">Valuta</label>
@@ -144,6 +156,9 @@
                                         </a>
                                     </th>
 
+                                    <!-- Tip Fakture Column (Story 4.1) -->
+                                    <th class="py-3">Tip</th>
+
                                     <th class="py-3">Komitent</th>
                                     <th class="py-3">Valuta</th>
 
@@ -181,6 +196,18 @@
                                     <td class="py-3">
                                         <i class="fa-regular fa-calendar me-1 text-muted"></i>
                                         {{ faktura.datum_prometa.strftime('%d.%m.%Y') }}
+                                    </td>
+                                    <!-- Tip Fakture Badge (Story 4.1) -->
+                                    <td class="py-3">
+                                        {% if faktura.tip_fakture == 'profaktura' %}
+                                            <span class="badge bg-info">Profaktura</span>
+                                        {% elif faktura.tip_fakture == 'avansna' %}
+                                            <span class="badge bg-warning text-dark">Avansna</span>
+                                        {% elif faktura.tip_fakture == 'devizna' %}
+                                            <span class="badge bg-primary">Devizna</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Standardna</span>
+                                        {% endif %}
                                     </td>
                                     <td class="py-3">
                                         <div class="fw-semibold">{{ faktura.komitent.naziv }}</div>

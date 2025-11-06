@@ -47,6 +47,12 @@
                 {% if form.tip_fakture.errors %}
                     <div class="text-danger mt-2">{{ form.tip_fakture.errors[0] }}</div>
                 {% endif %}
+
+                <!-- Profaktura Info Message (Story 4.1) -->
+                <div class="alert alert-info mt-3" id="profaktura_info" style="display: none;">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena o profakturama:</strong> Profaktura se ne evidentira u KPO knjigu. Koristi se za slanje ponude pre finalne fakture.
+                </div>
             </div>
         </div>
 
@@ -338,6 +344,29 @@
         artikliSearch: "{{ url_for('api.artikli_search') }}",
         kursevi: "{{ url_for('api.get_kursevi') }}"
     };
+</script>
+<script>
+    // Show/hide profaktura info message (Story 4.1)
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipRadios = document.querySelectorAll('input[name="tip_fakture"]');
+        const profakturaInfo = document.getElementById('profaktura_info');
+        
+        function handleTipChange() {
+            const selectedTip = document.querySelector('input[name="tip_fakture"]:checked');
+            if (selectedTip && selectedTip.value === 'profaktura') {
+                profakturaInfo.style.display = 'block';
+            } else {
+                profakturaInfo.style.display = 'none';
+            }
+        }
+        
+        tipRadios.forEach(radio => {
+            radio.addEventListener('change', handleTipChange);
+        });
+        
+        // Initial check on page load
+        handleTipChange();
+    });
 </script>
 <script src="{{ url_for('static', filename='js/faktura.js') }}"></script>
 {% endblock %}

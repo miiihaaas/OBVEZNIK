@@ -9,7 +9,17 @@
     <div class="card mb-3">
         <div class="card-body">
             <h5>Status: <span class="badge bg-{{ 'warning' if faktura.status == 'draft' else 'success' }}">{{ faktura.status }}</span></h5>
-            <p><strong>Tip fakture:</strong> {{ faktura.tip_fakture|capitalize }}</p>
+            <p><strong>Tip fakture:</strong>
+                {% if faktura.tip_fakture == 'profaktura' %}
+                    <span class="badge bg-info">PROFAKTURA</span>
+                {% elif faktura.tip_fakture == 'avansna' %}
+                    <span class="badge bg-warning">AVANSNA</span>
+                {% elif faktura.tip_fakture == 'devizna' %}
+                    <span class="badge bg-primary">DEVIZNA</span>
+                {% else %}
+                    <span class="badge bg-secondary">STANDARDNA</span>
+                {% endif %}
+            </p>
             <p><strong>Komitent:</strong> {{ faktura.komitent.naziv }}</p>
             <p><strong>Datum prometa:</strong> {{ faktura.datum_prometa }}</p>
             <p><strong>Datum dospeća:</strong> {{ faktura.datum_dospeca }}</p>
@@ -95,6 +105,21 @@
 
     {% if faktura.status == 'izdata' %}
     <div class="mt-3">
+        <!-- Konvertuj u Fakturu Button (Story 4.1 - Prepared for Story 4.2) -->
+        {% if faktura.tip_fakture == 'profaktura' %}
+        <div class="mb-3">
+            <button 
+                type="button" 
+                class="btn btn-outline-primary" 
+                disabled 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="top" 
+                title="Funkcionalnost dolazi u Story 4.2">
+                <i class="bi bi-arrow-right-circle"></i> Konvertuj u Finalnu Fakturu
+            </button>
+            <small class="text-muted ms-2">Uskoro dostupno</small>
+        </div>
+        {% endif %}
         {% if faktura.status_pdf == 'generating' %}
         <!-- PDF generation in progress -->
         <div class="alert alert-info">

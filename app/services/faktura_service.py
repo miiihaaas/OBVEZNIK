@@ -13,24 +13,36 @@ from app.services.nbs_kursna_service import get_kurs
 security_logger = logging.getLogger('security')
 
 
-def generate_broj_fakture(firma):
+def generate_broj_fakture(firma, tip_fakture='standardna'):
     """
-    Generate the next invoice number based on firma's prefix, counter, and suffix.
+    Generate the next invoice number based on tip fakture, firma's prefix, counter, and suffix.
 
     Args:
         firma: PausalnFirma instance
+        tip_fakture: str - Type of invoice ('standardna', 'profaktura', 'avansna')
 
     Returns:
-        str: Generated invoice number (e.g., "MK-001/2025-PS")
+        str: Generated invoice number
+            - Standardna: "{prefiks}{brojac}{sufiks}" (e.g., "MK-0001/2025-PS")
+            - Profaktura: "{prefiks}PRO{brojac}{sufiks}" (e.g., "MK-PRO-0001/2025-PS")
+            - Avansna: "{prefiks}AVN{brojac}{sufiks}" (e.g., "MK-AVN-0001/2025-PS")
 
     Note:
         Does NOT increment the counter - that happens only during finalization.
     """
     prefiks = firma.prefiks_fakture or ''
-    brojac = str(firma.brojac_fakture).zfill(4)  # Pad with zeros (e.g., 0001)
     sufiks = firma.sufiks_fakture or ''
 
-    return f"{prefiks}{brojac}{sufiks}"
+    if tip_fakture == 'profaktura':
+        brojac = str(firma.brojac_profakture).zfill(4)  # Pad with zeros (e.g., 0001)
+        return f"{prefiks}PRO{brojac}{sufiks}"
+    elif tip_fakture == 'avansna':
+        # Priprema za Story 4.3 - avansne fakture
+        brojac = str(getattr(firma, 'brojac_avansne', 1)).zfill(4)
+        return f"{prefiks}AVN{brojac}{sufiks}"
+    else:  # standardna
+        brojac = str(firma.brojac_fakture).zfill(4)  # Pad with zeros (e.g., 0001)
+        return f"{prefiks}{brojac}{sufiks}"
 
 
 def calculate_datum_dospeca(datum_prometa, valuta_placanja):
@@ -213,28 +225,30 @@ def create_faktura(data, user):
     return faktura
 
 
-def increment_brojac_with_year_check(firma):
+def increment_brojac_with_year_check(firma, tip_fakture='standardna'):
     """
     Increment invoice counter with automatic year rollover.
 
-    Checks if the current year is different from the year of the last finalized invoice.
+    Checks if the current year is different from the year of the last finalized invoice of the same type.
     If it's a new year, resets counter to 1. Otherwise, increments by 1.
 
     Args:
         firma: PausalnFirma instance
+        tip_fakture: str - Type of invoice ('standardna', 'profaktura', 'avansna')
 
     Business Rules:
         - Counter resets to 1 on January 1st of each year
-        - Comparison is based on the year of the LAST FINALIZED invoice, not today's date
-        - Example: Last invoice in 2025 is #984 → First invoice in 2026 is #1
+        - Each invoice type has its own counter
+        - Comparison is based on the year of the LAST FINALIZED invoice of the same type
+        - Example: Last standardna in 2025 is #984 → First standardna in 2026 is #1
 
     Note:
         This function does NOT commit - caller must commit
     """
-    # Get the last finalized faktura for this firma
+    # Get the last finalized faktura of this type for this firma
     last_faktura = (
         Faktura.query
-        .filter_by(firma_id=firma.id, status='izdata')
+        .filter_by(firma_id=firma.id, tip_fakture=tip_fakture, status='izdata')
         .order_by(Faktura.finalized_at.desc())
         .first()
     )
@@ -247,16 +261,40 @@ def increment_brojac_with_year_check(firma):
 
         if last_year != current_year:
             # New year - reset counter to 1
-            firma.brojac_fakture = 1
+            if tip_fakture == 'profaktura':
+                firma.brojac_profakture = 1
+            elif tip_fakture == 'avansna':
+                # Priprema za Story 4.3
+                firma.brojac_avansne = 1
+            else:  # standardna
+                firma.brojac_fakture = 1
         else:
             # Same year - increment counter
-            firma.brojac_fakture += 1
+            if tip_fakture == 'profaktura':
+                firma.brojac_profakture += 1
+            elif tip_fakture == 'avansna':
+                # Priprema za Story 4.3
+                firma.brojac_avansne += 1
+            else:  # standardna
+                firma.brojac_fakture += 1
     else:
-        # No previous invoices - this is the first one, ensure counter is at least 1
-        if firma.brojac_fakture == 0:
-            firma.brojac_fakture = 1
-        else:
-            firma.brojac_fakture += 1
+        # No previous invoices of this type - this is the first one
+        if tip_fakture == 'profaktura':
+            if firma.brojac_profakture == 0:
+                firma.brojac_profakture = 1
+            else:
+                firma.brojac_profakture += 1
+        elif tip_fakture == 'avansna':
+            # Priprema za Story 4.3
+            if firma.brojac_avansne == 0:
+                firma.brojac_avansne = 1
+            else:
+                firma.brojac_avansne += 1
+        else:  # standardna
+            if firma.brojac_fakture == 0:
+                firma.brojac_fakture = 1
+            else:
+                firma.brojac_fakture += 1
 
 
 def update_faktura(faktura_id, data, user):
@@ -450,7 +488,7 @@ def finalize_faktura(faktura_id):
         raise ValueError(f"Cannot finalize faktura with status '{faktura.status}'. Only draft invoices can be finalized.")
 
     # Generate final invoice number (replacing DRAFT-{id} with real number)
-    faktura.broj_fakture = generate_broj_fakture(faktura.firma)
+    faktura.broj_fakture = generate_broj_fakture(faktura.firma, faktura.tip_fakture)
 
     # Change status to 'izdata' (issued)
     faktura.status = 'izdata'
@@ -459,7 +497,7 @@ def finalize_faktura(faktura_id):
     faktura.finalized_at = datetime.now()
 
     # Increment firma's invoice counter (with year rollover check)
-    increment_brojac_with_year_check(faktura.firma)
+    increment_brojac_with_year_check(faktura.firma, faktura.tip_fakture)
 
     # Set PDF status to 'generating' (Celery task will update to 'generated' or 'failed')
     faktura.status_pdf = 'generating'
@@ -557,6 +595,9 @@ def list_fakture(user, filters=None, page=1, per_page=20, sort_by='datum_prometa
 
     if filters.get('valuta'):
         query = query.filter(Faktura.valuta_fakture == filters['valuta'])
+
+    if filters.get('tip_fakture'):
+        query = query.filter(Faktura.tip_fakture == filters['tip_fakture'])
 
     # Search by invoice number (case-insensitive LIKE query)
     if filters.get('search'):

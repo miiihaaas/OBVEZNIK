@@ -8,17 +8,30 @@ from app.models import Faktura
 
 def get_template(faktura):
     """
-    Get the appropriate PDF template based on invoice language.
+    Get the appropriate PDF template based on invoice type and language.
 
     Args:
         faktura: Faktura model instance
 
     Returns:
-        str: Template path ('pdf/faktura_sr.html' or 'pdf/faktura_en.html')
+        str: Template path (e.g., 'pdf/profaktura_sr.html', 'pdf/faktura_en.html')
+
+    Business Rules:
+        - Profakture use separate templates with PROFAKTURA/PROFORMA INVOICE watermark
+        - Standardne fakture use standard templates
+        - Serbian invoices use '_sr.html' templates
+        - Foreign currency invoices use '_en.html' templates (jezik='en')
     """
-    if faktura.jezik == 'en':
-        return 'pdf/faktura_en.html'
-    return 'pdf/faktura_sr.html'
+    if faktura.tip_fakture == 'profaktura':
+        # Profaktura templates with watermark
+        if faktura.jezik == 'en':
+            return 'pdf/profaktura_en.html'
+        return 'pdf/profaktura_sr.html'
+    else:
+        # Standardna/Avansna faktura templates
+        if faktura.jezik == 'en':
+            return 'pdf/faktura_en.html'
+        return 'pdf/faktura_sr.html'
 
 
 def render_pdf_template(faktura, template_name):

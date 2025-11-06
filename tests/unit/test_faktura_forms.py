@@ -410,3 +410,96 @@ class TestFakturaCreateForm:
                 )
                 assert not form.validate()
                 assert 'valuta_fakture' in form.errors or 'srednji_kurs' in form.errors
+
+
+
+class TestProfakturaForm:
+    """Tests for Profaktura-specific validation."""
+
+    def test_profaktura_form_accepts_valid_data(self, app, pausalac_user):
+        """Test that profaktura form accepts valid data (AC: Story 4.1)."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                # Create komitent
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib="12345678",
+                    maticni_broj="87654321",
+                    naziv="Test Komitent",
+                    adresa="Test",
+                    broj="1",
+                    postanski_broj="11000",
+                    mesto="Beograd",
+                    drzava="Srbija",
+                    email="test@komitent.rs"
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test valid profaktura
+                form = FakturaCreateForm(
+                    tip_fakture="profaktura",
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    stavke=[{
+                        "naziv": "Konsultantske usluge",
+                        "kolicina": Decimal("10.00"),
+                        "jedinica_mere": "h",
+                        "cena": Decimal("5000.00")
+                    }]
+                )
+                assert form.validate(), f"Form validation failed: {form.errors}"
+
+    def test_profaktura_requires_komitent(self, app):
+        """Test that profaktura validation fails without komitent (AC: Story 4.1)."""
+        with app.test_request_context():
+            form = FakturaCreateForm(
+                tip_fakture="profaktura",
+                datum_prometa=date.today(),
+                valuta_placanja=7,
+                stavke=[{
+                    "naziv": "Test usluga",
+                    "kolicina": Decimal("1.00"),
+                    "jedinica_mere": "h",
+                    "cena": Decimal("1000.00")
+                }]
+            )
+            assert not form.validate()
+            assert "komitent_id" in form.errors
+
+    def test_profaktura_requires_stavke(self, app, pausalac_user):
+        """Test that profaktura validation fails without stavke (AC: Story 4.1)."""
+        with app.app_context():
+            with app.test_request_context():
+                login_user(pausalac_user)
+
+                # Create komitent
+                komitent = Komitent(
+                    firma_id=pausalac_user.firma_id,
+                    pib="12345678",
+                    maticni_broj="87654321",
+                    naziv="Test Komitent",
+                    adresa="Test",
+                    broj="1",
+                    postanski_broj="11000",
+                    mesto="Beograd",
+                    drzava="Srbija",
+                    email="test@komitent.rs"
+                )
+                db.session.add(komitent)
+                db.session.commit()
+
+                # Test profaktura without stavke
+                form = FakturaCreateForm(
+                    tip_fakture="profaktura",
+                    komitent_id=komitent.id,
+                    datum_prometa=date.today(),
+                    valuta_placanja=7,
+                    stavke=[]
+                )
+                assert not form.validate()
+                assert "stavke" in form.errors
+

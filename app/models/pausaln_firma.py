@@ -30,6 +30,7 @@ class PausalnFirma(db.Model):
     sufiks_fakture = db.Column(db.String(10), nullable=True)
     brojac_fakture = db.Column(db.Integer, default=1, nullable=False)
     brojac_profakture = db.Column(db.Integer, default=1, nullable=False)
+    brojac_avansne = db.Column(db.Integer, default=1, nullable=False)
 
     # Tax information
     pdv_kategorija = db.Column(db.String(10), default='SS', nullable=False)

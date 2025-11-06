@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.models.komitent import Komitent
 from app.models.faktura import Faktura
-from app.services.faktura_service import create_faktura, update_faktura
+from app.services.faktura_service import create_faktura, update_faktura, generate_broj_fakture, finalize_faktura
 
 
 @pytest.fixture
@@ -46,6 +46,27 @@ def pausalac_with_firma(app):
         db.session.commit()
 
         yield user, firma
+
+
+@pytest.fixture
+def komitent(pausalac_with_firma):
+    """Create a test komitent for the pausalac's firma."""
+    user, firma = pausalac_with_firma
+    komitent = Komitent(
+        firma_id=firma.id,
+        pib='87654321',
+        maticni_broj='12345678',
+        naziv='Test Komitent',
+        adresa='Komitent Adresa',
+        broj='2',
+        postanski_broj='11000',
+        mesto='Beograd',
+        drzava='Srbija',
+        email='komitent@test.rs'
+    )
+    db.session.add(komitent)
+    db.session.commit()
+    return komitent
 
 
 def create_foreign_komitent(firma_id):
@@ -654,3 +675,133 @@ class TestUpdateFaktura:
             # datum_dospeca should be 14 days later: 2025-11-17 (Monday)
             expected_dospeca_updated = date(2025, 11, 17)
             assert updated_faktura.datum_dospeca == expected_dospeca_updated
+
+
+class TestProfakturaService:
+    """Tests for profaktura-specific service logic (Story 4.1)."""
+
+    def test_generate_broj_profakture(self, pausalac_with_firma):
+        """Test that generate_broj_fakture generates number with PRO for profakture."""
+        user, firma = pausalac_with_firma
+        
+        # Set brojac_profakture to 5
+        firma.brojac_profakture = 5
+        db.session.commit()
+        
+        broj = generate_broj_fakture(firma, tip_fakture='profaktura')
+        
+        # Should contain "PRO" and the counter
+        assert 'PRO' in broj
+        assert '0005' in broj
+
+    def test_generate_broj_profakture_format(self, pausalac_with_firma):
+        """Test that profaktura number format is {prefiks}PRO{brojac}{sufiks}."""
+        user, firma = pausalac_with_firma
+        
+        # Set prefiks and sufiks
+        firma.prefiks_fakture = 'MK-'
+        firma.sufiks_fakture = '/2025-PS'
+        firma.brojac_profakture = 1
+        db.session.commit()
+        
+        broj = generate_broj_fakture(firma, tip_fakture='profaktura')
+        
+        # Should be: MK-PRO0001/2025-PS
+        assert broj == 'MK-PRO0001/2025-PS'
+
+    def test_create_profaktura_domestic(self, pausalac_with_firma, komitent):
+        """Test creating domestic profaktura (RSD)."""
+        user, firma = pausalac_with_firma
+        
+        data = {
+            'tip_fakture': 'profaktura',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'stavke': [
+                {
+                    'naziv': 'Konsultantske usluge',
+                    'kolicina': Decimal('10.00'),
+                    'jedinica_mere': 'h',
+                    'cena': Decimal('5000.00')
+                }
+            ]
+        }
+        
+        profaktura = create_faktura(data, user)
+        
+        assert profaktura.tip_fakture == 'profaktura'
+        assert profaktura.valuta_fakture == 'RSD'
+        assert profaktura.status == 'draft'
+        assert profaktura.broj_fakture == f'DRAFT-{profaktura.id}'
+        assert profaktura.ukupan_iznos_rsd == Decimal('50000.00')
+        assert profaktura.jezik == 'sr'
+
+    def test_finalize_profaktura_increments_brojac_profakture(self, pausalac_with_firma, komitent):
+        """Test that finalizing profaktura increments brojac_profakture."""
+        user, firma = pausalac_with_firma
+        
+        # Set initial profaktura brojac
+        initial_brojac_profakture = 3
+        firma.brojac_profakture = initial_brojac_profakture
+        db.session.commit()
+        
+        # Create profaktura
+        data = {
+            'tip_fakture': 'profaktura',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1.00'), 'jedinica_mere': 'h', 'cena': Decimal('100.00')}]
+        }
+        profaktura = create_faktura(data, user)
+        
+        # Finalize profaktura
+        finalized = finalize_faktura(profaktura.id)
+        
+        # Reload firma from DB
+        db.session.refresh(firma)
+        
+        # Profaktura brojac should be incremented
+        assert firma.brojac_profakture == initial_brojac_profakture + 1
+        assert finalized.status == 'izdata'
+        assert 'PRO' in finalized.broj_fakture
+
+    def test_profaktura_and_standardna_have_separate_counters(self, pausalac_with_firma, komitent):
+        """Test that profakture and standardne fakture have independent counters."""
+        user, firma = pausalac_with_firma
+        
+        # Set initial brojaci
+        firma.brojac_fakture = 10
+        firma.brojac_profakture = 5
+        db.session.commit()
+        
+        # Create and finalize standardna faktura
+        data_standardna = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1.00'), 'jedinica_mere': 'h', 'cena': Decimal('100.00')}]
+        }
+        standardna = create_faktura(data_standardna, user)
+        finalize_faktura(standardna.id)
+        
+        db.session.refresh(firma)
+        assert firma.brojac_fakture == 11
+        assert firma.brojac_profakture == 5  # Should NOT change
+        
+        # Create and finalize profaktura
+        data_profaktura = {
+            'tip_fakture': 'profaktura',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1.00'), 'jedinica_mere': 'h', 'cena': Decimal('100.00')}]
+        }
+        profaktura = create_faktura(data_profaktura, user)
+        finalize_faktura(profaktura.id)
+        
+        db.session.refresh(firma)
+        assert firma.brojac_fakture == 11  # Should NOT change
+        assert firma.brojac_profakture == 6  # Should increment

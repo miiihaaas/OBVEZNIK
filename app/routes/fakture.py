@@ -73,6 +73,9 @@ def lista():
     if request.args.get('valuta'):
         filters['valuta'] = request.args.get('valuta')
 
+    if request.args.get('tip_fakture'):
+        filters['tip_fakture'] = request.args.get('tip_fakture')
+
     if request.args.get('search'):
         filters['search'] = request.args.get('search').strip()
 
