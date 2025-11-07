@@ -50,11 +50,24 @@ class Faktura(db.Model):
 
     # Status and references
     status = db.Column(
-        db.Enum('draft', 'izdata', 'stornirana', name='status_fakture'),
+        db.Enum('draft', 'izdata', 'stornirana', 'konvertovana', name='status_fakture'),
         default='draft',
         nullable=False
     )
     avansna_faktura_id = db.Column(db.Integer, db.ForeignKey('fakture.id'), nullable=True)
+
+    # Profaktura conversion linking (self-referential)
+    konvertovana_iz_profakture_id = db.Column(
+        db.Integer,
+        db.ForeignKey('fakture.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True
+    )
+    konvertovana_u_fakturu_id = db.Column(
+        db.Integer,
+        db.ForeignKey('fakture.id', ondelete='SET NULL'),
+        nullable=True
+    )
 
     # PDF storage
     pdf_url = db.Column(db.String(500), nullable=True)
@@ -83,6 +96,15 @@ class Faktura(db.Model):
     komitent = db.relationship('Komitent', back_populates='fakture')
     user = db.relationship('User', back_populates='fakture')
     stavke = db.relationship('FakturaStavka', back_populates='faktura', cascade='all, delete-orphan')
+
+    # Self-referential relationships for profaktura conversion
+    konvertovana_iz_profakture = db.relationship(
+        'Faktura',
+        remote_side=[id],
+        foreign_keys=[konvertovana_iz_profakture_id],
+        backref='konvertovana_u_fakturu_ref',
+        uselist=False
+    )
 
     # Constraints and indexes
     __table_args__ = (

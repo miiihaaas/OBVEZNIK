@@ -50,6 +50,7 @@
                                 <option value="draft" {% if filters.get('status') == 'draft' %}selected{% endif %}>Nacrt</option>
                                 <option value="izdata" {% if filters.get('status') == 'izdata' %}selected{% endif %}>Izdata</option>
                                 <option value="stornirana" {% if filters.get('status') == 'stornirana' %}selected{% endif %}>Stornirana</option>
+                                <option value="konvertovana" {% if filters.get('status') == 'konvertovana' %}selected{% endif %}>Konvertovana</option>
                             </select>
                         </div>
 
@@ -238,6 +239,18 @@
                                             <span class="badge bg-danger">
                                                 <i class="fa-solid fa-ban me-1"></i> Stornirana
                                             </span>
+                                        {% elif faktura.status == 'konvertovana' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fa-solid fa-arrow-right-circle me-1"></i> Konvertovana
+                                            </span>
+                                            {% if faktura.konvertovana_u_fakturu_id %}
+                                            <br>
+                                            <small>
+                                                <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_u_fakturu_id) }}" class="text-decoration-none">
+                                                    <i class="fa-solid fa-link me-1"></i> Faktura
+                                                </a>
+                                            </small>
+                                            {% endif %}
                                         {% endif %}
                                     </td>
 

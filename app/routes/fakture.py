@@ -7,7 +7,7 @@ from app import db, limiter
 from app.models.faktura import Faktura
 from app.models.komitent import Komitent
 from app.forms.faktura import FakturaCreateForm
-from app.services.faktura_service import create_faktura, update_faktura, finalize_faktura, list_fakture
+from app.services.faktura_service import convert_profaktura_to_faktura, create_faktura, update_faktura, finalize_faktura, list_fakture
 from app.utils.query_helpers import filter_by_firma
 
 fakture_bp = Blueprint('fakture', __name__, url_prefix='/fakture')
@@ -589,3 +589,57 @@ def search_komitenti():
     ]
 
     return jsonify(results)
+
+
+@fakture_bp.route('/<int:faktura_id>/konvertuj', methods=['POST'])
+@login_required
+def konvertuj_profakturu(faktura_id):
+    """
+    Convert profaktura to standard faktura.
+
+    Route: POST /fakture/<id>/konvertuj
+
+    Business Rules:
+        - Only izdate profakture can be converted
+        - Conversion creates new draft faktura
+        - Profaktura status changes to 'konvertovana'
+        - User is redirected to new faktura detail page
+
+    Returns:
+        Redirect to new faktura detail page with success message
+
+    Security:
+        - Tenant isolation applied (user can only convert their firma's profakture)
+    """
+    # Load profaktura with tenant isolation
+    profaktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first()
+
+    if not profaktura:
+        flash('Profaktura nije pronađena.', 'danger')
+        return redirect(url_for('fakture.lista'))
+
+    try:
+        # Convert profaktura to standard faktura
+        nova_faktura = convert_profaktura_to_faktura(profaktura.id)
+
+        # Success message with new faktura broj
+        flash(
+            f'Profaktura uspešno konvertovana u fakturu {nova_faktura.broj_fakture}.',
+            'success'
+        )
+
+        # Redirect to new faktura detail page
+        return redirect(url_for('fakture.detail', faktura_id=nova_faktura.id))
+
+    except ValueError as e:
+        # Handle validation errors (e.g., profaktura nije izdata, već konvertovana, etc.)
+        flash(str(e), 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=profaktura.id))
+
+    except Exception as e:
+        # Handle unexpected errors
+        db.session.rollback()
+        current_app.logger.error(f'Error converting profaktura {faktura_id}: {e}')
+        flash('Greška pri konverziji profakture. Molimo pokušajte ponovo.', 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=profaktura.id))
+
