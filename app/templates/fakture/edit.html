@@ -105,6 +105,41 @@
             </div>
         </div>
 
+        <!-- Story 4.4: Zatvaranje Avansa Fields -->
+        <div class="card border-0 shadow-sm mb-4" id="zatvaranje_avansa_section" style="{% if faktura.tip_fakture not in ['standardna', 'devizna'] %}display: none;{% endif %}">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-receipt me-2 text-warning"></i> Zatvaranje Avansa</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="form-check form-switch mb-3">
+                    {{ form.zatvara_avans(id="zatvara_avans", checked=faktura.avansna_faktura_id) }}
+                    <label class="form-check-label fw-semibold" for="zatvara_avans">
+                        Ova faktura zatvara avans
+                    </label>
+                </div>
+
+                <!-- Conditional fieldset - prikazuje se samo ako je zatvara_avans checked -->
+                <div id="avans_dropdown_fieldset" style="{% if not faktura.avansna_faktura_id %}display: none;{% endif %}">
+                    <div class="alert alert-info">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        <strong>Napomena:</strong> Izaberite avansnu fakturu koja će biti zatvorena. Iznos avansa će se automatski odbiti od ukupnog iznosa fakture.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="avansna_faktura_id" class="form-label fw-semibold">
+                                <i class="fa-solid fa-file-contract me-1 text-muted"></i> Izaberi Avansnu Fakturu *
+                            </label>
+                            {{ form.avansna_faktura_id(class="form-control form-control-lg avansna-select" ~ (" is-invalid" if form.avansna_faktura_id.errors else ""), id="avansna_faktura_id") }}
+                            {% if form.avansna_faktura_id.errors %}
+                                <div class="invalid-feedback">{{ form.avansna_faktura_id.errors[0] }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Prikazuju se samo izdate avansne fakture koje nisu zatvorene.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Komitent Selection -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
@@ -348,7 +383,8 @@
     window.API_URLS = {
         komitentiSearch: "{{ url_for('api.komitenti_search') }}",
         artikliSearch: "{{ url_for('api.artikli_search') }}",
-        kursevi: "{{ url_for('api.get_kursevi') }}"
+        kursevi: "{{ url_for('api.get_kursevi') }}",
+        avansneIzdate: "{{ url_for('fakture.get_avansne_izdate') }}"  // Story 4.4
     };
 
     // Prepopulate stavke from existing faktura
@@ -363,6 +399,86 @@
         }{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
+</script>
+<script>
+    // Story 4.4: Show/hide zatvaranje avansa section and handle dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipRadios = document.querySelectorAll('input[name="tip_fakture"]');
+        const zataranjeAvansaSection = document.getElementById('zatvaranje_avansa_section');
+        const zataraAvansCheckbox = document.getElementById('zatvara_avans');
+        const avansDropdownFieldset = document.getElementById('avans_dropdown_fieldset');
+        const avansnaFakturaSelect = document.getElementById('avansna_faktura_id');
+
+        // Show/hide zatvaranje avansa section based on tip fakture
+        function handleTipChange() {
+            const selectedTip = document.querySelector('input[name="tip_fakture"]:checked');
+            // Zatvaranje avansa je dostupno samo za standardne i devizne fakture
+            if (selectedTip && (selectedTip.value === 'standardna' || selectedTip.value === 'devizna')) {
+                zataranjeAvansaSection.style.display = 'block';
+            } else {
+                zataranjeAvansaSection.style.display = 'none';
+                zataraAvansCheckbox.checked = false;
+                avansDropdownFieldset.style.display = 'none';
+            }
+        }
+
+        tipRadios.forEach(radio => {
+            radio.addEventListener('change', handleTipChange);
+        });
+
+        // Show/hide dropdown when checkbox is toggled
+        zataraAvansCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                avansDropdownFieldset.style.display = 'block';
+                loadAvansneFakture();
+            } else {
+                avansDropdownFieldset.style.display = 'none';
+                avansnaFakturaSelect.innerHTML = '<option value="">Izaberite avansnu fakturu...</option>';
+            }
+        });
+
+        // Load avansne fakture via AJAX
+        function loadAvansneFakture() {
+            fetch(window.API_URLS.avansneIzdate)
+                .then(response => response.json())
+                .then(data => {
+                    avansnaFakturaSelect.innerHTML = '<option value="">Izaberite avansnu fakturu...</option>';
+                    if (data.length === 0) {
+                        avansnaFakturaSelect.innerHTML += '<option value="" disabled>Nema dostupnih izdatih avansnih faktura</option>';
+                    } else {
+                        data.forEach(avans => {
+                            const option = document.createElement('option');
+                            option.value = avans.id;
+                            option.textContent = `${avans.broj_fakture} - ${avans.komitent_naziv} - ${avans.iznos.toFixed(2)} ${avans.valuta}`;
+                            option.dataset.iznos = avans.iznos;
+                            option.dataset.brojFakture = avans.broj_fakture;
+                            option.dataset.valuta = avans.valuta;
+
+                            // Pre-select if this is the current avansna_faktura_id
+                            {% if faktura.avansna_faktura_id %}
+                            if (avans.id === {{ faktura.avansna_faktura_id }}) {
+                                option.selected = true;
+                            }
+                            {% endif %}
+
+                            avansnaFakturaSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Greška pri učitavanju avansnih faktura:', error);
+                    avansnaFakturaSelect.innerHTML = '<option value="" disabled>Greška pri učitavanju faktura</option>';
+                });
+        }
+
+        // Initial load if checkbox is already checked (when editing existing faktura with avans)
+        if (zataraAvansCheckbox.checked) {
+            loadAvansneFakture();
+        }
+
+        // Initial check on page load
+        handleTipChange();
+    });
 </script>
 <script src="{{ url_for('static', filename='js/faktura.js') }}"></script>
 {% endblock %}

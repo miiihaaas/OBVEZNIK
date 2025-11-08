@@ -100,6 +100,96 @@
             </div>
         </div>
 
+        <!-- Avansna Faktura Fields (Conditional - Only for Avansna) - Story 4.3 -->
+        <div class="card border-0 shadow-sm mb-4" id="avansni_fieldset" style="display: none;">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-file-contract me-2 text-primary"></i> Podaci o Avansu</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> Avansna faktura ima samo jednu stavku sa iznosom avansa. Možete uneti procenat ili direktan iznos.
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label for="opis_posla" class="form-label fw-semibold">
+                            <i class="fa-solid fa-clipboard me-1 text-muted"></i> Opis Posla
+                        </label>
+                        {{ form.opis_posla(class="form-control form-control-lg" ~ (" is-invalid" if form.opis_posla.errors else ""), id="opis_posla", placeholder="Naziv projekta ili posla") }}
+                        {% if form.opis_posla.errors %}
+                            <div class="invalid-feedback">{{ form.opis_posla.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Npr. "Projekat XYZ"</small>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label for="ukupna_vrednost_posla" class="form-label fw-semibold">
+                            <i class="fa-solid fa-calculator me-1 text-muted"></i> Ukupna Vrednost Posla (RSD)
+                        </label>
+                        {{ form.ukupna_vrednost_posla(class="form-control form-control-lg" ~ (" is-invalid" if form.ukupna_vrednost_posla.errors else ""), id="ukupna_vrednost_posla", placeholder="0.00") }}
+                        {% if form.ukupna_vrednost_posla.errors %}
+                            <div class="invalid-feedback">{{ form.ukupna_vrednost_posla.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Unesite ukupnu vrednost ako računate procenat</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="procenat_avansa" class="form-label fw-semibold">
+                            <i class="fa-solid fa-percent me-1 text-muted"></i> Procenat Avansa (%)
+                        </label>
+                        {{ form.procenat_avansa(class="form-control form-control-lg" ~ (" is-invalid" if form.procenat_avansa.errors else ""), id="procenat_avansa", placeholder="30") }}
+                        {% if form.procenat_avansa.errors %}
+                            <div class="invalid-feedback">{{ form.procenat_avansa.errors[0] }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Npr. 30, 50, 100</small>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-12">
+                        <div class="alert alert-success" id="iznos_avansa_display" style="display: none;">
+                            <i class="fa-solid fa-calculator me-2"></i>
+                            <strong>Iznos avansa:</strong> <span id="iznos_avansa_value">0.00</span> RSD
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story 4.4: Zatvaranje Avansa Fields -->
+        <div class="card border-0 shadow-sm mb-4" id="zatvaranje_avansa_section" style="display: none;">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-receipt me-2 text-warning"></i> Zatvaranje Avansa</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="form-check form-switch mb-3">
+                    {{ form.zatvara_avans(id="zatvara_avans") }}
+                    <label class="form-check-label fw-semibold" for="zatvara_avans">
+                        Ova faktura zatvara avans
+                    </label>
+                </div>
+
+                <!-- Conditional fieldset - prikazuje se samo ako je zatvara_avans checked -->
+                <div id="avans_dropdown_fieldset" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        <strong>Napomena:</strong> Izaberite avansnu fakturu koja će biti zatvorena. Iznos avansa će se automatski odbiti od ukupnog iznosa fakture.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label for="avansna_faktura_id" class="form-label fw-semibold">
+                                <i class="fa-solid fa-file-contract me-1 text-muted"></i> Izaberi Avansnu Fakturu *
+                            </label>
+                            {{ form.avansna_faktura_id(class="form-control form-control-lg avansna-select" ~ (" is-invalid" if form.avansna_faktura_id.errors else ""), id="avansna_faktura_id") }}
+                            {% if form.avansna_faktura_id.errors %}
+                                <div class="invalid-feedback">{{ form.avansna_faktura_id.errors[0] }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Prikazuju se samo izdate avansne fakture koje nisu zatvorene.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Komitent Selection -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
@@ -342,7 +432,8 @@
     window.API_URLS = {
         komitentiSearch: "{{ url_for('api.komitenti_search') }}",
         artikliSearch: "{{ url_for('api.artikli_search') }}",
-        kursevi: "{{ url_for('api.get_kursevi') }}"
+        kursevi: "{{ url_for('api.get_kursevi') }}",
+        avansneIzdate: "{{ url_for('fakture.get_avansne_izdate') }}"  // Story 4.4
     };
 </script>
 <script>
@@ -364,6 +455,116 @@
             radio.addEventListener('change', handleTipChange);
         });
         
+        // Initial check on page load
+        handleTipChange();
+    });
+</script>
+<script>
+    // Show/hide avansni fields and calculate iznos avansa (Story 4.3)
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipRadios = document.querySelectorAll('input[name="tip_fakture"]');
+        const avansniFieldset = document.getElementById('avansni_fieldset');
+        const ukupnaVrednostInput = document.getElementById('ukupna_vrednost_posla');
+        const procenatAvansaInput = document.getElementById('procenat_avansa');
+        const iznosAvansaDisplay = document.getElementById('iznos_avansa_display');
+        const iznosAvansaValue = document.getElementById('iznos_avansa_value');
+
+        function handleTipChange() {
+            const selectedTip = document.querySelector('input[name="tip_fakture"]:checked');
+            if (selectedTip && selectedTip.value === 'avansna') {
+                avansniFieldset.style.display = 'block';
+            } else {
+                avansniFieldset.style.display = 'none';
+            }
+        }
+
+        function calculateIznosAvansa() {
+            const ukupnaVrednost = parseFloat(ukupnaVrednostInput.value) || 0;
+            const procenat = parseInt(procenatAvansaInput.value) || 0;
+
+            if (ukupnaVrednost > 0 && procenat > 0 && procenat <= 100) {
+                const iznos = (ukupnaVrednost * (procenat / 100)).toFixed(2);
+                iznosAvansaValue.textContent = iznos.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                iznosAvansaDisplay.style.display = 'block';
+            } else {
+                iznosAvansaDisplay.style.display = 'none';
+            }
+        }
+
+        tipRadios.forEach(radio => {
+            radio.addEventListener('change', handleTipChange);
+        });
+
+        ukupnaVrednostInput.addEventListener('input', calculateIznosAvansa);
+        procenatAvansaInput.addEventListener('input', calculateIznosAvansa);
+
+        // Initial check on page load
+        handleTipChange();
+    });
+</script>
+<script>
+    // Story 4.4: Show/hide zatvaranje avansa section and handle dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipRadios = document.querySelectorAll('input[name="tip_fakture"]');
+        const zataranjeAvansaSection = document.getElementById('zatvaranje_avansa_section');
+        const zataraAvansCheckbox = document.getElementById('zatvara_avans');
+        const avansDropdownFieldset = document.getElementById('avans_dropdown_fieldset');
+        const avansnaFakturaSelect = document.getElementById('avansna_faktura_id');
+
+        // Show/hide zatvaranje avansa section based on tip fakture
+        function handleTipChange() {
+            const selectedTip = document.querySelector('input[name="tip_fakture"]:checked');
+            // Zatvaranje avansa je dostupno samo za standardne i devizne fakture
+            if (selectedTip && (selectedTip.value === 'standardna' || selectedTip.value === 'devizna')) {
+                zataranjeAvansaSection.style.display = 'block';
+            } else {
+                zataranjeAvansaSection.style.display = 'none';
+                zataraAvansCheckbox.checked = false;
+                avansDropdownFieldset.style.display = 'none';
+            }
+        }
+
+        tipRadios.forEach(radio => {
+            radio.addEventListener('change', handleTipChange);
+        });
+
+        // Show/hide dropdown when checkbox is toggled
+        zataraAvansCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                avansDropdownFieldset.style.display = 'block';
+                loadAvansneFakture();
+            } else {
+                avansDropdownFieldset.style.display = 'none';
+                avansnaFakturaSelect.innerHTML = '<option value="">Izaberite avansnu fakturu...</option>';
+            }
+        });
+
+        // Load avansne fakture via AJAX
+        function loadAvansneFakture() {
+            fetch(window.API_URLS.avansneIzdate)
+                .then(response => response.json())
+                .then(data => {
+                    avansnaFakturaSelect.innerHTML = '<option value="">Izaberite avansnu fakturu...</option>';
+                    if (data.length === 0) {
+                        avansnaFakturaSelect.innerHTML += '<option value="" disabled>Nema dostupnih izdatih avansnih faktura</option>';
+                    } else {
+                        data.forEach(avans => {
+                            const option = document.createElement('option');
+                            option.value = avans.id;
+                            option.textContent = `${avans.broj_fakture} - ${avans.komitent_naziv} - ${avans.iznos.toFixed(2)} ${avans.valuta}`;
+                            option.dataset.iznos = avans.iznos;
+                            option.dataset.brojFakture = avans.broj_fakture;
+                            option.dataset.valuta = avans.valuta;
+                            avansnaFakturaSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Greška pri učitavanju avansnih faktura:', error);
+                    avansnaFakturaSelect.innerHTML = '<option value="" disabled>Greška pri učitavanju faktura</option>';
+                });
+        }
+
         // Initial check on page load
         handleTipChange();
     });

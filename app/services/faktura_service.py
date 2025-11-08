@@ -159,6 +159,66 @@ def create_faktura(data, user):
         # Foreign currency invoices are always in English
         jezik = 'en'
 
+    # Handle zatvaranje avansa logic (Story 4.4)
+    zatvara_avans = data.get('zatvara_avans', False)
+    avansna_faktura_id = data.get('avansna_faktura_id')
+    avansna_faktura_ref = None  # Store reference for validation
+
+    if zatvara_avans and avansna_faktura_id:
+        # Load avansna faktura
+        avansna_faktura_ref = db.session.get(Faktura, avansna_faktura_id)
+        if not avansna_faktura_ref:
+            raise ValueError(f"Avansna faktura sa ID {avansna_faktura_id} nije pronađena.")
+
+        # Validation: Must be 'izdata', not 'zatvorena'
+        if avansna_faktura_ref.status == 'zatvorena':
+            raise ValueError(f"Avansna faktura {avansna_faktura_ref.broj_fakture} je već zatvorena.")
+
+        if avansna_faktura_ref.status != 'izdata':
+            raise ValueError("Samo izdate avansne fakture mogu biti zatvorene.")
+
+        # SEC-001: Tenant isolation
+        if avansna_faktura_ref.firma_id != firma.id:
+            raise ValueError("Avansna faktura ne pripada vašoj firmi.")
+
+        # Validation: Must be tip_fakture='avansna'
+        if avansna_faktura_ref.tip_fakture != 'avansna':
+            raise ValueError("Izabrana faktura nije avansna faktura.")
+
+    # Handle avansna faktura logic (Story 4.3)
+    stavke_data = data.get('stavke', [])
+    if tip_fakture == 'avansna':
+        # Validate avansna faktura specific fields
+        ukupna_vrednost_posla = data.get('ukupna_vrednost_posla')
+        procenat_avansa = data.get('procenat_avansa')
+        opis_posla = data.get('opis_posla', 'projekat')
+
+        if procenat_avansa:
+            # Calculate avans amount from percentage
+            if not ukupna_vrednost_posla or Decimal(str(ukupna_vrednost_posla)) <= 0:
+                raise ValueError("Ukupna vrednost posla je obavezna kada je procenat avansa unet.")
+
+            ukupna_vrednost = Decimal(str(ukupna_vrednost_posla))
+            procenat = Decimal(str(procenat_avansa))
+            iznos_avansa = (ukupna_vrednost * (procenat / Decimal('100'))).quantize(Decimal('0.01'))
+            opis_stavke = f"Avans {procenat_avansa}% za {opis_posla}"
+        else:
+            # Direct amount entry (no percentage)
+            # User enters stavka directly with avans amount
+            if not stavke_data or len(stavke_data) == 0:
+                raise ValueError("Avansna faktura mora imati najmanje jednu stavku.")
+            iznos_avansa = Decimal(str(stavke_data[0].get('cena', 0)))
+            opis_stavke = stavke_data[0].get('naziv', 'Avans za projekat')
+
+        # Create single stavka for avansna faktura
+        stavke_data = [{
+            'naziv': opis_stavke,
+            'kolicina': Decimal('1.00'),
+            'jedinica_mere': 'kom',
+            'cena': iznos_avansa,
+            'ukupno': iznos_avansa
+        }]
+
     # Create faktura instance
     faktura = Faktura(
         firma_id=firma.id,
@@ -179,7 +239,8 @@ def create_faktura(data, user):
         srednji_kurs=srednji_kurs,  # Store NBS exchange rate for foreign currency
         ukupan_iznos_rsd=Decimal('0.00'),  # Will be calculated below
         ukupan_iznos_originalna_valuta=Decimal('0.00'),  # Will be calculated below
-        status='draft'
+        status='draft',
+        avansna_faktura_id=avansna_faktura_id if zatvara_avans else None  # Story 4.4
     )
 
     db.session.add(faktura)
@@ -190,7 +251,8 @@ def create_faktura(data, user):
 
     # Create faktura stavke (line items)
     ukupan_iznos = Decimal('0.00')
-    for i, stavka_data in enumerate(data.get('stavke', []), start=1):
+    redni_broj = 1
+    for stavka_data in stavke_data:
         # Calculate ukupno for this stavka
         kolicina = Decimal(str(stavka_data.get('kolicina', 0)))
         cena = Decimal(str(stavka_data.get('cena', 0)))
@@ -204,10 +266,41 @@ def create_faktura(data, user):
             jedinica_mere=stavka_data.get('jedinica_mere'),
             cena=cena,
             ukupno=ukupno,
-            redni_broj=i
+            redni_broj=redni_broj
         )
         db.session.add(stavka)
         ukupan_iznos += ukupno
+        redni_broj += 1
+
+    # Story 4.4: Add negative stavka for avans odbitak
+    if zatvara_avans and avansna_faktura_ref:
+        # Get avans amount in appropriate currency
+        if valuta_fakture == 'RSD':
+            iznos_avansa = avansna_faktura_ref.ukupan_iznos_rsd
+        else:
+            # For foreign currency invoices, use original currency amount
+            iznos_avansa = avansna_faktura_ref.ukupan_iznos_originalna_valuta or avansna_faktura_ref.ukupan_iznos_rsd
+
+        # Add negative stavka (odbitak)
+        odbitak_stavka = FakturaStavka(
+            faktura_id=faktura.id,
+            artikal_id=None,
+            naziv=f"Odbitak avansa - {avansna_faktura_ref.broj_fakture}",
+            kolicina=Decimal('1.00'),
+            jedinica_mere='kom',
+            cena=-iznos_avansa,  # NEGATIVE
+            ukupno=-iznos_avansa,  # NEGATIVE
+            redni_broj=redni_broj
+        )
+        db.session.add(odbitak_stavka)
+        ukupan_iznos -= iznos_avansa  # Subtract avans from total
+
+        # Validation: Total amount cannot be negative
+        if ukupan_iznos < 0:
+            raise ValueError(
+                "Ukupan iznos fakture ne može biti negativan. "
+                f"Avans ({iznos_avansa}) je veći od vrednosti poslova ({ukupan_iznos + iznos_avansa})."
+            )
 
     # Update faktura total amounts
     if valuta_fakture == 'RSD':
@@ -388,6 +481,32 @@ def update_faktura(faktura_id, data, user):
         # Foreign currency invoices are always in English
         jezik = 'en'
 
+    # Handle zatvaranje avansa logic (Story 4.4)
+    zatvara_avans = data.get('zatvara_avans', False)
+    avansna_faktura_id = data.get('avansna_faktura_id')
+    avansna_faktura_ref = None  # Store reference for validation
+
+    if zatvara_avans and avansna_faktura_id:
+        # Load avansna faktura
+        avansna_faktura_ref = db.session.get(Faktura, avansna_faktura_id)
+        if not avansna_faktura_ref:
+            raise ValueError(f"Avansna faktura sa ID {avansna_faktura_id} nije pronađena.")
+
+        # Validation: Must be 'izdata', not 'zatvorena'
+        if avansna_faktura_ref.status == 'zatvorena':
+            raise ValueError(f"Avansna faktura {avansna_faktura_ref.broj_fakture} je već zatvorena.")
+
+        if avansna_faktura_ref.status != 'izdata':
+            raise ValueError("Samo izdate avansne fakture mogu biti zatvorene.")
+
+        # SEC-001: Tenant isolation
+        if avansna_faktura_ref.firma_id != user.firma.id:
+            raise ValueError("Avansna faktura ne pripada vašoj firmi.")
+
+        # Validation: Must be tip_fakture='avansna'
+        if avansna_faktura_ref.tip_fakture != 'avansna':
+            raise ValueError("Izabrana faktura nije avansna faktura.")
+
     # Update faktura fields
     faktura.tip_fakture = tip_fakture
     faktura.valuta_fakture = valuta_fakture
@@ -401,6 +520,7 @@ def update_faktura(faktura_id, data, user):
     faktura.poziv_na_broj = data.get('poziv_na_broj')
     faktura.model = data.get('model')
     faktura.srednji_kurs = srednji_kurs
+    faktura.avansna_faktura_id = avansna_faktura_id if zatvara_avans else None  # Story 4.4
 
     # Recalculate datum_dospeca
     faktura.datum_dospeca = calculate_datum_dospeca(
@@ -413,7 +533,8 @@ def update_faktura(faktura_id, data, user):
 
     # Create new stavke from data
     ukupan_iznos = Decimal('0.00')
-    for i, stavka_data in enumerate(data.get('stavke', []), start=1):
+    redni_broj = 1
+    for stavka_data in data.get('stavke', []):
         # Calculate ukupno for this stavka
         kolicina = Decimal(str(stavka_data.get('kolicina', 0)))
         cena = Decimal(str(stavka_data.get('cena', 0)))
@@ -427,10 +548,41 @@ def update_faktura(faktura_id, data, user):
             jedinica_mere=stavka_data.get('jedinica_mere'),
             cena=cena,
             ukupno=ukupno,
-            redni_broj=i
+            redni_broj=redni_broj
         )
         db.session.add(stavka)
         ukupan_iznos += ukupno
+        redni_broj += 1
+
+    # Story 4.4: Add negative stavka for avans odbitak (same logic as create_faktura)
+    if zatvara_avans and avansna_faktura_ref:
+        # Get avans amount in appropriate currency
+        if valuta_fakture == 'RSD':
+            iznos_avansa = avansna_faktura_ref.ukupan_iznos_rsd
+        else:
+            # For foreign currency invoices, use original currency amount
+            iznos_avansa = avansna_faktura_ref.ukupan_iznos_originalna_valuta or avansna_faktura_ref.ukupan_iznos_rsd
+
+        # Add negative stavka (odbitak)
+        odbitak_stavka = FakturaStavka(
+            faktura_id=faktura.id,
+            artikal_id=None,
+            naziv=f"Odbitak avansa - {avansna_faktura_ref.broj_fakture}",
+            kolicina=Decimal('1.00'),
+            jedinica_mere='kom',
+            cena=-iznos_avansa,  # NEGATIVE
+            ukupno=-iznos_avansa,  # NEGATIVE
+            redni_broj=redni_broj
+        )
+        db.session.add(odbitak_stavka)
+        ukupan_iznos -= iznos_avansa  # Subtract avans from total
+
+        # Validation: Total amount cannot be negative
+        if ukupan_iznos < 0:
+            raise ValueError(
+                "Ukupan iznos fakture ne može biti negativan. "
+                f"Avans ({iznos_avansa}) je veći od vrednosti poslova ({ukupan_iznos + iznos_avansa})."
+            )
 
     # Update faktura total amounts
     if valuta_fakture == 'RSD':
@@ -502,6 +654,38 @@ def finalize_faktura(faktura_id):
     # Set PDF status to 'generating' (Celery task will update to 'generated' or 'failed')
     faktura.status_pdf = 'generating'
 
+    # Story 4.4: Close avansna faktura if this faktura is closing an avans
+    # IMPORTANT: Must be done BEFORE commit so both operations are in same transaction
+    if faktura.avansna_faktura_id:
+        avansna = db.session.get(Faktura, faktura.avansna_faktura_id)
+
+        if not avansna:
+            raise ValueError(f"Avansna faktura sa ID {faktura.avansna_faktura_id} nije pronađena.")
+
+        if avansna.tip_fakture != 'avansna':
+            raise ValueError("Izabrana faktura nije avansna faktura.")
+
+        if avansna.status == 'zatvorena':
+            raise ValueError(f"Avansna faktura {avansna.broj_fakture} je već zatvorena.")
+
+        if avansna.status != 'izdata':
+            raise ValueError("Samo izdate avansne fakture mogu biti zatvorene.")
+
+        # Close the avans (change status and create bidirectional link)
+        avansna.status = 'zatvorena'
+        avansna.konvertovana_u_fakturu_id = faktura.id
+
+        # Security logging
+        security_logger.info(
+            f"Avansna faktura {avansna.broj_fakture} zatvorena sa finalnom fakturom {faktura.broj_fakture}",
+            extra={
+                'user_id': faktura.user_id,
+                'firma_id': faktura.firma_id,
+                'ip_address': request.remote_addr if request else None
+            }
+        )
+
+    # Commit all changes together (faktura finalization + avans closure)
     db.session.commit()
 
     # Trigger background PDF generation (async Celery task)
@@ -518,6 +702,60 @@ def finalize_faktura(faktura_id):
     return faktura
 
 
+def close_avans_faktura(avansna_faktura_id, finalna_faktura_id):
+    """
+    Close an avansna faktura by changing its status to 'zatvorena'.
+
+    Args:
+        avansna_faktura_id: int - ID of avansna faktura to close
+        finalna_faktura_id: int - ID of final faktura that closes the avans
+
+    Returns:
+        Faktura: Closed avansna faktura instance
+
+    Raises:
+        ValueError: If avansna faktura is already closed or invalid
+
+    Business Rules:
+        - Only 'izdata' avansne fakture can be closed
+        - Sets status to 'zatvorena'
+        - Creates bidirectional link (avansna ↔ finalna)
+        - Security logging for audit trail
+    """
+    avansna = db.session.get(Faktura, avansna_faktura_id)
+
+    if not avansna:
+        raise ValueError(f"Avansna faktura sa ID {avansna_faktura_id} nije pronađena.")
+
+    if avansna.tip_fakture != 'avansna':
+        raise ValueError("Faktura nije avansna faktura.")
+
+    if avansna.status == 'zatvorena':
+        raise ValueError(f"Avansna faktura {avansna.broj_fakture} je već zatvorena.")
+
+    if avansna.status != 'izdata':
+        raise ValueError("Samo izdate avansne fakture mogu biti zatvorene.")
+
+    # Change status to 'zatvorena'
+    avansna.status = 'zatvorena'
+
+    # Set bidirectional link (use existing konvertovana_u_fakturu_id field pattern)
+    avansna.konvertovana_u_fakturu_id = finalna_faktura_id
+
+    db.session.commit()
+
+    # Security logging
+    security_logger.info(
+        f"Avansna faktura {avansna.broj_fakture} zatvorena "
+        f"sa finalnom fakturom ID {finalna_faktura_id}",
+        extra={
+            'user_id': avansna.user_id,
+            'firma_id': avansna.firma_id,
+            'ip_address': request.remote_addr if request else None
+        }
+    )
+
+    return avansna
 
 
 def convert_profaktura_to_faktura(profaktura_id):

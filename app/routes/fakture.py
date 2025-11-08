@@ -120,6 +120,15 @@ def nova_faktura():
     """
     form = FakturaCreateForm()
 
+    # Story 4.4: Populate avansne fakture choices dynamically (for validation)
+    avansne_fakture = filter_by_firma(Faktura.query).filter_by(
+        tip_fakture='avansna',
+        status='izdata'
+    ).all()
+    form.avansna_faktura_id.choices = [(None, 'Izaberite avansnu fakturu...')] + [
+        (f.id, f'{f.broj_fakture} - {f.komitent.naziv if f.komitent else "N/A"}') for f in avansne_fakture
+    ]
+
     if request.method == 'POST':
         current_app.logger.debug('POST request received for nova faktura')
         current_app.logger.debug(f'Form errors before validation: {form.errors}')
@@ -132,6 +141,11 @@ def nova_faktura():
                     'tip_fakture': form.tip_fakture.data,
                     'valuta_fakture': form.valuta_fakture.data,  # For devizna fakture
                     'srednji_kurs': form.srednji_kurs.data,  # For devizna fakture
+                    'ukupna_vrednost_posla': form.ukupna_vrednost_posla.data,  # For avansna fakture
+                    'procenat_avansa': form.procenat_avansa.data,  # For avansna fakture
+                    'opis_posla': form.opis_posla.data,  # For avansna fakture
+                    'zatvara_avans': form.zatvara_avans.data,  # Story 4.4: Zatvaranje avansa
+                    'avansna_faktura_id': form.avansna_faktura_id.data,  # Story 4.4: Zatvaranje avansa
                     'komitent_id': form.komitent_id.data,
                     'datum_prometa': form.datum_prometa.data,
                     'valuta_placanja': form.valuta_placanja.data,
@@ -157,7 +171,26 @@ def nova_faktura():
                 # Create faktura using service
                 faktura = create_faktura(data, current_user)
 
-                flash('Faktura kreirana kao nacrt.', 'success')
+                # Success message with tip fakture (Story 4.3)
+                tip_display = {
+                    'standardna': 'Domaća faktura',
+                    'profaktura': 'Profaktura',
+                    'avansna': 'Avansna faktura',
+                    'devizna': 'Devizna faktura'
+                }.get(faktura.tip_fakture, 'Faktura')
+
+                # Story 4.4: Enhanced message when closing avans
+                if faktura.avansna_faktura_id:
+                    avansna_faktura = Faktura.query.get(faktura.avansna_faktura_id)
+                    avans_broj = avansna_faktura.broj_fakture if avansna_faktura else 'nepoznat'
+                    flash(
+                        f'{tip_display} {faktura.broj_fakture} uspešno kreirana u draft statusu '
+                        f'sa zatvaranjem avansa {avans_broj}.',
+                        'success'
+                    )
+                else:
+                    flash(f'{tip_display} {faktura.broj_fakture} uspešno kreirana u draft statusu.', 'success')
+
                 return redirect(url_for('fakture.detail', faktura_id=faktura.id))
 
             except Exception as e:
@@ -218,6 +251,15 @@ def edit_faktura(faktura_id):
 
     form = FakturaCreateForm()
 
+    # Story 4.4: Populate avansne fakture choices dynamically (for validation)
+    avansne_fakture = filter_by_firma(Faktura.query).filter_by(
+        tip_fakture='avansna',
+        status='izdata'
+    ).all()
+    form.avansna_faktura_id.choices = [(None, 'Izaberite avansnu fakturu...')] + [
+        (f.id, f'{f.broj_fakture} - {f.komitent.naziv if f.komitent else "N/A"}') for f in avansne_fakture
+    ]
+
     if request.method == 'POST':
         current_app.logger.debug('POST request received for edit faktura')
         current_app.logger.debug(f'Form errors before validation: {form.errors}')
@@ -230,6 +272,11 @@ def edit_faktura(faktura_id):
                     'tip_fakture': form.tip_fakture.data,
                     'valuta_fakture': form.valuta_fakture.data,  # For devizna fakture
                     'srednji_kurs': form.srednji_kurs.data,  # For devizna fakture
+                    'ukupna_vrednost_posla': form.ukupna_vrednost_posla.data,  # For avansna fakture
+                    'procenat_avansa': form.procenat_avansa.data,  # For avansna fakture
+                    'opis_posla': form.opis_posla.data,  # For avansna fakture
+                    'zatvara_avans': form.zatvara_avans.data,  # Story 4.4: Zatvaranje avansa
+                    'avansna_faktura_id': form.avansna_faktura_id.data,  # Story 4.4: Zatvaranje avansa
                     'komitent_id': form.komitent_id.data,
                     'datum_prometa': form.datum_prometa.data,
                     'valuta_placanja': form.valuta_placanja.data,
@@ -288,6 +335,9 @@ def edit_faktura(faktura_id):
         form.broj_narudzbenice.data = faktura.broj_narudzbenice
         form.poziv_na_broj.data = faktura.poziv_na_broj
         form.model.data = faktura.model
+        # Story 4.4: Zatvaranje avansa
+        form.zatvara_avans.data = bool(faktura.avansna_faktura_id)
+        form.avansna_faktura_id.data = faktura.avansna_faktura_id
 
     # Load komitenti for dropdown (filtered by firma)
     komitenti = filter_by_firma(Komitent.query).all()
@@ -586,6 +636,43 @@ def search_komitenti():
             'pib': k.pib
         }
         for k in komitenti
+    ]
+
+    return jsonify(results)
+
+
+@fakture_bp.route('/api/fakture/avansne/izdate')
+@login_required
+def get_avansne_izdate():
+    """
+    AJAX endpoint for listing issued avansne fakture (for zatvaranje avansa).
+
+    Returns:
+        JSON array of issued avansne fakture: [{"id": 1, "broj_fakture": "...",
+        "komitent_naziv": "...", "iznos": 1000.00}, ...]
+
+    Security:
+        - Tenant isolation applied (pausalac sees only their firma's avansne fakture)
+        - Only returns fakture with status='izdata' (not 'draft', 'zatvorena', etc.)
+
+    Story: 4.4 - Zatvaranje Avansa
+    """
+    # Get all avansne fakture with status='izdata' (tenant isolation applied)
+    avansne_fakture = filter_by_firma(Faktura.query).filter_by(
+        tip_fakture='avansna',
+        status='izdata'
+    ).order_by(Faktura.datum_prometa.desc()).all()
+
+    # Format response as JSON
+    results = [
+        {
+            'id': f.id,
+            'broj_fakture': f.broj_fakture,
+            'komitent_naziv': f.komitent.naziv if f.komitent else 'N/A',
+            'iznos': float(f.ukupan_iznos_rsd),
+            'valuta': f.valuta_fakture
+        }
+        for f in avansne_fakture
     ]
 
     return jsonify(results)

@@ -50,7 +50,7 @@ class Faktura(db.Model):
 
     # Status and references
     status = db.Column(
-        db.Enum('draft', 'izdata', 'stornirana', 'konvertovana', name='status_fakture'),
+        db.Enum('draft', 'izdata', 'stornirana', 'konvertovana', 'zatvorena', name='status_fakture'),
         default='draft',
         nullable=False
     )

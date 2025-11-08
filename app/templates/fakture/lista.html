@@ -209,6 +209,30 @@
                                         {% else %}
                                             <span class="badge bg-secondary">Standardna</span>
                                         {% endif %}
+
+                                        <!-- Story 4.2: Link ka profakturi iz koje je faktura nastala -->
+                                        {% if faktura.konvertovana_iz_profakture_id %}
+                                        <br>
+                                        <small>
+                                            <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_iz_profakture_id) }}"
+                                               class="text-decoration-none text-muted"
+                                               title="Pogledaj profakturu">
+                                                <i class="fa-solid fa-arrow-left me-1"></i> iz Profakture
+                                            </a>
+                                        </small>
+                                        {% endif %}
+
+                                        <!-- Story 4.4: Link ka avansu koji ova faktura zatvara -->
+                                        {% if faktura.avansna_faktura_id %}
+                                        <br>
+                                        <small>
+                                            <a href="{{ url_for('fakture.detail', faktura_id=faktura.avansna_faktura_id) }}"
+                                               class="text-decoration-none text-muted"
+                                               title="Pogledaj avansnu fakturu">
+                                                <i class="fa-solid fa-receipt me-1"></i> zatvara Avans
+                                            </a>
+                                        </small>
+                                        {% endif %}
                                     </td>
                                     <td class="py-3">
                                         <div class="fw-semibold">{{ faktura.komitent.naziv }}</div>
@@ -246,8 +270,25 @@
                                             {% if faktura.konvertovana_u_fakturu_id %}
                                             <br>
                                             <small>
-                                                <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_u_fakturu_id) }}" class="text-decoration-none">
-                                                    <i class="fa-solid fa-link me-1"></i> Faktura
+                                                <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_u_fakturu_id) }}"
+                                                   class="text-decoration-none"
+                                                   title="Pogledaj fakturu">
+                                                    <i class="fa-solid fa-arrow-right me-1"></i> Faktura
+                                                </a>
+                                            </small>
+                                            {% endif %}
+                                        {% elif faktura.status == 'zatvorena' %}
+                                            <!-- Story 4.4: Status "Zatvorena" za avansne fakture -->
+                                            <span class="badge bg-info">
+                                                <i class="fa-solid fa-lock me-1"></i> Zatvorena
+                                            </span>
+                                            {% if faktura.konvertovana_u_fakturu_id %}
+                                            <br>
+                                            <small>
+                                                <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_u_fakturu_id) }}"
+                                                   class="text-decoration-none"
+                                                   title="Pogledaj finalnu fakturu">
+                                                    <i class="fa-solid fa-arrow-right me-1"></i> Finalna faktura
                                                 </a>
                                             </small>
                                             {% endif %}

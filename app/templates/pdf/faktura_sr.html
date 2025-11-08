@@ -259,6 +259,11 @@
             <p style="font-size: 7pt;"><strong>Identifikacioni broj:</strong> {{ faktura.identifikacioni_broj }}</p>
             {% endif %}
 
+            <!-- Story 4.4: Napomena o odbitku avansa -->
+            {% if faktura.avansna_faktura_id and faktura.avansna_faktura %}
+            <p style="font-size: 8pt; margin-top: 10px;"><strong>Odbitak avansa:</strong> Ovom fakturom se zatvara avans iz fakture {{ faktura.avansna_faktura.broj_fakture }}</p>
+            {% endif %}
+
             <p>U koliko imate bilo kakvih pitanja slobodno nas kontaktirajte: {{ firma.email }}</p>
         </div>
 

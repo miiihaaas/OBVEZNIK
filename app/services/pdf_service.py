@@ -14,10 +14,11 @@ def get_template(faktura):
         faktura: Faktura model instance
 
     Returns:
-        str: Template path (e.g., 'pdf/profaktura_sr.html', 'pdf/faktura_en.html')
+        str: Template path (e.g., 'pdf/profaktura_sr.html', 'pdf/faktura_en.html', 'pdf/avansna_sr.html')
 
     Business Rules:
-        - Profakture use separate templates with PROFAKTURA/PROFORMA INVOICE watermark
+        - Profakture use separate templates with PROFAKTURA/PROFORMA INVOICE watermark (Story 4.1)
+        - Avansne fakture use separate templates with AVANSNA FAKTURA/ADVANCE INVOICE watermark (Story 4.3)
         - Standardne fakture use standard templates
         - Serbian invoices use '_sr.html' templates
         - Foreign currency invoices use '_en.html' templates (jezik='en')
@@ -27,8 +28,13 @@ def get_template(faktura):
         if faktura.jezik == 'en':
             return 'pdf/profaktura_en.html'
         return 'pdf/profaktura_sr.html'
+    elif faktura.tip_fakture == 'avansna':
+        # Avansna faktura templates with watermark (Story 4.3)
+        if faktura.jezik == 'en':
+            return 'pdf/avansna_en.html'
+        return 'pdf/avansna_sr.html'
     else:
-        # Standardna/Avansna faktura templates
+        # Standardna faktura templates
         if faktura.jezik == 'en':
             return 'pdf/faktura_en.html'
         return 'pdf/faktura_sr.html'

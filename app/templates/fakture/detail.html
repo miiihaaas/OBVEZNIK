@@ -89,9 +89,20 @@
             {% if faktura.konvertovana_iz_profakture_id %}
             <div class="alert alert-info mt-3" role="alert">
                 <i class="bi bi-info-circle"></i>
-                <strong>Nastala konverzijom:</strong> Ova faktura je nastala konverzijom profakture 
+                <strong>Nastala konverzijom:</strong> Ova faktura je nastala konverzijom profakture
                 <a href="{{ url_for('fakture.detail', faktura_id=faktura.konvertovana_iz_profakture_id) }}" class="alert-link">
                     {{ faktura.konvertovana_iz_profakture.broj_fakture if faktura.konvertovana_iz_profakture else 'nepoznat broj' }}
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Story 4.4: Zatvaranje Avansa -->
+            {% if faktura.avansna_faktura_id %}
+            <div class="alert alert-warning mt-3" role="alert">
+                <i class="bi bi-receipt"></i>
+                <strong>Zatvara avans:</strong> Ova faktura zatvara avansnu fakturu
+                <a href="{{ url_for('fakture.detail', faktura_id=faktura.avansna_faktura_id) }}" class="alert-link">
+                    {{ faktura.avansna_faktura.broj_fakture if faktura.avansna_faktura else 'nepoznat broj' }}
                 </a>
             </div>
             {% endif %}

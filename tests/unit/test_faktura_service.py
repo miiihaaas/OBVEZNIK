@@ -805,3 +805,488 @@ class TestProfakturaService:
         db.session.refresh(firma)
         assert firma.brojac_fakture == 11  # Should NOT change
         assert firma.brojac_profakture == 6  # Should increment
+
+
+class TestAvansnaFakturaService:
+    """Tests for avansna faktura service logic (Story 4.3)."""
+
+    def test_generate_broj_fakture_avansna(self, pausalac_with_firma):
+        """Test that generate_broj_fakture generates number with AVN for avansne fakture."""
+        user, firma = pausalac_with_firma
+
+        # Set brojac_avansne to 3
+        firma.brojac_avansne = 3
+        db.session.commit()
+
+        broj = generate_broj_fakture(firma, tip_fakture='avansna')
+
+        # Should contain "AVN" and the counter
+        assert 'AVN' in broj
+        assert '0003' in broj
+
+    def test_generate_broj_avansna_format(self, pausalac_with_firma):
+        """Test that avansna faktura number format is {prefiks}AVN{brojac}{sufiks}."""
+        user, firma = pausalac_with_firma
+
+        # Set prefiks and sufiks
+        firma.prefiks_fakture = 'MK-'
+        firma.sufiks_fakture = '/2025-PS'
+        firma.brojac_avansne = 1
+        db.session.commit()
+
+        broj = generate_broj_fakture(firma, tip_fakture='avansna')
+
+        # Should be: MK-AVN0001/2025-PS
+        assert broj == 'MK-AVN0001/2025-PS'
+
+    def test_create_avansna_faktura_with_procenat(self, pausalac_with_firma, komitent):
+        """Test creating avansna faktura with procenat avansa (percentage)."""
+        user, firma = pausalac_with_firma
+
+        data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30,
+            'opis_posla': 'Projekat XYZ'
+        }
+
+        avansna = create_faktura(data, user)
+
+        # Assertions
+        assert avansna.tip_fakture == 'avansna'
+        assert avansna.status == 'draft'
+        assert avansna.broj_fakture == f'DRAFT-{avansna.id}'
+        assert len(avansna.stavke) == 1  # Only one stavka
+        assert avansna.stavke[0].naziv == 'Avans 30% za Projekat XYZ'
+        assert avansna.stavke[0].kolicina == Decimal('1.00')
+        assert avansna.stavke[0].cena == Decimal('3000.00')  # 30% of 10000
+        assert avansna.stavke[0].ukupno == Decimal('3000.00')
+        assert avansna.ukupan_iznos_rsd == Decimal('3000.00')
+        assert avansna.valuta_fakture == 'RSD'
+        assert avansna.jezik == 'sr'
+
+    def test_create_avansna_faktura_without_procenat(self, pausalac_with_firma, komitent):
+        """Test creating avansna faktura without percentage (direct amount entry)."""
+        user, firma = pausalac_with_firma
+
+        data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'stavke': [
+                {
+                    'naziv': 'Avans za projekat ABC',
+                    'kolicina': Decimal('1.00'),
+                    'jedinica_mere': 'kom',
+                    'cena': Decimal('5000.00')
+                }
+            ]
+        }
+
+        avansna = create_faktura(data, user)
+
+        # Assertions
+        assert avansna.tip_fakture == 'avansna'
+        assert avansna.status == 'draft'
+        assert len(avansna.stavke) == 1
+        assert avansna.stavke[0].naziv == 'Avans za projekat ABC'
+        assert avansna.stavke[0].cena == Decimal('5000.00')
+        assert avansna.ukupan_iznos_rsd == Decimal('5000.00')
+
+    def test_create_avansna_faktura_procenat_requires_ukupna_vrednost(self, pausalac_with_firma, komitent):
+        """Test that procenat avansa requires ukupna_vrednost_posla."""
+        user, firma = pausalac_with_firma
+
+        data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'procenat_avansa': 30,  # Percentage without ukupna_vrednost
+            'opis_posla': 'Projekat XYZ'
+        }
+
+        with pytest.raises(ValueError) as exc_info:
+            create_faktura(data, user)
+
+        assert 'Ukupna vrednost posla je obavezna kada je procenat avansa unet' in str(exc_info.value)
+
+    def test_finalize_avansna_increments_brojac_avansne(self, pausalac_with_firma, komitent):
+        """Test that finalizing avansna faktura increments brojac_avansne."""
+        user, firma = pausalac_with_firma
+
+        # Set initial avansna brojac
+        initial_brojac_avansne = 5
+        firma.brojac_avansne = initial_brojac_avansne
+        db.session.commit()
+
+        # Create avansna faktura
+        data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('20000.00'),
+            'procenat_avansa': 50,
+            'opis_posla': 'Projekat DEF'
+        }
+        avansna = create_faktura(data, user)
+
+        # Finalize avansna faktura
+        finalized = finalize_faktura(avansna.id)
+
+        # Reload firma from DB
+        db.session.refresh(firma)
+
+        # Avansna brojac should be incremented
+        assert firma.brojac_avansne == initial_brojac_avansne + 1
+        assert finalized.status == 'izdata'
+        assert 'AVN' in finalized.broj_fakture
+
+    def test_avansna_and_standardna_have_separate_counters(self, pausalac_with_firma, komitent):
+        """Test that avansne fakture and standardne fakture have independent counters."""
+        user, firma = pausalac_with_firma
+
+        # Set initial brojaci
+        firma.brojac_fakture = 10
+        firma.brojac_avansne = 3
+        db.session.commit()
+
+        # Create and finalize standardna faktura
+        data_standardna = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1.00'), 'jedinica_mere': 'h', 'cena': Decimal('100.00')}]
+        }
+        standardna = create_faktura(data_standardna, user)
+        finalize_faktura(standardna.id)
+
+        db.session.refresh(firma)
+        assert firma.brojac_fakture == 11
+        assert firma.brojac_avansne == 3  # Should NOT change
+
+        # Create and finalize avansna faktura
+        data_avansna = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date.today(),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('5000.00'),
+            'procenat_avansa': 40,
+            'opis_posla': 'Projekat GHI'
+        }
+        avansna = create_faktura(data_avansna, user)
+        finalize_faktura(avansna.id)
+
+        db.session.refresh(firma)
+        assert firma.brojac_fakture == 11  # Should NOT change
+        assert firma.brojac_avansne == 4  # Should increment
+
+    def test_create_avansna_faktura_calculates_iznos_correctly(self, pausalac_with_firma, komitent):
+        """Test that avansna faktura calculates iznos correctly from percentage."""
+        user, firma = pausalac_with_firma
+
+        test_cases = [
+            # (ukupna_vrednost, procenat, expected_iznos)
+            (Decimal('10000.00'), 30, Decimal('3000.00')),
+            (Decimal('15000.00'), 50, Decimal('7500.00')),
+            (Decimal('8500.00'), 25, Decimal('2125.00')),
+            (Decimal('100000.00'), 10, Decimal('10000.00')),
+        ]
+
+        for ukupna, procenat, expected in test_cases:
+            data = {
+                'tip_fakture': 'avansna',
+                'komitent_id': komitent.id,
+                'datum_prometa': date.today(),
+                'valuta_placanja': 7,
+                'ukupna_vrednost_posla': ukupna,
+                'procenat_avansa': procenat,
+                'opis_posla': f'Test {procenat}%'
+            }
+
+            avansna = create_faktura(data, user)
+
+            assert avansna.ukupan_iznos_rsd == expected
+            assert avansna.stavke[0].ukupno == expected
+
+            # Cleanup for next iteration
+            db.session.delete(avansna)
+            db.session.commit()
+
+
+class TestZatvaranjeAvansa:
+    """Tests for closing avansna faktura (Story 4.4)."""
+
+    def test_create_faktura_with_avans_odbitak(self, pausalac_with_firma, komitent, db):
+        """Test creating faktura that closes an avans."""
+        user, firma = pausalac_with_firma
+
+        # First, create and finalize avansna faktura
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30,
+            'opis_posla': 'Projekat XYZ',
+            'stavke': []
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Now create final faktura that closes the avans
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [
+                {
+                    'naziv': 'Usluga 1',
+                    'kolicina': Decimal('10.00'),
+                    'jedinica_mere': 'h',
+                    'cena': Decimal('500.00'),
+                    'ukupno': Decimal('5000.00')
+                }
+            ]
+        }
+
+        faktura = create_faktura(faktura_data, user)
+
+        # Assertions
+        assert faktura.avansna_faktura_id == avansna.id
+        assert len(faktura.stavke) == 2  # Regular stavka + avans odbitak
+
+    def test_avans_odbitak_adds_negative_stavka(self, pausalac_with_firma, komitent, db):
+        """Test that avans odbitak adds a negative stavka with correct name."""
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30,
+            'opis_posla': 'Projekat ABC'
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Create final faktura that closes the avans
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('5000.00')}]
+        }
+
+        faktura = create_faktura(faktura_data, user)
+
+        # Find odbitak stavka
+        odbitak = [s for s in faktura.stavke if 'Odbitak avansa' in s.naziv][0]
+        assert f"Odbitak avansa - {avansna.broj_fakture}" in odbitak.naziv
+        assert odbitak.cena < 0  # Negative
+        assert odbitak.ukupno < 0  # Negative
+
+    def test_avans_odbitak_calculates_correct_total(self, pausalac_with_firma, komitent, db):
+        """Test that total amount is calculated correctly (sum - avans)."""
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura (3000 RSD)
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Create final faktura (5000 RSD - 3000 RSD avans = 2000 RSD)
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('5000.00')}]
+        }
+
+        faktura = create_faktura(faktura_data, user)
+
+        # Total should be 5000 - 3000 = 2000
+        assert faktura.ukupan_iznos_rsd == Decimal('2000.00')
+
+    def test_cannot_close_already_closed_avans(self, pausalac_with_firma, komitent, db):
+        """Test that already closed avans cannot be closed again."""
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+
+        # Close it once
+        faktura1_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('5000.00')}]
+        }
+        faktura1 = create_faktura(faktura1_data, user)
+        finalize_faktura(faktura1.id)
+        db.session.commit()
+
+        # Try to close it again - should raise ValueError
+        faktura2_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 9),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('2000.00')}]
+        }
+
+        with pytest.raises(ValueError, match="već zatvorena"):
+            create_faktura(faktura2_data, user)
+
+    def test_cannot_close_avans_if_total_negative(self, pausalac_with_firma, komitent, db):
+        """Test that total cannot be negative (avans > total value)."""
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura (5000 RSD)
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 50
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Try to create faktura where avans (5000) > work value (3000)
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'zatvara_avans': True,
+            'avansna_faktura_id': avansna.id,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('3000.00')}]
+        }
+
+        with pytest.raises(ValueError, match="ne može biti negativan"):
+            create_faktura(faktura_data, user)
+
+    def test_close_avans_updates_status(self, pausalac_with_firma, komitent, db):
+        """Test that avansna faktura status changes to 'zatvorena'."""
+        from app.services.faktura_service import close_avans_faktura
+
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Create final faktura
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('5000.00')}]
+        }
+        faktura = create_faktura(faktura_data, user)
+        db.session.commit()
+
+        # Close avans
+        close_avans_faktura(avansna.id, faktura.id)
+        db.session.commit()
+
+        # Refresh avansna from DB
+        db.session.refresh(avansna)
+        assert avansna.status == 'zatvorena'
+
+    def test_close_avans_creates_bidirectional_link(self, pausalac_with_firma, komitent, db):
+        """Test bidirectional linking between avansna and final faktura."""
+        from app.services.faktura_service import close_avans_faktura
+
+        user, firma = pausalac_with_firma
+
+        # Create and finalize avansna faktura
+        avansna_data = {
+            'tip_fakture': 'avansna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 7),
+            'valuta_placanja': 7,
+            'ukupna_vrednost_posla': Decimal('10000.00'),
+            'procenat_avansa': 30
+        }
+        avansna = create_faktura(avansna_data, user)
+        finalize_faktura(avansna.id)
+        db.session.commit()
+
+        # Create final faktura
+        faktura_data = {
+            'tip_fakture': 'standardna',
+            'komitent_id': komitent.id,
+            'datum_prometa': date(2025, 11, 8),
+            'valuta_placanja': 7,
+            'stavke': [{'naziv': 'Usluga', 'kolicina': Decimal('1'), 'jedinica_mere': 'kom', 'cena': Decimal('5000.00')}]
+        }
+        faktura = create_faktura(faktura_data, user)
+        db.session.commit()
+
+        # Close avans
+        close_avans_faktura(avansna.id, faktura.id)
+        db.session.commit()
+
+        # Refresh from DB
+        db.session.refresh(avansna)
+
+        # Check bidirectional link
+        assert avansna.konvertovana_u_fakturu_id == faktura.id

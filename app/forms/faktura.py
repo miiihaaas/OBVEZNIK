@@ -2,7 +2,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, IntegerField, DateField, SelectField,
-    DecimalField, HiddenField, FieldList, FormField
+    DecimalField, HiddenField, FieldList, FormField, BooleanField
 )
 from wtforms.validators import (
     DataRequired, Optional, Length, NumberRange,
@@ -10,8 +10,27 @@ from wtforms.validators import (
 )
 from datetime import date
 from flask_login import current_user
+from app import db
 from app.models.komitent import Komitent
+from app.models.faktura import Faktura
 from app.utils.query_helpers import filter_by_firma
+
+
+def coerce_int_or_none(value):
+    """
+    Custom coerce function for SelectField that allows empty string to become None.
+
+    Used for optional SelectField with coerce=int where empty choice is valid.
+
+    Args:
+        value: Value from form (string or None)
+
+    Returns:
+        int or None: Coerced value
+    """
+    if value in ('', None):
+        return None
+    return int(value)
 
 
 class OptionalDecimalField(DecimalField):
@@ -184,6 +203,48 @@ class FakturaCreateForm(FlaskForm):
         render_kw={'class': 'form-control', 'placeholder': '0.0000', 'step': '0.0001'}
     )
 
+    # Avansna faktura fields (conditional - only for avansna fakture - Story 4.3)
+    ukupna_vrednost_posla = OptionalDecimalField(
+        'Ukupna vrednost posla',
+        validators=[Optional()],
+        places=2,
+        render_kw={'class': 'form-control', 'placeholder': '0.00', 'step': '0.01'}
+    )
+
+    procenat_avansa = IntegerField(
+        'Procenat avansa (%)',
+        validators=[
+            Optional(),
+            NumberRange(min=1, max=100, message='Procenat avansa mora biti između 1 i 100.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Npr. 30'}
+    )
+
+    opis_posla = StringField(
+        'Opis posla',
+        validators=[
+            Optional(),
+            Length(max=255, message='Opis posla može imati maksimalno 255 karaktera.')
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Naziv projekta ili posla'}
+    )
+
+    # Story 4.4: Zatvaranje avansa fields
+    zatvara_avans = BooleanField(
+        'Zatvara avans',
+        default=False,
+        validators=[Optional()],
+        render_kw={'class': 'form-check-input'}
+    )
+
+    avansna_faktura_id = SelectField(
+        'Izaberi avansnu fakturu',
+        coerce=coerce_int_or_none,
+        choices=[],  # Dynamic choices via AJAX
+        validators=[Optional()],
+        render_kw={'class': 'form-control avansna-select'}
+    )
+
     valuta_placanja = IntegerField(
         'Valuta plaćanja (dani)',
         validators=[
@@ -310,4 +371,60 @@ class FakturaCreateForm(FlaskForm):
         else:
             if field.data and field.data != '':
                 raise ValidationError('Valuta fakture može biti izabrana samo za devizne fakture.')
+
+    def validate_ukupna_vrednost_posla(self, field):
+        """
+        Validate that ukupna_vrednost_posla is required when procenat_avansa is entered.
+
+        Args:
+            field: ukupna_vrednost_posla field to validate
+
+        Raises:
+            ValidationError: If procenat_avansa is entered but ukupna_vrednost_posla is not
+        """
+        if self.tip_fakture.data == 'avansna' and self.procenat_avansa.data:
+            if not field.data or field.data <= 0:
+                raise ValidationError(
+                    'Ukupna vrednost posla je obavezna kada je procenat avansa unet.'
+                )
+
+    def validate_avansna_faktura_id(self, field):
+        """
+        Validate avansna faktura selection when zatvara_avans is checked.
+
+        Args:
+            field: avansna_faktura_id field to validate
+
+        Raises:
+            ValidationError: If avansna faktura is invalid or already closed
+
+        Business Rules:
+            - Required when zatvara_avans is checked
+            - Must belong to current user's firma (SEC-001: Tenant isolation)
+            - Must have status='izdata' (not 'draft', 'zatvorena', etc.)
+            - Must be tip_fakture='avansna'
+        """
+        if self.zatvara_avans.data:
+            if not field.data:
+                raise ValidationError("Izaberite avansnu fakturu koju želite zatvoriti.")
+
+            # Load avansna faktura
+            avansna = db.session.get(Faktura, field.data)
+            if not avansna:
+                raise ValidationError("Izabrana avansna faktura nije pronađena.")
+
+            # SEC-001: Tenant isolation
+            if avansna.firma_id != current_user.firma.id:
+                raise ValidationError("Avansna faktura ne pripada vašoj firmi.")
+
+            # Validation: Must be tip_fakture='avansna'
+            if avansna.tip_fakture != 'avansna':
+                raise ValidationError("Izabrana faktura nije avansna faktura.")
+
+            # Validation: Must be 'izdata', not 'zatvorena'
+            if avansna.status == 'zatvorena':
+                raise ValidationError(f"Avansna faktura {avansna.broj_fakture} je već zatvorena.")
+
+            if avansna.status != 'izdata':
+                raise ValidationError("Samo izdate avansne fakture mogu biti zatvorene.")
 

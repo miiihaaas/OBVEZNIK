@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Invoice {{ faktura.broj_fakture }}</title>
+    <title>Advance Invoice {{ faktura.broj_fakture }}</title>
     <style>
         /* Marimar Branding Color Palette */
         @page {
@@ -159,9 +159,26 @@
             color: #7A7A7A;
             margin-top: 5px;
         }
+
+        /* Advance Invoice Watermark */
+        .avansna-watermark {
+            text-align: center;
+            font-size: 22pt;
+            font-weight: bold;
+            color: #8D696E;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 3px solid #8D696E;
+        }
     </style>
 </head>
 <body>
+    <!-- Advance Invoice Watermark -->
+    <div class="avansna-watermark">
+        ADVANCE INVOICE
+    </div>
+
+
     <!-- Header: 3 columns - QR | Invoice Number + Date/Place | Invoice Date + Due Date -->
     <table class="layout-table">
         <tr>
@@ -209,7 +226,7 @@
                     <p><strong>{{ firma.naziv }}</strong></p>
                     <p>{{ firma.adresa }}, {{ firma.mesto|upper }}</p>
                     {% if firma.dinarski_racuni %}
-                    <p>Account: {{ firma.dinarski_racuni[0].broj if firma.dinarski_racuni[0] is mapping else firma.dinarski_racuni[0] }}</p>
+                    <p>Account: {{ firma.dinarski_racuni[0].racun if firma.dinarski_racuni[0] is mapping else firma.dinarski_racuni[0] }}</p>
                     {% endif %}
                     <p>Tax ID: {{ firma.pib }} | Reg. No: {{ firma.maticni_broj }}</p>
                 </div>
@@ -266,11 +283,6 @@
 
             {% if faktura.identifikacioni_broj %}
             <p style="font-size: 7pt;"><strong>Identification Number:</strong> {{ faktura.identifikacioni_broj }}</p>
-            {% endif %}
-
-            <!-- Story 4.4: Advance payment deduction note -->
-            {% if faktura.avansna_faktura_id and faktura.avansna_faktura %}
-            <p style="font-size: 8pt; margin-top: 10px;"><strong>Advance Deduction:</strong> This invoice closes the advance payment from invoice {{ faktura.avansna_faktura.broj_fakture }}</p>
             {% endif %}
 
             <p>If you have any questions, please feel free to contact us: {{ firma.email }}</p>

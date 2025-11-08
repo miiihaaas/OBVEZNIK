@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Invoice {{ faktura.broj_fakture }}</title>
+    <title>Avansna faktura {{ faktura.broj_fakture }}</title>
     <style>
         /* Marimar Branding Color Palette */
         @page {
@@ -159,10 +159,27 @@
             color: #7A7A7A;
             margin-top: 5px;
         }
+
+        /* Avansna Faktura Watermark */
+        .avansna-watermark {
+            text-align: center;
+            font-size: 22pt;
+            font-weight: bold;
+            color: #8D696E;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 3px solid #8D696E;
+        }
     </style>
 </head>
 <body>
-    <!-- Header: 3 columns - QR | Invoice Number + Date/Place | Invoice Date + Due Date -->
+    <!-- Avansna Faktura Watermark -->
+    <div class="avansna-watermark">
+        AVANSNA FAKTURA
+    </div>
+
+
+    <!-- Header: 3 columns - QR | Broj fakture + Datum i mesto prometa | Datum fakture + Datum valute -->
     <table class="layout-table">
         <tr>
             <td style="width: 20%;">
@@ -172,35 +189,35 @@
             </td>
             <td style="width: 40%;">
                 <div class="header-info">
-                    <p><strong>Invoice Number:</strong><br>{{ faktura.broj_fakture }}</p>
-                    <p><strong>Date and Place of Supply:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}, {{ firma.mesto|upper }}</p>
+                    <p><strong>Broj fakture:</strong><br>{{ faktura.broj_fakture }}</p>
+                    <p><strong>Datum i mesto prometa:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}, {{ firma.mesto|upper }}</p>
                 </div>
             </td>
             <td style="width: 40%;">
                 <div class="header-info">
-                    <p><strong>Invoice Date:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}</p>
-                    <p><strong>Due Date:</strong><br>{{ faktura.datum_dospeca.strftime('%d-%b-%Y') if faktura.datum_dospeca else 'N/A' }}</p>
+                    <p><strong>Datum fakture:</strong><br>{{ faktura.datum_prometa.strftime('%d-%b-%Y') if faktura.datum_prometa else 'N/A' }}</p>
+                    <p><strong>Datum valute:</strong><br>{{ faktura.datum_dospeca.strftime('%d-%b-%Y') if faktura.datum_dospeca else 'N/A' }}</p>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- Parties: Client left, Company right (smaller spacing) -->
+    <!-- Parties: Komitent levo, Firma desno (manji razmaci) -->
     <table class="layout-table" style="margin-top: 15px;">
         <tr>
             <td style="width: 50%;">
                 <div class="party-section">
-                    <h3>To:</h3>
+                    <h3>Za:</h3>
                     <p><strong>{{ komitent.naziv }}</strong></p>
                     <p>{{ komitent.adresa }}, {{ komitent.mesto|upper }}</p>
                     {% if komitent.email %}
                     <p>Email: {{ komitent.email }}</p>
                     {% endif %}
                     {% if komitent.pib %}
-                    <p>Tax ID: {{ komitent.pib }}</p>
+                    <p>PIB: {{ komitent.pib }}</p>
                     {% endif %}
                     {% if komitent.maticni_broj %}
-                    <p>Registration Number: {{ komitent.maticni_broj }}</p>
+                    <p>Maticni broj: {{ komitent.maticni_broj }}</p>
                     {% endif %}
                 </div>
             </td>
@@ -209,23 +226,23 @@
                     <p><strong>{{ firma.naziv }}</strong></p>
                     <p>{{ firma.adresa }}, {{ firma.mesto|upper }}</p>
                     {% if firma.dinarski_racuni %}
-                    <p>Account: {{ firma.dinarski_racuni[0].broj if firma.dinarski_racuni[0] is mapping else firma.dinarski_racuni[0] }}</p>
+                    <p>TR: {{ firma.dinarski_racuni[0].racun if firma.dinarski_racuni[0] is mapping else firma.dinarski_racuni[0] }}</p>
                     {% endif %}
-                    <p>Tax ID: {{ firma.pib }} | Reg. No: {{ firma.maticni_broj }}</p>
+                    <p>PIB: {{ firma.pib }} | MB: {{ firma.maticni_broj }}</p>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- Items Table with word-wrap -->
+    <!-- Items Table sa word-wrap -->
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 40%;">Service / Product</th>
-                <th style="width: 12%;">Quantity</th>
-                <th style="width: 13%;">Unit</th>
-                <th style="width: 17.5%;" class="text-right">Price</th>
-                <th style="width: 17.5%;" class="text-right">Total</th>
+                <th style="width: 40%;">Usluga / Proizvod</th>
+                <th style="width: 12%;">Kolicina</th>
+                <th style="width: 13%;">Jedinica mere</th>
+                <th style="width: 17.5%;" class="text-right">Cena</th>
+                <th style="width: 17.5%;" class="text-right">Ukupno</th>
             </tr>
         </thead>
         <tbody>
@@ -243,41 +260,27 @@
 
     <!-- Total -->
     <div class="total-section">
-        {% if faktura.tip_fakture == 'devizna' %}
-        Amount Due: {{ "{:,.2f}".format(faktura.ukupan_iznos_originalna_valuta).replace(',', ' ').replace('.', ',') }} {{ faktura.valuta_fakture }} ({{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD)
-        {% else %}
-        Amount Due: {{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD
-        {% endif %}
+        Za uplatu: {{ "{:,.2f}".format(faktura.ukupan_iznos_rsd).replace(',', ' ').replace('.', ',') }} RSD
     </div>
-    {% if faktura.tip_fakture == 'devizna' %}
-    <div style="text-align: right; font-size: 9pt; font-weight: normal; color: #7A7A7A; margin-top: 5px;">
-        Exchange Rate: 1 {{ faktura.valuta_fakture }} = {{ "{:,.2f}".format(faktura.srednji_kurs).replace(',', ' ').replace('.', ',') }} RSD
-    </div>
-    {% endif %}
 
-    <!-- Footer Content (fixed at bottom of last page) -->
+    <!-- Footer Content (fiksiran na dnu poslednje stranice) -->
     <div id="footerContent">
         <div class="footer-section">
-            <h4>Note</h4>
+            <h4>Napomena</h4>
             <p class="italic">
-                Not in the VAT system. VAT is not calculated on this invoice in accordance with Article 33 of the Value Added Tax Law.
-                This invoice is issued in electronic form and is valid without stamp and signature.
+                Nije u sistemu PDV-a. PDV nije obracunat na fakturi u skladu sa clanom 33. Zakona o porezu na dodatu vrednost.
+                Ovaj racun je izdat u elektronskom obliku i vazi bez pecata i potpisa.
             </p>
 
             {% if faktura.identifikacioni_broj %}
-            <p style="font-size: 7pt;"><strong>Identification Number:</strong> {{ faktura.identifikacioni_broj }}</p>
+            <p style="font-size: 7pt;"><strong>Identifikacioni broj:</strong> {{ faktura.identifikacioni_broj }}</p>
             {% endif %}
 
-            <!-- Story 4.4: Advance payment deduction note -->
-            {% if faktura.avansna_faktura_id and faktura.avansna_faktura %}
-            <p style="font-size: 8pt; margin-top: 10px;"><strong>Advance Deduction:</strong> This invoice closes the advance payment from invoice {{ faktura.avansna_faktura.broj_fakture }}</p>
-            {% endif %}
-
-            <p>If you have any questions, please feel free to contact us: {{ firma.email }}</p>
+            <p>U koliko imate bilo kakvih pitanja slobodno nas kontaktirajte: {{ firma.email }}</p>
         </div>
 
         <div class="page-number">
-            Page <pdf:pagenumber> of <pdf:pagecount>
+            Strana <pdf:pagenumber> od <pdf:pagecount>
         </div>
     </div>
 </body>
