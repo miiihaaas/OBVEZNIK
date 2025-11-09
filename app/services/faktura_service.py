@@ -1,5 +1,5 @@
 """Business logic for Faktura (Invoice) management."""
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from decimal import Decimal
 import logging
 from flask import request
@@ -1046,10 +1046,10 @@ def storniraj_fakturu(faktura_id, razlog=None):
     # Change status to 'stornirana'
     faktura.status = 'stornirana'
 
-    # Optional fields (to be implemented in Task 2 if needed)
-    # faktura.razlog_storniranja = razlog
-    # faktura.stornirana_at = datetime.now(timezone.utc)
-    # faktura.stornirana_by_user_id = current_user.id
+    # Set optional audit trail fields
+    faktura.razlog_storniranja = razlog
+    faktura.stornirana_at = datetime.now(timezone.utc)
+    faktura.stornirana_by_user_id = current_user.id
 
     # Commit changes
     db.session.commit()

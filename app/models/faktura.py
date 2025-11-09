@@ -91,10 +91,16 @@ class Faktura(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     finalized_at = db.Column(db.DateTime, nullable=True)
 
+
+    # Storniranje audit trail (optional fields)
+    razlog_storniranja = db.Column(db.String(500), nullable=True)
+    stornirana_at = db.Column(db.DateTime, nullable=True)
+    stornirana_by_user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
     # Relationships
     firma = db.relationship('PausalnFirma', back_populates='fakture')
     komitent = db.relationship('Komitent', back_populates='fakture')
-    user = db.relationship('User', back_populates='fakture')
+    user = db.relationship('User', foreign_keys=[user_id], back_populates='fakture')
     stavke = db.relationship('FakturaStavka', back_populates='faktura', cascade='all, delete-orphan')
 
     # Self-referential relationships for profaktura conversion

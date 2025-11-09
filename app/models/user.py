@@ -21,7 +21,7 @@ class User(UserMixin, db.Model):
 
     # Relationships
     firma = db.relationship('PausalnFirma', back_populates='users')
-    fakture = db.relationship('Faktura', back_populates='user')
+    fakture = db.relationship('Faktura', foreign_keys='Faktura.user_id', back_populates='user')
 
     def is_admin(self):
         """Check if user has admin role."""
