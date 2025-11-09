@@ -187,11 +187,11 @@
                             </thead>
                             <tbody>
                                 {% for faktura in pagination.items %}
-                                <tr>
+                                <tr{% if faktura.status == 'stornirana' %} class="text-danger"{% endif %}>
                                     <td class="px-4 py-3">
-                                        <a href="{{ url_for('fakture.detail', faktura_id=faktura.id) }}" class="text-decoration-none fw-semibold">
+                                        <a href="{{ url_for('fakture.detail', faktura_id=faktura.id) }}" class="text-decoration-none fw-semibold{% if faktura.status == 'stornirana' %} text-danger{% endif %}">
                                             <i class="fa-solid fa-file-invoice me-1 text-muted"></i>
-                                            {{ faktura.broj_fakture }}
+                                            {% if faktura.status == 'stornirana' %}<s>{{ faktura.broj_fakture }}</s>{% else %}{{ faktura.broj_fakture }}{% endif %}
                                         </a>
                                     </td>
                                     <td class="py-3">

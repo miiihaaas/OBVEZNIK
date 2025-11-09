@@ -38,6 +38,10 @@ def generate_faktura_pdf_task(faktura_id):
         # Save PDF to disk
         pdf_path = pdf_service.save_pdf(pdf_bytes, faktura)
 
+        # Update status to 'generated'
+        faktura.status_pdf = 'generated'
+        db.session.commit()
+
         current_app.logger.info(
             f"PDF generated successfully for Faktura {faktura_id}: {pdf_path}"
         )

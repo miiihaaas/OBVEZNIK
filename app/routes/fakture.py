@@ -7,7 +7,7 @@ from app import db, limiter
 from app.models.faktura import Faktura
 from app.models.komitent import Komitent
 from app.forms.faktura import FakturaCreateForm
-from app.services.faktura_service import convert_profaktura_to_faktura, create_faktura, update_faktura, finalize_faktura, list_fakture
+from app.services.faktura_service import convert_profaktura_to_faktura, create_faktura, update_faktura, finalize_faktura, list_fakture, storniraj_fakturu
 from app.utils.query_helpers import filter_by_firma
 
 fakture_bp = Blueprint('fakture', __name__, url_prefix='/fakture')
@@ -372,6 +372,49 @@ def finalizuj(faktura_id):
     return redirect(url_for('fakture.detail', faktura_id=faktura_id))
 
 
+@fakture_bp.route('/<int:faktura_id>/storniraj', methods=['POST'])
+@login_required
+def storniraj(faktura_id):
+    """
+    Cancel (stornirati) an invoice and regenerate PDF with watermark.
+
+    Args:
+        faktura_id: Invoice ID
+
+    Story: 4.5 - Storniranje Fakture
+    """
+    try:
+        # Get razlog from form (optional)
+        razlog = request.form.get('razlog', None)
+
+        # Call service function (includes tenant isolation and authorization checks)
+        faktura = storniraj_fakturu(faktura_id, razlog)
+
+        # Trigger PDF regeneration with watermark (in background)
+        if faktura.pdf_url:
+            faktura.status_pdf = 'generating'
+            db.session.commit()
+            
+            import celery_worker
+            celery_worker.generate_faktura_pdf_task_async.apply_async(args=[faktura_id])
+
+        flash(f'Faktura {faktura.broj_fakture} uspešno stornirana. PDF se regeneriše sa watermark-om.', 'success')
+        return redirect(url_for('fakture.lista'))
+
+    except ValueError as e:
+        flash(f'Greška: {str(e)}', 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+    except PermissionError as e:
+        flash(f'Greška: {str(e)}', 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Greška pri storniranju fakture: {str(e)}', 'danger')
+        return redirect(url_for('fakture.detail', faktura_id=faktura_id))
+
+
 @fakture_bp.route('/<int:faktura_id>/download-pdf')
 @login_required
 def download_pdf(faktura_id):
@@ -472,11 +515,11 @@ def send_email(faktura_id):
         # Get faktura with tenant isolation
         faktura = filter_by_firma(Faktura.query).filter_by(id=faktura_id).first_or_404()
 
-        # Validate that invoice is finalized
-        if faktura.status != 'izdata':
+        # Validate that invoice is finalized or cancelled (Story 4.5)
+        if faktura.status not in ['izdata', 'stornirana']:
             return jsonify({
                 'success': False,
-                'error': 'Samo izdate fakture mogu biti poslate'
+                'error': 'Samo izdate i stornirane fakture mogu biti poslate'
             }), 400
 
         # Validate that PDF is generated

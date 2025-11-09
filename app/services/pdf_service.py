@@ -197,6 +197,12 @@ def generate_pdf(faktura):
                     current_app.logger.info(f"Ignoring @font-face for {uri}, using reportlab fonts")
                     return None
 
+                # Handle /static/ URLs by converting to absolute file paths
+                if uri.startswith('/static/'):
+                    static_path = os.path.join(current_app.root_path, 'static', uri[8:])  # Remove '/static/' prefix
+                    current_app.logger.debug(f"Resolved /static/ URI to: {static_path}")
+                    return static_path
+
                 # Handle other resources (images, CSS, etc.) if needed in future
                 return uri
 

@@ -73,6 +73,60 @@ def calculate_datum_dospeca(datum_prometa, valuta_placanja):
     return datum_dospeca
 
 
+def _add_avans_odbitak_stavka(faktura, avansna_faktura_ref, valuta_fakture, redni_broj, ukupan_iznos):
+    """
+    Helper function to add negative stavka for avans odbitak.
+
+    Extracts duplicated logic from create_faktura() and update_faktura().
+    Story 4.4: Zatvaranje Avansa
+
+    Args:
+        faktura: Faktura instance (draft invoice being created/updated)
+        avansna_faktura_ref: Faktura instance (advance invoice to close)
+        valuta_fakture: str - Invoice currency ('RSD' or foreign currency code)
+        redni_broj: int - Sequential number for the odbitak stavka
+        ukupan_iznos: Decimal - Current total amount before avans deduction
+
+    Returns:
+        Decimal: Updated total amount after avans deduction
+
+    Raises:
+        ValueError: If total amount becomes negative after deduction
+
+    Side Effects:
+        - Creates and adds FakturaStavka (odbitak) to database session
+    """
+    # Get avans amount in appropriate currency
+    if valuta_fakture == 'RSD':
+        iznos_avansa = avansna_faktura_ref.ukupan_iznos_rsd
+    else:
+        # For foreign currency invoices, use original currency amount
+        iznos_avansa = avansna_faktura_ref.ukupan_iznos_originalna_valuta or avansna_faktura_ref.ukupan_iznos_rsd
+
+    # Add negative stavka (odbitak)
+    odbitak_stavka = FakturaStavka(
+        faktura_id=faktura.id,
+        artikal_id=None,
+        naziv=f"Odbitak avansa - {avansna_faktura_ref.broj_fakture}",
+        kolicina=Decimal('1.00'),
+        jedinica_mere='kom',
+        cena=-iznos_avansa,  # NEGATIVE
+        ukupno=-iznos_avansa,  # NEGATIVE
+        redni_broj=redni_broj
+    )
+    db.session.add(odbitak_stavka)
+    ukupan_iznos -= iznos_avansa  # Subtract avans from total
+
+    # Validation: Total amount cannot be negative
+    if ukupan_iznos < 0:
+        raise ValueError(
+            "Ukupan iznos fakture ne može biti negativan. "
+            f"Avans ({iznos_avansa}) je veći od vrednosti poslova ({ukupan_iznos + iznos_avansa})."
+        )
+
+    return ukupan_iznos
+
+
 def create_faktura(data, user):
     """
     Create a new invoice (faktura) with line items.
@@ -274,33 +328,13 @@ def create_faktura(data, user):
 
     # Story 4.4: Add negative stavka for avans odbitak
     if zatvara_avans and avansna_faktura_ref:
-        # Get avans amount in appropriate currency
-        if valuta_fakture == 'RSD':
-            iznos_avansa = avansna_faktura_ref.ukupan_iznos_rsd
-        else:
-            # For foreign currency invoices, use original currency amount
-            iznos_avansa = avansna_faktura_ref.ukupan_iznos_originalna_valuta or avansna_faktura_ref.ukupan_iznos_rsd
-
-        # Add negative stavka (odbitak)
-        odbitak_stavka = FakturaStavka(
-            faktura_id=faktura.id,
-            artikal_id=None,
-            naziv=f"Odbitak avansa - {avansna_faktura_ref.broj_fakture}",
-            kolicina=Decimal('1.00'),
-            jedinica_mere='kom',
-            cena=-iznos_avansa,  # NEGATIVE
-            ukupno=-iznos_avansa,  # NEGATIVE
-            redni_broj=redni_broj
+        ukupan_iznos = _add_avans_odbitak_stavka(
+            faktura=faktura,
+            avansna_faktura_ref=avansna_faktura_ref,
+            valuta_fakture=valuta_fakture,
+            redni_broj=redni_broj,
+            ukupan_iznos=ukupan_iznos
         )
-        db.session.add(odbitak_stavka)
-        ukupan_iznos -= iznos_avansa  # Subtract avans from total
-
-        # Validation: Total amount cannot be negative
-        if ukupan_iznos < 0:
-            raise ValueError(
-                "Ukupan iznos fakture ne može biti negativan. "
-                f"Avans ({iznos_avansa}) je veći od vrednosti poslova ({ukupan_iznos + iznos_avansa})."
-            )
 
     # Update faktura total amounts
     if valuta_fakture == 'RSD':
@@ -554,35 +588,15 @@ def update_faktura(faktura_id, data, user):
         ukupan_iznos += ukupno
         redni_broj += 1
 
-    # Story 4.4: Add negative stavka for avans odbitak (same logic as create_faktura)
+    # Story 4.4: Add negative stavka for avans odbitak
     if zatvara_avans and avansna_faktura_ref:
-        # Get avans amount in appropriate currency
-        if valuta_fakture == 'RSD':
-            iznos_avansa = avansna_faktura_ref.ukupan_iznos_rsd
-        else:
-            # For foreign currency invoices, use original currency amount
-            iznos_avansa = avansna_faktura_ref.ukupan_iznos_originalna_valuta or avansna_faktura_ref.ukupan_iznos_rsd
-
-        # Add negative stavka (odbitak)
-        odbitak_stavka = FakturaStavka(
-            faktura_id=faktura.id,
-            artikal_id=None,
-            naziv=f"Odbitak avansa - {avansna_faktura_ref.broj_fakture}",
-            kolicina=Decimal('1.00'),
-            jedinica_mere='kom',
-            cena=-iznos_avansa,  # NEGATIVE
-            ukupno=-iznos_avansa,  # NEGATIVE
-            redni_broj=redni_broj
+        ukupan_iznos = _add_avans_odbitak_stavka(
+            faktura=faktura,
+            avansna_faktura_ref=avansna_faktura_ref,
+            valuta_fakture=valuta_fakture,
+            redni_broj=redni_broj,
+            ukupan_iznos=ukupan_iznos
         )
-        db.session.add(odbitak_stavka)
-        ukupan_iznos -= iznos_avansa  # Subtract avans from total
-
-        # Validation: Total amount cannot be negative
-        if ukupan_iznos < 0:
-            raise ValueError(
-                "Ukupan iznos fakture ne može biti negativan. "
-                f"Avans ({iznos_avansa}) je veći od vrednosti poslova ({ukupan_iznos + iznos_avansa})."
-            )
 
     # Update faktura total amounts
     if valuta_fakture == 'RSD':
@@ -976,3 +990,80 @@ def list_fakture(user, filters=None, page=1, per_page=20, sort_by='datum_prometa
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
     return pagination
+
+
+def storniraj_fakturu(faktura_id, razlog=None):
+    """
+    Cancel (stornirati) an invoice by changing its status to 'stornirana'.
+
+    Args:
+        faktura_id: int - ID of the faktura to cancel
+        razlog: str (optional) - Reason for cancellation
+
+    Returns:
+        Faktura: Cancelled faktura instance
+
+    Raises:
+        ValueError: If faktura doesn't exist or is not 'izdata'
+        PermissionError: If user doesn't have permission to cancel
+
+    Business Rules:
+        - Only 'izdata' fakture can be cancelled
+        - Only the user who created the faktura or Admin can cancel
+        - Tenant isolation: faktura must belong to user's firma
+        - Status changes to 'stornirana'
+        - Stornirane fakture are excluded from KPO report calculations
+        - Security logging for audit trail
+        - PDF is NOT regenerated (watermark is rendered in PDF template)
+
+    Story: 4.5 - Storniranje Fakture
+    """
+    from flask_login import current_user
+
+    # Load faktura
+    faktura = db.session.get(Faktura, faktura_id)
+
+    if not faktura:
+        raise ValueError(f"Faktura sa ID {faktura_id} nije pronađena.")
+
+    # Validation: Must be 'izdata' status
+    if faktura.status != 'izdata':
+        raise ValueError(
+            f"Samo izdate fakture mogu biti stornirane. "
+            f"Faktura {faktura.broj_fakture} ima status '{faktura.status}'."
+        )
+
+    # SEC-001: Tenant isolation
+    if faktura.firma_id != current_user.firma.id:
+        raise PermissionError("Faktura ne pripada vašoj firmi.")
+
+    # Authorization: Only creator or admin
+    if current_user.role != 'admin' and faktura.user_id != current_user.id:
+        raise PermissionError(
+            "Samo korisnik koji je kreirao fakturu ili Admin mogu stornirati."
+        )
+
+    # Change status to 'stornirana'
+    faktura.status = 'stornirana'
+
+    # Optional fields (to be implemented in Task 2 if needed)
+    # faktura.razlog_storniranja = razlog
+    # faktura.stornirana_at = datetime.now(timezone.utc)
+    # faktura.stornirana_by_user_id = current_user.id
+
+    # Commit changes
+    db.session.commit()
+
+    # Security logging
+    security_logger.info(
+        f"Faktura {faktura.broj_fakture} stornirana od korisnika {current_user.email}",
+        extra={
+            'user_id': current_user.id,
+            'firma_id': faktura.firma_id,
+            'faktura_id': faktura.id,
+            'razlog': razlog or 'Nije naveden',
+            'ip_address': request.remote_addr if request else None
+        }
+    )
+
+    return faktura

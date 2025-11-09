@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.models.komitent import Komitent
 from app.models.faktura import Faktura
-from app.services.faktura_service import create_faktura, update_faktura, generate_broj_fakture, finalize_faktura
+from app.services.faktura_service import create_faktura, update_faktura, generate_broj_fakture, finalize_faktura, storniraj_fakturu
 
 
 @pytest.fixture
@@ -1024,7 +1024,7 @@ class TestAvansnaFakturaService:
 class TestZatvaranjeAvansa:
     """Tests for closing avansna faktura (Story 4.4)."""
 
-    def test_create_faktura_with_avans_odbitak(self, pausalac_with_firma, komitent, db):
+    def test_create_faktura_with_avans_odbitak(self, pausalac_with_firma, komitent, app):
         """Test creating faktura that closes an avans."""
         user, firma = pausalac_with_firma
 
@@ -1068,7 +1068,7 @@ class TestZatvaranjeAvansa:
         assert faktura.avansna_faktura_id == avansna.id
         assert len(faktura.stavke) == 2  # Regular stavka + avans odbitak
 
-    def test_avans_odbitak_adds_negative_stavka(self, pausalac_with_firma, komitent, db):
+    def test_avans_odbitak_adds_negative_stavka(self, pausalac_with_firma, komitent, app):
         """Test that avans odbitak adds a negative stavka with correct name."""
         user, firma = pausalac_with_firma
 
@@ -1105,7 +1105,7 @@ class TestZatvaranjeAvansa:
         assert odbitak.cena < 0  # Negative
         assert odbitak.ukupno < 0  # Negative
 
-    def test_avans_odbitak_calculates_correct_total(self, pausalac_with_firma, komitent, db):
+    def test_avans_odbitak_calculates_correct_total(self, pausalac_with_firma, komitent, app):
         """Test that total amount is calculated correctly (sum - avans)."""
         user, firma = pausalac_with_firma
 
@@ -1138,7 +1138,7 @@ class TestZatvaranjeAvansa:
         # Total should be 5000 - 3000 = 2000
         assert faktura.ukupan_iznos_rsd == Decimal('2000.00')
 
-    def test_cannot_close_already_closed_avans(self, pausalac_with_firma, komitent, db):
+    def test_cannot_close_already_closed_avans(self, pausalac_with_firma, komitent, app):
         """Test that already closed avans cannot be closed again."""
         user, firma = pausalac_with_firma
 
@@ -1182,7 +1182,7 @@ class TestZatvaranjeAvansa:
         with pytest.raises(ValueError, match="već zatvorena"):
             create_faktura(faktura2_data, user)
 
-    def test_cannot_close_avans_if_total_negative(self, pausalac_with_firma, komitent, db):
+    def test_cannot_close_avans_if_total_negative(self, pausalac_with_firma, komitent, app):
         """Test that total cannot be negative (avans > total value)."""
         user, firma = pausalac_with_firma
 
@@ -1213,7 +1213,7 @@ class TestZatvaranjeAvansa:
         with pytest.raises(ValueError, match="ne može biti negativan"):
             create_faktura(faktura_data, user)
 
-    def test_close_avans_updates_status(self, pausalac_with_firma, komitent, db):
+    def test_close_avans_updates_status(self, pausalac_with_firma, komitent, app):
         """Test that avansna faktura status changes to 'zatvorena'."""
         from app.services.faktura_service import close_avans_faktura
 
@@ -1251,7 +1251,7 @@ class TestZatvaranjeAvansa:
         db.session.refresh(avansna)
         assert avansna.status == 'zatvorena'
 
-    def test_close_avans_creates_bidirectional_link(self, pausalac_with_firma, komitent, db):
+    def test_close_avans_creates_bidirectional_link(self, pausalac_with_firma, komitent, app):
         """Test bidirectional linking between avansna and final faktura."""
         from app.services.faktura_service import close_avans_faktura
 
@@ -1290,3 +1290,251 @@ class TestZatvaranjeAvansa:
 
         # Check bidirectional link
         assert avansna.konvertovana_u_fakturu_id == faktura.id
+
+
+class TestStorniranjeFakture:
+    """Tests for storniranje (cancelling) fakture (Story 4.5)."""
+
+    def test_storniraj_fakturu_success(self, pausalac_with_firma, komitent, app):
+        """Test successfully cancelling an issued invoice."""
+        user, firma = pausalac_with_firma
+
+        with app.app_context():
+            from flask_login import login_user
+            login_user(user)
+
+            # Create and finalize a faktura
+            faktura_data = {
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',
+                'komitent_id': komitent.id,
+                'datum_prometa': date(2025, 11, 9),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga 1',
+                        'kolicina': Decimal('10.00'),
+                        'jedinica_mere': 'h',
+                        'cena': Decimal('500.00')
+                    }
+                ]
+            }
+
+            faktura = create_faktura(faktura_data, user)
+            finalize_faktura(faktura.id)
+            db.session.commit()
+
+            # Verify initial status
+            assert faktura.status == 'izdata'
+
+            # Storniraj fakturu
+            faktura = storniraj_fakturu(faktura.id, razlog="Greška u unosu")
+
+            # Verify status changed to 'stornirana'
+            assert faktura.status == 'stornirana'
+
+    def test_cannot_stornirati_draft_faktura(self, pausalac_with_firma, komitent, app):
+        """Test that draft fakture cannot be cancelled."""
+        user, firma = pausalac_with_firma
+
+        with app.app_context():
+            from flask_login import login_user
+            login_user(user)
+
+            # Create draft faktura (not finalized)
+            faktura_data = {
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',
+                'komitent_id': komitent.id,
+                'datum_prometa': date(2025, 11, 9),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga 1',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'kom',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            faktura = create_faktura(faktura_data, user)
+            db.session.commit()
+
+            # Verify it's draft
+            assert faktura.status == 'draft'
+
+            # Attempt to stornirati draft faktura
+            with pytest.raises(ValueError, match="Samo izdate fakture mogu biti stornirane"):
+                storniraj_fakturu(faktura.id)
+
+    def test_cannot_stornirati_already_stornirana(self, pausalac_with_firma, komitent, app):
+        """Test that already stornirana fakture cannot be cancelled again."""
+        user, firma = pausalac_with_firma
+
+        with app.app_context():
+            from flask_login import login_user
+            login_user(user)
+
+            # Create and finalize a faktura
+            faktura_data = {
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',
+                'komitent_id': komitent.id,
+                'datum_prometa': date(2025, 11, 9),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga 1',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'kom',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            faktura = create_faktura(faktura_data, user)
+            finalize_faktura(faktura.id)
+            db.session.commit()
+
+            # Storniraj first time
+            faktura = storniraj_fakturu(faktura.id)
+            assert faktura.status == 'stornirana'
+
+            # Attempt to stornirati again
+            with pytest.raises(ValueError, match="Samo izdate fakture mogu biti stornirane"):
+                storniraj_fakturu(faktura.id)
+
+    def test_tenant_isolation_storniranje(self, pausalac_with_firma, komitent, app):
+        """Test tenant isolation - pausalac cannot stornirati faktura from another firma."""
+        user, firma = pausalac_with_firma
+
+        with app.app_context():
+            # Create another firma and user
+            firma2 = PausalnFirma(
+                pib='987654321',
+                maticni_broj='87654321',
+                naziv='Druga Firma',
+                adresa='Druga Adresa',
+                broj='2',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='022222222',
+                email='firma2@test.com',
+                dinarski_racuni=[{'banka': 'Druga Banka', 'racun': '321-987654-00'}],
+                prefiks_fakture='DF-',
+                sufiks_fakture='/2025',
+                brojac_fakture=1
+            )
+            db.session.add(firma2)
+            db.session.commit()
+
+            user2 = User(
+                email='pausalac2@test.com',
+                full_name='Drugi Pausalac',
+                role='pausalac',
+                firma_id=firma2.id
+            )
+            user2.set_password('password123')
+            db.session.add(user2)
+            db.session.commit()
+
+            # Create komitent for firma2
+            komitent2 = Komitent(
+                firma_id=firma2.id,
+                pib='11111111',
+                maticni_broj='11111111',
+                naziv='Komitent 2',
+                adresa='Adresa 2',
+                broj='3',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='komitent2@test.rs'
+            )
+            db.session.add(komitent2)
+            db.session.commit()
+
+            # Login as user2 and create faktura
+            from flask_login import login_user
+            login_user(user2)
+
+            faktura_data = {
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',
+                'komitent_id': komitent2.id,
+                'datum_prometa': date(2025, 11, 9),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'kom',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            faktura = create_faktura(faktura_data, user2)
+            finalize_faktura(faktura.id)
+            db.session.commit()
+
+            # Login as user (from firma) and attempt to stornirati user2's faktura
+            login_user(user)
+
+            # Attempt to stornirati faktura from another firma
+            with pytest.raises(PermissionError, match="Faktura ne pripada vašoj firmi"):
+                storniraj_fakturu(faktura.id)
+
+    def test_authorization_only_creator_or_admin(self, pausalac_with_firma, komitent, app):
+        """Test that only the creator or admin can stornirati a faktura."""
+        user, firma = pausalac_with_firma
+
+        with app.app_context():
+            # Create another pausalac user in the SAME firma
+            user2 = User(
+                email='pausalac3@test.com',
+                full_name='Treći Pausalac',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            user2.set_password('password123')
+            db.session.add(user2)
+            db.session.commit()
+
+            # Login as user and create faktura
+            from flask_login import login_user
+            login_user(user)
+
+            faktura_data = {
+                'tip_fakture': 'standardna',
+                'valuta_fakture': 'RSD',
+                'komitent_id': komitent.id,
+                'datum_prometa': date(2025, 11, 9),
+                'valuta_placanja': 7,
+                'stavke': [
+                    {
+                        'naziv': 'Usluga',
+                        'kolicina': Decimal('1.00'),
+                        'jedinica_mere': 'kom',
+                        'cena': Decimal('100.00')
+                    }
+                ]
+            }
+
+            faktura = create_faktura(faktura_data, user)
+            finalize_faktura(faktura.id)
+            db.session.commit()
+
+            # Login as user2 (different user, SAME firma) and attempt to stornirati
+            login_user(user2)
+
+            # Attempt to stornirati faktura created by different user
+            with pytest.raises(PermissionError, match="Samo korisnik koji je kreirao fakturu ili Admin mogu stornirati"):
+                storniraj_fakturu(faktura.id)
+
+            # Now login as original creator (user) and stornirati successfully
+            login_user(user)
+            faktura = storniraj_fakturu(faktura.id)
+            assert faktura.status == 'stornirana'

@@ -34,9 +34,26 @@
                                 Poštovani,
                             </p>
 
+                            {% if faktura.status == 'stornirana' %}
+                            <!-- Alert for Cancelled Invoice (Story 4.5) -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-radius: 8px; margin-bottom: 24px;">
+                                <tr>
+                                    <td style="padding: 16px; text-align: center;">
+                                        <p style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                            ⚠️ STORNIRANA FAKTURA
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
+                                U prilogu vam šaljemo <strong style="color: #dc3545;">storniranu fakturu {{ faktura.broj_fakture }}</strong>. Ova faktura je poništena i nema obavezu plaćanja.
+                            </p>
+                            {% else %}
                             <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
                                 U prilogu vam šaljemo fakturu <strong style="color: #8D696E;">{{ faktura.broj_fakture }}</strong> za izvršene usluge/prodate proizvode.
                             </p>
+                            {% endif %}
 
                             <!-- Invoice Details Card -->
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #FCFCFC; border-radius: 8px; border: 1px solid #E0E0E0; margin-bottom: 32px;">
@@ -95,7 +112,8 @@
                                 </tr>
                             </table>
 
-                            <!-- Call to Action -->
+                            <!-- Call to Action (Story 4.5: Only for non-cancelled invoices) -->
+                            {% if faktura.status != 'stornirana' %}
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 32px;">
                                 <tr>
                                     <td style="background: linear-gradient(135deg, #D98282 0%, #8D696E 100%); padding: 16px; border-radius: 8px; text-align: center;">
@@ -105,6 +123,7 @@
                                     </td>
                                 </tr>
                             </table>
+                            {% endif %}
 
                             <!-- Thank You Message -->
                             <p style="margin: 0 0 8px 0; font-size: 16px; line-height: 1.5; color: #4B4B4B;">
