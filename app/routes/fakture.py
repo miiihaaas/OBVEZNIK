@@ -125,7 +125,9 @@ def nova_faktura():
         tip_fakture='avansna',
         status='izdata'
     ).all()
-    form.avansna_faktura_id.choices = [(None, 'Izaberite avansnu fakturu...')] + [
+    # NOTE: Use empty string '' instead of None to match HTML <option value="">
+
+    form.avansna_faktura_id.choices = [('', 'Izaberite avansnu fakturu...')] + [
         (f.id, f'{f.broj_fakture} - {f.komitent.naziv if f.komitent else "N/A"}') for f in avansne_fakture
     ]
 
@@ -256,7 +258,9 @@ def edit_faktura(faktura_id):
         tip_fakture='avansna',
         status='izdata'
     ).all()
-    form.avansna_faktura_id.choices = [(None, 'Izaberite avansnu fakturu...')] + [
+    # NOTE: Use empty string '' instead of None to match HTML <option value="">
+
+    form.avansna_faktura_id.choices = [('', 'Izaberite avansnu fakturu...')] + [
         (f.id, f'{f.broj_fakture} - {f.komitent.naziv if f.komitent else "N/A"}') for f in avansne_fakture
     ]
 
