@@ -131,9 +131,11 @@ def create_app(config_name='development'):
     from app.routes.fakture import fakture_bp
     app.register_blueprint(fakture_bp)
 
+    # Register memorandumi blueprint
+    from app.routes.memorandumi import memorandumi_bp
+    app.register_blueprint(memorandumi_bp)
+
     # TODO: Register other blueprints when they are created in future stories
-    # from app.routes import fakture
-    # app.register_blueprint(fakture.bp)
 
     # Register context processors
     @app.context_processor

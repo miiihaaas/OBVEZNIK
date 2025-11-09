@@ -66,6 +66,12 @@
                             <span>Artikli</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{{ url_for('memorandumi.lista') }}">
+                            <i class="fa-solid fa-memo me-1" aria-hidden="true"></i>
+                            <span>Memorandumi</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if current_user.role == 'admin' %}
                     <li class="nav-item dropdown">

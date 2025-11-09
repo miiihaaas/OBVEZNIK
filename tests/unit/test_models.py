@@ -12,6 +12,7 @@ from app.models import (
     Faktura,
     FakturaStavka,
     Memorandum,
+    KPOEntry,
 )
 
 
@@ -1001,3 +1002,522 @@ class TestCascadeDeletes:
             user_after = db.session.get(User, user.id)
             assert user_after is not None
             assert user_after.firma_id is None
+
+
+class TestMemorandumModel:
+    """Tests for Memorandum model."""
+
+    def test_memorandum_creation(self, app):
+        """Test Memorandum model can be created with required fields."""
+        with app.app_context():
+            # Create firma dependency
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            # Create memorandum
+            memo = Memorandum(
+                firma_id=firma.id,
+                naslov='Testni memorandum',
+                sadrzaj='Ovo je sadrzaj testnog memoranduma sa dovoljno karaktera.',
+                datum=date(2025, 11, 9)
+            )
+            db.session.add(memo)
+            db.session.commit()
+
+            assert memo.id is not None
+            assert memo.firma_id == firma.id
+            assert memo.naslov == 'Testni memorandum'
+            assert memo.sadrzaj == 'Ovo je sadrzaj testnog memoranduma sa dovoljno karaktera.'
+            assert memo.datum == date(2025, 11, 9)
+            assert memo.komitent_id is None
+            assert memo.faktura_id is None
+            assert memo.created_at is not None
+
+    def test_memorandum_with_komitent(self, app):
+        """Test Memorandum can be linked to a Komitent."""
+        with app.app_context():
+            # Create dependencies
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Test Komitent',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='k@test.rs'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create memorandum with komitent link
+            memo = Memorandum(
+                firma_id=firma.id,
+                naslov='Memorandum sa komitentom',
+                sadrzaj='Ovaj memorandum je povezan sa komitentom za evidenciju sastanka.',
+                datum=date.today(),
+                komitent_id=komitent.id
+            )
+            db.session.add(memo)
+            db.session.commit()
+
+            assert memo.id is not None
+            assert memo.komitent_id == komitent.id
+            assert memo.komitent is not None
+            assert memo.komitent.naziv == 'Test Komitent'
+
+    def test_memorandum_with_faktura(self, app):
+        """Test Memorandum can be linked to a Faktura."""
+        with app.app_context():
+            # Create dependencies
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            komitent = Komitent(
+                firma_id=firma.id,
+                pib='98765432',
+                maticni_broj='12348765',
+                naziv='Test Komitent',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='k@test.rs'
+            )
+            db.session.add(komitent)
+
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            faktura = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='001/2025',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                jezik='sr',
+                datum_prometa=date(2025, 10, 12),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 11, 11),
+                ukupan_iznos_rsd=Decimal('120000.00'),
+                status='draft'
+            )
+            db.session.add(faktura)
+            db.session.commit()
+
+            # Create memorandum with faktura link
+            memo = Memorandum(
+                firma_id=firma.id,
+                naslov='Memorandum sa fakturom',
+                sadrzaj='Ovaj memorandum je povezan sa fakturom radi evidencije placanja.',
+                datum=date.today(),
+                faktura_id=faktura.id
+            )
+            db.session.add(memo)
+            db.session.commit()
+
+            assert memo.id is not None
+            assert memo.faktura_id == faktura.id
+            assert memo.faktura is not None
+            assert memo.faktura.broj_fakture == '001/2025'
+
+    def test_memorandum_repr(self, app):
+        """Test Memorandum __repr__ method returns expected string."""
+        with app.app_context():
+            # Create firma dependency
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            # Create memorandum with long title
+            memo = Memorandum(
+                firma_id=firma.id,
+                naslov='Jako dugacak naslov memoranduma koji ima vise od 50 karaktera za testiranje truncate funkcionalnosti',
+                sadrzaj='Sadrzaj memoranduma',
+                datum=date.today()
+            )
+            db.session.add(memo)
+            db.session.commit()
+
+            # __repr__ should truncate naslov to first 50 chars
+            expected = '<Memorandum Jako dugacak naslov memoranduma koji ima vise od 5>'
+            assert repr(memo) == expected
+
+
+class TestKPOEntryModel:
+    """Tests for KPOEntry model."""
+
+    def test_kpo_entry_creation(self, app):
+        """Test KPOEntry model can be created with required fields."""
+        with app.app_context():
+            # Create firma
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            # Create komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                naziv='Komitent d.o.o.',
+                pib='87654321',
+                maticni_broj='12345678',
+                adresa='Adresa 1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='kontakt@komitent.rs',
+                broj='1'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create user
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Create faktura
+            faktura = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='F-2025-001',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 1, 15),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 2, 14),
+                ukupan_iznos_rsd=Decimal('12000.00'),
+                status='izdata',
+                finalized_at=datetime.now()
+            )
+            db.session.add(faktura)
+            db.session.commit()
+
+            # Create KPO entry
+            kpo_entry = KPOEntry(
+                firma_id=firma.id,
+                faktura_id=faktura.id,
+                redni_broj=1,
+                broj_fakture='F-2025-001',
+                datum_prometa=date(2025, 1, 15),
+                datum_dospeca=date(2025, 2, 14),
+                komitent_naziv='Komitent d.o.o.',
+                komitent_pib='87654321',
+                opis='Usluge konsaltinga',
+                iznos_rsd=Decimal('12000.00'),
+                valuta='RSD',
+                status_fakture='izdata',
+                godina=2025
+            )
+            db.session.add(kpo_entry)
+            db.session.commit()
+
+            assert kpo_entry.id is not None
+            assert kpo_entry.firma_id == firma.id
+            assert kpo_entry.faktura_id == faktura.id
+            assert kpo_entry.redni_broj == 1
+            assert kpo_entry.broj_fakture == 'F-2025-001'
+            assert kpo_entry.datum_prometa == date(2025, 1, 15)
+            assert kpo_entry.datum_dospeca == date(2025, 2, 14)
+            assert kpo_entry.komitent_naziv == 'Komitent d.o.o.'
+            assert kpo_entry.komitent_pib == '87654321'
+            assert kpo_entry.opis == 'Usluge konsaltinga'
+            assert kpo_entry.iznos_rsd == Decimal('12000.00')
+            assert kpo_entry.valuta == 'RSD'
+            assert kpo_entry.status_fakture == 'izdata'
+            assert kpo_entry.godina == 2025
+            assert kpo_entry.created_at is not None
+
+    def test_kpo_entry_unique_redni_broj_per_firma_godina(self, app):
+        """Test unique constraint on redni_broj per firma and godina."""
+        with app.app_context():
+            # Create firma
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            # Create komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                naziv='Komitent d.o.o.',
+                pib='87654321',
+                maticni_broj='12345678',
+                adresa='Adresa 1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='kontakt@komitent.rs',
+                broj='1'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create user
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Create two fakturas
+            faktura1 = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='F-2025-001',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 1, 15),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 2, 14),
+                ukupan_iznos_rsd=Decimal('12000.00'),
+                status='izdata'
+            )
+            db.session.add(faktura1)
+
+            faktura2 = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='F-2025-002',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 1, 16),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 2, 15),
+                ukupan_iznos_rsd=Decimal('15000.00'),
+                status='izdata'
+            )
+            db.session.add(faktura2)
+            db.session.commit()
+
+            # Create first KPO entry
+            kpo_entry1 = KPOEntry(
+                firma_id=firma.id,
+                faktura_id=faktura1.id,
+                redni_broj=1,
+                broj_fakture='F-2025-001',
+                datum_prometa=date(2025, 1, 15),
+                datum_dospeca=date(2025, 2, 14),
+                komitent_naziv='Komitent d.o.o.',
+                komitent_pib='87654321',
+                opis='Test',
+                iznos_rsd=Decimal('12000.00'),
+                valuta='RSD',
+                status_fakture='izdata',
+                godina=2025
+            )
+            db.session.add(kpo_entry1)
+            db.session.commit()
+
+            # Attempt to create second KPO entry with same redni_broj, firma_id, and godina
+            # This should raise IntegrityError due to unique constraint
+            kpo_entry2 = KPOEntry(
+                firma_id=firma.id,
+                faktura_id=faktura2.id,
+                redni_broj=1,  # Same redni_broj
+                broj_fakture='F-2025-002',
+                datum_prometa=date(2025, 1, 16),
+                datum_dospeca=date(2025, 2, 15),
+                komitent_naziv='Komitent d.o.o.',
+                komitent_pib='87654321',
+                opis='Test 2',
+                iznos_rsd=Decimal('15000.00'),
+                valuta='RSD',
+                status_fakture='izdata',
+                godina=2025  # Same godina
+            )
+            db.session.add(kpo_entry2)
+
+            # Expect IntegrityError
+            from sqlalchemy.exc import IntegrityError
+            with pytest.raises(IntegrityError):
+                db.session.commit()
+
+            db.session.rollback()
+
+    def test_kpo_entry_repr(self, app):
+        """Test __repr__ method of KPOEntry."""
+        with app.app_context():
+            # Create firma
+            firma = PausalnFirma(
+                pib='12345678',
+                maticni_broj='87654321',
+                naziv='Test Firma',
+                adresa='Test',
+                broj='1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                telefon='011123456',
+                email='test@test.rs',
+                dinarski_racuni=[]
+            )
+            db.session.add(firma)
+            db.session.commit()
+
+            # Create komitent
+            komitent = Komitent(
+                firma_id=firma.id,
+                naziv='Komitent d.o.o.',
+                pib='87654321',
+                maticni_broj='12345678',
+                adresa='Adresa 1',
+                postanski_broj='11000',
+                mesto='Beograd',
+                drzava='Srbija',
+                email='kontakt@komitent.rs',
+                broj='1'
+            )
+            db.session.add(komitent)
+            db.session.commit()
+
+            # Create user
+            user = User(
+                email='user@test.rs',
+                password_hash='hash',
+                full_name='Test User',
+                role='pausalac',
+                firma_id=firma.id
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            # Create faktura
+            faktura = Faktura(
+                firma_id=firma.id,
+                komitent_id=komitent.id,
+                user_id=user.id,
+                broj_fakture='F-2025-001',
+                tip_fakture='standardna',
+                valuta_fakture='RSD',
+                datum_prometa=date(2025, 1, 15),
+                valuta_placanja=30,
+                datum_dospeca=date(2025, 2, 14),
+                ukupan_iznos_rsd=Decimal('12000.00'),
+                status='izdata'
+            )
+            db.session.add(faktura)
+            db.session.commit()
+
+            # Create KPO entry
+            kpo_entry = KPOEntry(
+                firma_id=firma.id,
+                faktura_id=faktura.id,
+                redni_broj=5,
+                broj_fakture='F-2025-001',
+                datum_prometa=date(2025, 1, 15),
+                datum_dospeca=date(2025, 2, 14),
+                komitent_naziv='Komitent d.o.o.',
+                komitent_pib='87654321',
+                opis='Test',
+                iznos_rsd=Decimal('12000.00'),
+                valuta='RSD',
+                status_fakture='izdata',
+                godina=2025
+            )
+            db.session.add(kpo_entry)
+            db.session.commit()
+
+            expected = '<KPOEntry 5/2025 - Faktura F-2025-001 - 12000.00 RSD>'
+            assert repr(kpo_entry) == expected

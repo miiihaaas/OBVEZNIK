@@ -8,6 +8,7 @@ from app.models.faktura import Faktura
 from app.models.faktura_stavka import FakturaStavka
 from app.models.pausaln_firma import PausalnFirma
 from app.services.nbs_kursna_service import get_kurs
+from app.services import kpo_service
 
 # Security logger for audit trail
 security_logger = logging.getLogger('security')
@@ -702,6 +703,17 @@ def finalize_faktura(faktura_id):
     # Commit all changes together (faktura finalization + avans closure)
     db.session.commit()
 
+    # Story 4.7: KPO evidentiranje (automatsko nakon finalizacije)
+    # IMPORTANT: Must be after commit so faktura is persisted with status='izdata'
+    try:
+        kpo_service.create_kpo_entry(faktura_id)
+    except Exception as e:
+        # Don't fail finalization if KPO entry creation fails - log error instead
+        from flask import current_app
+        current_app.logger.error(f"Failed to create KPO entry for Faktura {faktura_id}: {e}")
+        security_logger.error(f"KPO entry creation failed for Faktura {faktura_id}: {e}")
+
+
     # Trigger background PDF generation (async Celery task)
     from flask import current_app
     try:
@@ -1053,6 +1065,14 @@ def storniraj_fakturu(faktura_id, razlog=None):
 
     # Commit changes
     db.session.commit()
+
+    # Story 4.7: Update KPO entry status to 'stornirana'
+    try:
+        kpo_service.update_kpo_entry_status(faktura.id, 'stornirana')
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"Failed to update KPO entry status for Faktura {faktura.id}: {e}")
+        security_logger.error(f"KPO entry status update failed for Faktura {faktura.id}: {e}")
 
     # Security logging
     security_logger.info(

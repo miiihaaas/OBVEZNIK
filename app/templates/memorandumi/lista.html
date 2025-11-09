@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Memorandumi - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-2"><i class="fa-solid fa-memo me-2 text-primary"></i> Memorandumi</h1>
+            <p class="text-muted mb-0">Interna dokumentacija i napomene.</p>
+        </div>
+        <a href="{{ url_for('memorandumi.novi') }}" class="btn btn-primary btn-lg shadow-sm">
+            <i class="fa-solid fa-plus me-2"></i> Kreiraj Memorandum
+        </a>
+    </div>
+
+    {# Search and Filter Form #}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="{{ url_for('memorandumi.lista') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label fw-semibold">Pretraži po naslovu</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_term }}" placeholder="Unesite naslov...">
+                </div>
+                <div class="col-md-3">
+                    <label for="datum_od" class="form-label fw-semibold">Datum od</label>
+                    <input type="date" class="form-control" id="datum_od" name="datum_od" value="{{ datum_od }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="datum_do" class="form-label fw-semibold">Datum do</label>
+                    <input type="date" class="form-control" id="datum_do" name="datum_do" value="{{ datum_do }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1"><i class="fa-solid fa-search"></i> Filtriraj</button>
+                    <a href="{{ url_for('memorandumi.lista') }}" class="btn btn-outline-secondary" title="Resetuj"><i class="fa-solid fa-times"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Memorandumi Table #}
+    {% if memorandumi %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Naslov</th>
+                            <th>Datum</th>
+                            <th>Komitent</th>
+                            <th class="text-end">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for memo in memorandumi %}
+                        <tr>
+                            <td><strong>{{ memo.naslov }}</strong></td>
+                            <td>{{ memo.datum.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ memo.komitent.naziv if memo.komitent else '-' }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('memorandumi.detail', id=memo.id) }}" class="btn btn-sm btn-outline-primary">Pregledaj</a>
+                                <a href="{{ url_for('memorandumi.izmeni', id=memo.id) }}" class="btn btn-sm btn-outline-secondary">Izmeni</a>
+                                <form method="POST" action="{{ url_for('memorandumi.obrisi', id=memo.id) }}" style="display:inline;" onsubmit="return confirm('Da li ste sigurni da želite da obrišete ovaj memorandum?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Obriši</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Pagination #}
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('memorandumi.lista', page=pagination.prev_num, search=search_term, datum_od=datum_od, datum_do=datum_do) }}">Prethodna</a></li>
+            {% endif %}
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('memorandumi.lista', page=page_num, search=search_term, datum_od=datum_od, datum_do=datum_do) }}">{{ page_num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('memorandumi.lista', page=pagination.next_num, search=search_term, datum_od=datum_od, datum_do=datum_do) }}">Sledeća</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fa-solid fa-info-circle me-2"></i> Nema memoranduma. Kliknite "Kreiraj Memorandum" da dodate prvi.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

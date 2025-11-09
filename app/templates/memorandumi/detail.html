@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ memorandum.naslov }} - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0"><i class="fa-solid fa-memo me-2 text-primary"></i> {{ memorandum.naslov }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('memorandumi.izmeni', id=memorandum.id) }}" class="btn btn-outline-primary">
+                <i class="fa-solid fa-edit"></i> Izmeni
+            </a>
+            <form method="POST" action="{{ url_for('memorandumi.obrisi', id=memorandum.id) }}" style="display:inline;" onsubmit="return confirm('Da li ste sigurni?');">
+                <button type="submit" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Obriši</button>
+            </form>
+            <a href="{{ url_for('memorandumi.lista') }}" class="btn btn-outline-secondary">Nazad na listu</a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Datum:</p>
+                    <p class="fw-semibold">{{ memorandum.datum.strftime('%d.%m.%Y') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="text-muted mb-1">Kreiran:</p>
+                    <p class="fw-semibold">{{ memorandum.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                </div>
+            </div>
+
+            {% if memorandum.komitent %}
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted mb-1">Povezani komitent:</p>
+                    <p class="fw-semibold">{{ memorandum.komitent.naziv }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if memorandum.faktura %}
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted mb-1">Povezana faktura:</p>
+                    <p class="fw-semibold">{{ memorandum.faktura.broj_fakture }} - {{ memorandum.faktura.komitent.naziv }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <hr>
+
+            <div class="mt-4">
+                <p class="text-muted mb-2 fw-semibold">Sadržaj:</p>
+                <div style="white-space: pre-wrap;">{{ memorandum.sadrzaj }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
