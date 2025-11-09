@@ -269,3 +269,85 @@ def save_pdf(pdf_bytes, faktura):
     db.session.commit()
 
     return file_path
+
+
+def generate_kpo_pdf(kpo_entries, firma, filters, total_promet):
+    """
+    Generate PDF for KPO knjiga (Knjiga Prometa Obveznika).
+    
+    Args:
+        kpo_entries: List of KPOEntry objects
+        firma: PausalnFirma object (can be None for admin god mode)
+        filters: Dict with applied filters (for display in PDF header)
+        total_promet: Decimal - Total promet sum
+    
+    Returns:
+        bytes: PDF file content
+    
+    Compliance:
+        NFR16 - Pravilnik o vođenju poslovnih knjiga
+        A4 Landscape format for wide tables
+    """
+    import logging
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    
+    logger = logging.getLogger(__name__)
+    
+    # Render HTML template
+    html_content = render_template(
+        'pdf/kpo_knjiga.html',
+        kpo_entries=kpo_entries,
+        firma=firma,
+        filters=filters,
+        total_promet=total_promet,
+        generated_at=datetime.now()
+    )
+    
+    # WeasyPrint configuration
+    font_config = FontConfiguration()
+    
+    # Custom CSS for A4 landscape
+    landscape_css = CSS(string='''
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm 1cm;
+        }
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+    ''', font_config=font_config)
+    
+    try:
+        # Generate PDF
+        pdf_bytes = HTML(string=html_content).write_pdf(
+            stylesheets=[landscape_css],
+            font_config=font_config
+        )
+        
+        logger.info(f"KPO PDF generated successfully: {len(kpo_entries)} entries, firma={firma.naziv if firma else 'All'}")
+        
+        return pdf_bytes
+        
+    except Exception as e:
+        logger.error(f"Failed to generate KPO PDF: {e}", exc_info=True)
+        raise RuntimeError(f"PDF generation failed: {str(e)}")

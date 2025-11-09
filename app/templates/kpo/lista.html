@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}KPO Knjiga - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Page Header -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">
+                <i class="fa-solid fa-book me-2 text-primary"></i>
+                KPO Knjiga {% if current_filters.get('godina') %}({{ current_filters.get('godina') }}){% endif %}
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fa-solid fa-list me-1"></i>
+                {% if pagination %}
+                    Prikazano {{ ((pagination.page - 1) * 20) + 1 }}-{{ ((pagination.page - 1) * 20) + pagination.items|length }} od {{ pagination.total }} zapisa
+                {% else %}
+                    Knjiga Prometa Obveznika - Evidencija faktura za poresku upravu
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <!-- Export Buttons -->
+            <div class="btn-group shadow-sm" role="group" aria-label="Export opcije">
+                <a href="{{ url_for('kpo.export_pdf', **request.args) }}" class="btn btn-danger" title="Export u PDF">
+                    <i class="fa-solid fa-file-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('kpo.export_csv', **request.args) }}" class="btn btn-success" title="Export u CSV">
+                    <i class="fa-solid fa-file-csv me-1"></i> CSV
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('kpo.lista') }}" class="row g-3 align-items-end">
+                        <!-- Godina Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">
+                                <i class="fa-solid fa-calendar me-1"></i> Godina
+                            </label>
+                            <select name="godina" class="form-select">
+                                {% for year in available_years %}
+                                <option value="{{ year }}" {% if current_filters.get('godina') == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Datum od</label>
+                            <input type="date" name="datum_od" class="form-control" value="{{ current_filters.get('datum_od').strftime('%Y-%m-%d') if current_filters.get('datum_od') else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Datum do</label>
+                            <input type="date" name="datum_do" class="form-control" value="{{ current_filters.get('datum_do').strftime('%Y-%m-%d') if current_filters.get('datum_do') else '' }}">
+                        </div>
+
+                        <!-- Komitent Search -->
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">
+                                <i class="fa-solid fa-search me-1"></i> Komitent
+                            </label>
+                            <input type="text" name="komitent_search" class="form-control" placeholder="Pretraži po nazivu" value="{{ current_filters.get('komitent_search', '') }}">
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Status</label>
+                            <select name="status_filter" class="form-select">
+                                <option value="izdata" {% if current_filters.get('status_filter', 'izdata') == 'izdata' %}selected{% endif %}>Izdata</option>
+                                <option value="stornirana" {% if current_filters.get('status_filter') == 'stornirana' %}selected{% endif %}>Stornirana</option>
+                                <option value="all" {% if current_filters.get('status_filter') == 'all' %}selected{% endif %}>Sve</option>
+                            </select>
+                        </div>
+
+                        <!-- Valuta Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted">Valuta</label>
+                            <select name="valuta_filter" class="form-select">
+                                <option value="">Sve</option>
+                                <option value="RSD" {% if current_filters.get('valuta_filter') == 'RSD' %}selected{% endif %}>RSD</option>
+                                <option value="EUR" {% if current_filters.get('valuta_filter') == 'EUR' %}selected{% endif %}>EUR</option>
+                                <option value="USD" {% if current_filters.get('valuta_filter') == 'USD' %}selected{% endif %}>USD</option>
+                                <option value="GBP" {% if current_filters.get('valuta_filter') == 'GBP' %}selected{% endif %}>GBP</option>
+                                <option value="CHF" {% if current_filters.get('valuta_filter') == 'CHF' %}selected{% endif %}>CHF</option>
+                            </select>
+                        </div>
+
+                        <!-- Admin Firma Filter -->
+                        {% if current_user.role == 'admin' and all_firme %}
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted">Firma</label>
+                            <select name="firma_id" class="form-select">
+                                <option value="">Sve firme (God Mode)</option>
+                                {% for firma in all_firme %}
+                                <option value="{{ firma.id }}" {% if current_filters.get('firma_id') == firma.id %}selected{% endif %}>
+                                    {{ firma.naziv }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="col-md-{% if current_user.role == 'admin' %}2{% else %}3{% endif %}">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1">
+                                    <i class="fa-solid fa-filter me-1"></i> Primeni
+                                </button>
+                                <a href="{{ url_for('kpo.lista') }}" class="btn btn-outline-secondary" title="Resetuj filtere">
+                                    <i class="fa-solid fa-refresh"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPO Entries Table -->
+    {% if pagination and pagination.items %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0 align-middle">
+                            <thead class="table-primary sticky-top">
+                                <tr>
+                                    <th class="text-center">
+                                        <a href="{{ url_for('kpo.lista', sort_by='redni_broj', sort_order='asc' if sort_by == 'redni_broj' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                            Redni Broj
+                                            {% if sort_by == 'redni_broj' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% else %}
+                                                <i class="fa-solid fa-sort ms-1 text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>Broj Fakture</th>
+                                    <th>
+                                        <a href="{{ url_for('kpo.lista', sort_by='datum_prometa', sort_order='asc' if sort_by == 'datum_prometa' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                            Datum Prometa
+                                            {% if sort_by == 'datum_prometa' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% else %}
+                                                <i class="fa-solid fa-sort ms-1 text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>Datum Dospeća</th>
+                                    <th>Komitent</th>
+                                    <th class="text-end">
+                                        <a href="{{ url_for('kpo.lista', sort_by='iznos_rsd', sort_order='asc' if sort_by == 'iznos_rsd' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                            Iznos (RSD)
+                                            {% if sort_by == 'iznos_rsd' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% else %}
+                                                <i class="fa-solid fa-sort ms-1 text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th class="text-center">Valuta</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in pagination.items %}
+                                <tr>
+                                    <td class="text-center fw-bold">{{ entry.redni_broj }}/{{ entry.godina }}</td>
+                                    <td>
+                                        <a href="{{ url_for('fakture.detail', faktura_id=entry.faktura_id) }}" class="text-decoration-none">
+                                            {{ entry.broj_fakture }}
+                                        </a>
+                                    </td>
+                                    <td>{{ entry.datum_prometa.strftime('%d.%m.%Y') }}</td>
+                                    <td>{{ entry.datum_dospeca.strftime('%d.%m.%Y') }}</td>
+                                    <td>
+                                        <strong>{{ entry.komitent_naziv }}</strong><br>
+                                        <small class="text-muted">PIB: {{ entry.komitent_pib }}</small>
+                                    </td>
+                                    <td class="text-end fw-bold">{{ "{:,.2f}".format(entry.iznos_rsd) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">{{ entry.valuta }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if entry.status_fakture == 'izdata' %}
+                                        <span class="badge bg-success">
+                                            <i class="fa-solid fa-check me-1"></i>Izdata
+                                        </span>
+                                        {% elif entry.status_fakture == 'stornirana' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fa-solid fa-ban me-1"></i>Stornirana
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <!-- Total Footer -->
+                            <tfoot class="table-light border-top border-2">
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold fs-5">
+                                        <i class="fa-solid fa-calculator me-2"></i>Ukupan Promet:
+                                    </td>
+                                    <td class="text-end fw-bold fs-5 text-success">
+                                        {{ "{:,.2f}".format(total_promet) }}
+                                    </td>
+                                    <td class="text-center fw-bold">RSD</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted small py-2">
+                                        <i class="fa-solid fa-info-circle me-1"></i>
+                                        Ukupan promet se kalkuliše samo iz izdatih faktura (stornirane su isključene)
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if pagination.pages > 1 %}
+                <div class="card-footer bg-light">
+                    <nav aria-label="KPO pagination">
+                        <ul class="pagination pagination-sm justify-content-center mb-0">
+                            <!-- Previous Page -->
+                            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                                <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('kpo.lista', page=pagination.prev_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}{% else %}#{% endif %}">
+                                    <i class="fa-solid fa-chevron-left"></i> Prethodna
+                                </a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('kpo.lista', page=page_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            <!-- Next Page -->
+                            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                                <a class="page-link" href="{% if pagination.has_next %}{{ url_for('kpo.lista', page=pagination.next_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}{% else %}#{% endif %}">
+                                    Sledeća <i class="fa-solid fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fa-solid fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nema KPO entries za izabrane filtere</h4>
+                    <p class="text-muted mb-4">
+                        Pokušajte sa drugačijim filterima ili proverite da li su fakture finalizovane.
+                    </p>
+                    <a href="{{ url_for('kpo.lista') }}" class="btn btn-outline-primary">
+                        <i class="fa-solid fa-refresh me-2"></i>Resetuj Filtere
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

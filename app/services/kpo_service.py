@@ -63,7 +63,15 @@ def create_kpo_entry(faktura_id):
     # Extract godina from datum_prometa
     godina = faktura.datum_prometa.year
 
-    # Calculate redni_broj: max(redni_broj) + 1 for firma_id and godina
+    # Calculate redni_broj with SELECT FOR UPDATE lock to prevent race conditions
+    # CRITICAL FIX (QA-PERF-001): Lock all KPO entries for this firma/godina
+    # to ensure atomic redni_broj generation in concurrent scenarios
+    db.session.query(KPOEntry).filter_by(
+        firma_id=faktura.firma_id,
+        godina=godina
+    ).with_for_update().all()
+
+    # Now calculate max safely within the lock
     max_redni_broj = db.session.query(
         func.max(KPOEntry.redni_broj)
     ).filter_by(
@@ -76,7 +84,7 @@ def create_kpo_entry(faktura_id):
     # Generate opis from faktura stavke or default description
     opis = f"Faktura {faktura.broj_fakture}"
     if faktura.stavke:
-        stavke_opis = ", ".join([stavka.opis for stavka in faktura.stavke if stavka.opis])
+        stavke_opis = ", ".join([stavka.naziv for stavka in faktura.stavke if stavka.naziv])
         if stavke_opis:
             opis = stavke_opis
 
@@ -194,5 +202,205 @@ def calculate_total_promet(firma_id, godina, status_filter='izdata'):
 
     total = query.scalar()
 
+    # Return 0.00 if no entries found
+    return total or Decimal('0.00')
+
+
+def list_kpo_entries(user, filters, page, per_page, sort_by='datum_prometa', sort_order='desc'):
+    """
+    Lista KPO entries sa paginacijom, filterima i sortiranjem.
+    
+    Args:
+        user: Current user object (za tenant isolation)
+        filters: Dict sa filterima (godina, datum_od, datum_do, komitent_search, status_filter, valuta_filter, firma_id)
+        page: Page number
+        per_page: Items per page
+        sort_by: Column to sort by ('datum_prometa', 'iznos_rsd', 'redni_broj')
+        sort_order: Sort order ('asc', 'desc')
+    
+    Returns:
+        Pagination object sa KPO entries
+    """
+    # Base query
+    query = KPOEntry.query
+    
+    # Tenant isolation (CRITICAL)
+    if user.role == 'pausalac':
+        query = query.filter_by(firma_id=user.firma_id)
+    elif user.role == 'admin' and filters.get('firma_id'):
+        query = query.filter_by(firma_id=filters['firma_id'])
+    # Else: Admin god mode - no firma filter
+    
+    # Filter by godina
+    if filters.get('godina'):
+        query = query.filter_by(godina=filters['godina'])
+    
+    # Filter by datum_od
+    if filters.get('datum_od'):
+        query = query.filter(KPOEntry.datum_prometa >= filters['datum_od'])
+    
+    # Filter by datum_do
+    if filters.get('datum_do'):
+        query = query.filter(KPOEntry.datum_prometa <= filters['datum_do'])
+    
+    # Filter by komitent_search (LIKE search on komitent_naziv)
+    if filters.get('komitent_search'):
+        search_pattern = f"%{filters['komitent_search']}%"
+        query = query.filter(KPOEntry.komitent_naziv.ilike(search_pattern))
+    
+    # Filter by status (default: 'izdata')
+    status_filter = filters.get('status_filter', 'izdata')
+    if status_filter != 'all':
+        query = query.filter_by(status_fakture=status_filter)
+    
+    # Filter by valuta
+    if filters.get('valuta_filter'):
+        query = query.filter_by(valuta=filters['valuta_filter'])
+    
+    # Sorting
+    if sort_by == 'datum_prometa':
+        sort_column = KPOEntry.datum_prometa
+    elif sort_by == 'iznos_rsd':
+        sort_column = KPOEntry.iznos_rsd
+    elif sort_by == 'redni_broj':
+        sort_column = KPOEntry.redni_broj
+    else:
+        sort_column = KPOEntry.datum_prometa  # Default
+    
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+    
+    # Pagination
+    pagination = query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+    
+    return pagination
+
+
+def get_kpo_entries_list(user, filters, sort_by='datum_prometa', sort_order='desc'):
+    """
+    Vraća listu KPO entries bez paginacije (za export).
+    
+    Args:
+        user: Current user object (za tenant isolation)
+        filters: Dict sa filterima (isti kao list_kpo_entries)
+        sort_by: Column to sort by
+        sort_order: Sort order
+    
+    Returns:
+        List[KPOEntry]: Lista svih KPO entries
+    """
+    # Base query
+    query = KPOEntry.query
+    
+    # Tenant isolation (CRITICAL)
+    if user.role == 'pausalac':
+        query = query.filter_by(firma_id=user.firma_id)
+    elif user.role == 'admin' and filters.get('firma_id'):
+        query = query.filter_by(firma_id=filters['firma_id'])
+    # Else: Admin god mode - no firma filter
+    
+    # Filter by godina
+    if filters.get('godina'):
+        query = query.filter_by(godina=filters['godina'])
+    
+    # Filter by datum_od
+    if filters.get('datum_od'):
+        query = query.filter(KPOEntry.datum_prometa >= filters['datum_od'])
+    
+    # Filter by datum_do
+    if filters.get('datum_do'):
+        query = query.filter(KPOEntry.datum_prometa <= filters['datum_do'])
+    
+    # Filter by komitent_search
+    if filters.get('komitent_search'):
+        search_pattern = f"%{filters['komitent_search']}%"
+        query = query.filter(KPOEntry.komitent_naziv.ilike(search_pattern))
+    
+    # Filter by status
+    status_filter = filters.get('status_filter', 'izdata')
+    if status_filter != 'all':
+        query = query.filter_by(status_fakture=status_filter)
+    
+    # Filter by valuta
+    if filters.get('valuta_filter'):
+        query = query.filter_by(valuta=filters['valuta_filter'])
+    
+    # Sorting
+    if sort_by == 'datum_prometa':
+        sort_column = KPOEntry.datum_prometa
+    elif sort_by == 'iznos_rsd':
+        sort_column = KPOEntry.iznos_rsd
+    elif sort_by == 'redni_broj':
+        sort_column = KPOEntry.redni_broj
+    else:
+        sort_column = KPOEntry.datum_prometa  # Default
+    
+    if sort_order == 'asc':
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+    
+    # Return all entries (no pagination)
+    return query.all()
+
+
+def calculate_total_promet_with_filters(user, filters):
+    """
+    Kalkuliše ukupan promet sa filterima (extended verzija calculate_total_promet).
+    
+    Args:
+        user: Current user object (za tenant isolation)
+        filters: Dict sa filterima (godina, datum_od, datum_do, status_filter, valuta_filter, firma_id)
+    
+    Returns:
+        Decimal: Ukupan promet u RSD (suma iznos_rsd)
+    
+    Note:
+        Stornirane fakture se NE uključuju u promet (ako status_filter != 'all')
+    """
+    # Base query
+    query = db.session.query(func.sum(KPOEntry.iznos_rsd))
+    
+    # Tenant isolation (CRITICAL)
+    if user.role == 'pausalac':
+        query = query.filter_by(firma_id=user.firma_id)
+    elif user.role == 'admin' and filters.get('firma_id'):
+        query = query.filter_by(firma_id=filters['firma_id'])
+    # Else: Admin god mode - no firma filter
+    
+    # Filter by godina
+    if filters.get('godina'):
+        query = query.filter_by(godina=filters['godina'])
+    
+    # Filter by datum_od
+    if filters.get('datum_od'):
+        query = query.filter(KPOEntry.datum_prometa >= filters['datum_od'])
+    
+    # Filter by datum_do
+    if filters.get('datum_do'):
+        query = query.filter(KPOEntry.datum_prometa <= filters['datum_do'])
+    
+    # Filter by komitent_search
+    if filters.get('komitent_search'):
+        search_pattern = f"%{filters['komitent_search']}%"
+        query = query.filter(KPOEntry.komitent_naziv.ilike(search_pattern))
+    
+    # Filter by status (default: 'izdata' - excludes stornirane)
+    status_filter = filters.get('status_filter', 'izdata')
+    if status_filter != 'all':
+        query = query.filter_by(status_fakture=status_filter)
+    
+    # Filter by valuta
+    if filters.get('valuta_filter'):
+        query = query.filter_by(valuta=filters['valuta_filter'])
+    
+    total = query.scalar()
+    
     # Return 0.00 if no entries found
     return total or Decimal('0.00')

@@ -716,7 +716,7 @@ def kursevi_refresh():
 
         if cached_count > 0:
             flash(
-                f'Kursevi uspešno osvježeni sa NBS servisa! Ažurirano {cached_count} valuta.',
+                f'Kursevi uspešno osveženi sa NBS servisa! Ažurirano {cached_count} valuta.',
                 'success'
             )
         else:

@@ -134,6 +134,10 @@ def create_app(config_name='development'):
     # Register memorandumi blueprint
     from app.routes.memorandumi import memorandumi_bp
     app.register_blueprint(memorandumi_bp)
+    
+    # Register KPO knjiga blueprint
+    from app.routes.kpo import kpo_bp
+    app.register_blueprint(kpo_bp)
 
     # TODO: Register other blueprints when they are created in future stories
 
