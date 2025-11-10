@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDatumCalculation();
     initializeFormSubmit();
     initializeDeviznaFaktura(); // NEW: Initialize foreign currency functionality
+    initializeLimitWidget(); // Story 5.4: Initialize limit tracking widget
 
     // Check if we have initial stavke (for edit mode)
     if (typeof window.INITIAL_STAVKE !== 'undefined' && window.INITIAL_STAVKE.length > 0) {
@@ -473,6 +474,7 @@ function calculateStavkaUkupno(stavkaRow) {
  */
 function calculateUkupanIznos() {
     const tipFakture = document.querySelector('input[name="tip_fakture"]:checked').value;
+    let ukupanIznosRSD = 0;
 
     if (tipFakture === 'devizna') {
         // Devizna faktura - sum in foreign currency
@@ -490,6 +492,7 @@ function calculateUkupanIznos() {
         if (srednjiKurs > 0) {
             // Calculate RSD amount: foreign * kurs = RSD
             const totalRSD = totalForeign * srednjiKurs;
+            ukupanIznosRSD = totalRSD;
 
             // Show foreign currency amount (primary display for devizna)
             document.getElementById('ukupan_iznos_originalna_container').style.display = 'block';
@@ -505,6 +508,7 @@ function calculateUkupanIznos() {
             document.getElementById('ukupan_iznos_originalna').textContent = totalForeign.toFixed(2) + ' ' + valuta;
             document.getElementById('ukupan_iznos_label').textContent = 'Ukupan Iznos:';
             document.getElementById('ukupan_iznos_rsd').textContent = '(Kurs nije dostupan)';
+            ukupanIznosRSD = 0; // Can't calculate RSD without kurs
         }
     } else {
         // Standardna faktura - sum in RSD only
@@ -515,9 +519,16 @@ function calculateUkupanIznos() {
             totalRSD += ukupno;
         });
 
+        ukupanIznosRSD = totalRSD;
+
         document.getElementById('ukupan_iznos_originalna_container').style.display = 'none';
         document.getElementById('ukupan_iznos_label').textContent = 'Ukupan Iznos:';
         document.getElementById('ukupan_iznos_rsd').textContent = totalRSD.toFixed(2) + ' RSD';
+    }
+
+    // NEW: Update limit widget with new invoice amount (Task 5 - Story 5.4)
+    if (typeof loadLimitData === 'function') {
+        loadLimitData(ukupanIznosRSD);
     }
 }
 
@@ -858,4 +869,148 @@ function validateKomitentForDevizna(komitent) {
     }
 
     return true;
+}
+
+/**
+ * ============================================================================
+ * LIMIT TRACKING WIDGET (Story 5.4)
+ * ============================================================================
+ */
+
+/**
+ * Initialize limit tracking widget
+ * Loads initial limit data when page loads
+ */
+function initializeLimitWidget() {
+    // Check if widget exists on page (only on nova faktura form)
+    const widget = document.getElementById('limit_widget');
+    if (!widget) {
+        return; // Widget not present on this page
+    }
+
+    // Load initial limit data (without new invoice simulation)
+    loadLimitData(0);
+}
+
+/**
+ * Load limit widget data from API
+ * @param {number} novaFakturaIznos - Amount of new invoice for simulation (default: 0)
+ */
+function loadLimitData(novaFakturaIznos = 0) {
+    // Check if widget exists
+    const widget = document.getElementById('limit_widget');
+    if (!widget) {
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('limit_loading').style.display = 'block';
+    document.getElementById('limit_content').style.display = 'none';
+    document.getElementById('limit_error').style.display = 'none';
+
+    // Construct API URL with query parameter
+    const apiUrl = `${window.API_URLS.limitWidgetData}?nova_faktura_iznos=${novaFakturaIznos}`;
+
+    // Fetch data from API
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle success - update widget with data
+            updateLimitWidget(data);
+        })
+        .catch(error => {
+            // Handle error
+            console.error('Error loading limit widget data:', error);
+            document.getElementById('limit_loading').style.display = 'none';
+            document.getElementById('limit_content').style.display = 'none';
+            document.getElementById('limit_error').style.display = 'block';
+        });
+}
+
+/**
+ * Update limit widget display with data from API
+ * @param {Object} data - API response data
+ */
+function updateLimitWidget(data) {
+    // Hide loading, show content
+    document.getElementById('limit_loading').style.display = 'none';
+    document.getElementById('limit_content').style.display = 'block';
+    document.getElementById('limit_error').style.display = 'none';
+
+    // Update rolling limit display
+    document.getElementById('rolling_limit_display').textContent = formatCurrency(data.rolling_limit);
+
+    // Update promet 365 dana
+    document.getElementById('promet_365_display').textContent = formatCurrency(data.promet_365_dana);
+
+    // Update preostali limit with color coding
+    const preostaliElement = document.getElementById('preostali_limit_display');
+    preostaliElement.textContent = formatCurrency(data.preostali_limit);
+
+    // Color code based on remaining limit
+    preostaliElement.classList.remove('text-success', 'text-warning', 'text-danger');
+    if (data.preostali_limit > 0) {
+        preostaliElement.classList.add('text-success');
+    } else {
+        preostaliElement.classList.add('text-danger');
+    }
+
+    // Update progress bar
+    const progressBar = document.getElementById('progress_bar');
+    const progressPercentage = Math.round(data.progress_percentage);
+    progressBar.style.width = `${data.progress_percentage}%`;
+    progressBar.textContent = `${progressPercentage}%`;
+
+    // Update progress bar color
+    progressBar.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+    progressBar.classList.add(`bg-${data.progress_color}`);
+
+    // Update projekcije displays
+    document.getElementById('projekcija_7_display').textContent = formatCurrency(data.projekcija_7);
+    document.getElementById('projekcija_15_display').textContent = formatCurrency(data.projekcija_15);
+    document.getElementById('projekcija_30_display').textContent = formatCurrency(data.projekcija_30);
+
+    // Show/hide nova faktura simulation section
+    if (data.nova_faktura_iznos > 0) {
+        document.getElementById('nova_faktura_section').style.display = 'block';
+        document.getElementById('nova_faktura_iznos_display').textContent = formatCurrency(data.nova_faktura_iznos);
+
+        const preostaloNakonElement = document.getElementById('preostalo_nakon_display');
+        preostaloNakonElement.textContent = formatCurrency(data.preostalo_nakon_nove);
+
+        // Color code preostalo nakon based on value
+        preostaloNakonElement.classList.remove('text-success', 'text-danger');
+        if (data.preostalo_nakon_nove > 0) {
+            preostaloNakonElement.classList.add('text-success');
+        } else {
+            preostaloNakonElement.classList.add('text-danger');
+        }
+    } else {
+        document.getElementById('nova_faktura_section').style.display = 'none';
+    }
+
+    // Show/hide over limit warning
+    if (data.over_limit) {
+        document.getElementById('over_limit_warning').style.display = 'block';
+        document.getElementById('over_limit_amount_display').textContent = formatCurrency(data.over_limit_amount);
+    } else {
+        document.getElementById('over_limit_warning').style.display = 'none';
+    }
+}
+
+/**
+ * Format number as currency (Serbian locale)
+ * @param {number} amount - Amount to format
+ * @returns {string} - Formatted currency string (e.g., "1,000,000 RSD")
+ */
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sr-RS', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount) + ' RSD';
 }

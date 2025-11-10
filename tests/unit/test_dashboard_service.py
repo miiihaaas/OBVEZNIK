@@ -858,3 +858,135 @@ def test_rolling_limit_calculation_excludes_stornirane(app, test_data):
         # Preostali limit should be positive and reasonable
         assert stats['preostali_limit_365'] >= 7050000.00  # Minimum if all included
         assert stats['preostali_limit_365'] <= 7200000.00  # Maximum if some excluded
+
+
+def test_get_monthly_revenue_chart_data(app, test_data):
+    """Test get_monthly_revenue_chart_data function with correct month arithmetic."""
+    from dateutil.relativedelta import relativedelta
+    from app.services.dashboard_service import get_monthly_revenue_chart_data
+
+    with app.app_context():
+        firma1 = test_data['firma1']
+        komitent1 = test_data['komitent1']
+        pausalac1 = test_data['pausalac1']
+        today = date.today()
+
+        # Create invoices in specific months
+        # 3 months ago
+        date_3_months_ago = today - relativedelta(months=3)
+        faktura_3m = Faktura(
+            firma_id=firma1.id,
+            komitent_id=komitent1.id,
+            user_id=pausalac1.id,
+            broj_fakture='F-3M',
+            tip_fakture='domaca',
+            datum_prometa=date_3_months_ago,
+            ukupan_iznos_rsd=100000.00,
+            status='izdata'
+        )
+        db.session.add(faktura_3m)
+
+        # 2 months ago
+        date_2_months_ago = today - relativedelta(months=2)
+        faktura_2m = Faktura(
+            firma_id=firma1.id,
+            komitent_id=komitent1.id,
+            user_id=pausalac1.id,
+            broj_fakture='F-2M',
+            tip_fakture='domaca',
+            datum_prometa=date_2_months_ago,
+            ukupan_iznos_rsd=200000.00,
+            status='izdata'
+        )
+        db.session.add(faktura_2m)
+
+        # Current month
+        faktura_current = Faktura(
+            firma_id=firma1.id,
+            komitent_id=komitent1.id,
+            user_id=pausalac1.id,
+            broj_fakture='F-CURRENT',
+            tip_fakture='domaca',
+            datum_prometa=today,
+            ukupan_iznos_rsd=300000.00,
+            status='izdata'
+        )
+        db.session.add(faktura_current)
+
+        # Stornirana invoice (should be excluded)
+        faktura_storno = Faktura(
+            firma_id=firma1.id,
+            komitent_id=komitent1.id,
+            user_id=pausalac1.id,
+            broj_fakture='F-STORNO',
+            tip_fakture='domaca',
+            datum_prometa=today,
+            ukupan_iznos_rsd=50000.00,
+            status='stornirana'
+        )
+        db.session.add(faktura_storno)
+
+        db.session.commit()
+
+        # Get chart data for last 6 months
+        chart_data = get_monthly_revenue_chart_data(firma1.id, months=6)
+
+        # Verify structure
+        assert 'labels' in chart_data
+        assert 'data' in chart_data
+        assert len(chart_data['labels']) == 6
+        assert len(chart_data['data']) == 6
+
+        # Verify labels are in chronological order
+        # First label should be oldest (6 months ago)
+        oldest_month = today.replace(day=1) - relativedelta(months=5)
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec']
+        expected_first_label = f"{month_names[oldest_month.month - 1]} {oldest_month.year}"
+        assert chart_data['labels'][0] == expected_first_label
+
+        # Last label should be current month
+        expected_last_label = f"{month_names[today.month - 1]} {today.year}"
+        assert chart_data['labels'][-1] == expected_last_label
+
+        # Verify data values
+        # Current month should have at least 300k (faktura_current), stornirana excluded
+        # Note: test_data fixture may have additional invoices in current month
+        assert chart_data['data'][-1] >= 300000.00
+
+        # Find indices for 2 months ago and 3 months ago
+        month_2m = today.replace(day=1) - relativedelta(months=2)
+        month_3m = today.replace(day=1) - relativedelta(months=3)
+
+        label_2m = f"{month_names[month_2m.month - 1]} {month_2m.year}"
+        label_3m = f"{month_names[month_3m.month - 1]} {month_3m.year}"
+
+        idx_2m = chart_data['labels'].index(label_2m)
+        idx_3m = chart_data['labels'].index(label_3m)
+
+        assert chart_data['data'][idx_2m] == 200000.00
+        assert chart_data['data'][idx_3m] == 100000.00
+
+        # Months without invoices should have 0
+        zero_months = [i for i, val in enumerate(chart_data['data'])
+                      if i not in [idx_2m, idx_3m, len(chart_data['data']) - 1]]
+        for idx in zero_months:
+            assert chart_data['data'][idx] == 0.0
+
+
+def test_get_monthly_revenue_chart_data_empty(app, test_data):
+    """Test chart data for firma with no invoices."""
+    from app.services.dashboard_service import get_monthly_revenue_chart_data
+
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        # Delete all existing invoices for this firma
+        Faktura.query.filter_by(firma_id=firma1.id).delete()
+        db.session.commit()
+
+        chart_data = get_monthly_revenue_chart_data(firma1.id, months=3)
+
+        # Should return 3 months with 0 values
+        assert len(chart_data['labels']) == 3
+        assert len(chart_data['data']) == 3
+        assert all(val == 0.0 for val in chart_data['data'])

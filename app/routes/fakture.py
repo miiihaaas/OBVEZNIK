@@ -725,6 +725,122 @@ def get_avansne_izdate():
     return jsonify(results)
 
 
+@fakture_bp.route('/api/limit-widget-data', methods=['GET'])
+@login_required
+@limiter.limit("100 per minute")
+def get_limit_widget_data():
+    """
+    API endpoint for limit tracking widget data.
+
+    Query Parameters:
+        - nova_faktura_iznos: float (optional) - Amount of new invoice for simulation
+
+    Returns:
+        JSON response with rolling limit data:
+        {
+            "rolling_limit": 8000000,
+            "promet_365_dana": 4500000,
+            "preostali_limit": 3500000,
+            "progress_percentage": 56.25,
+            "progress_color": "success",
+            "projekcija_7": 3400000,
+            "projekcija_15": 3300000,
+            "projekcija_30": 3100000,
+            "nova_faktura_iznos": 500000,
+            "preostalo_nakon_nove": 3000000,
+            "over_limit": false,
+            "over_limit_amount": 0
+        }
+
+    Security:
+        - Tenant isolation applied (pausalac sees only their firma's data)
+        - Admin in firm context sees selected firma's data
+        - Admin in god mode gets 400 error
+
+    Story: 5.4 - Limit Tracking Widget
+    """
+    from app.utils.query_helpers import get_user_firma_id
+    from app.services.dashboard_service import calculate_rolling_limit_projections, ROLLING_LIMIT_365_DAYS
+    from datetime import date, timedelta
+    from sqlalchemy import func, and_
+
+    # Get firma_id with tenant isolation
+    firma_id = get_user_firma_id()
+    if firma_id is None:
+        return jsonify({
+            'error': 'Molimo selektujte firmu pre pristupa ovoj funkcionalnosti.'
+        }), 400
+
+    try:
+        # Get rolling limit projections (reuse existing function)
+        projections = calculate_rolling_limit_projections(firma_id)
+
+        # Calculate promet_365_dana (needed for progress bar)
+        date_365_days_ago = date.today() - timedelta(days=365)
+        promet_365_dana = db.session.query(
+            func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+        ).filter(
+            and_(
+                Faktura.firma_id == firma_id,
+                Faktura.datum_prometa >= date_365_days_ago,
+                Faktura.status != 'stornirana'
+            )
+        ).scalar()
+
+        promet_365_dana = float(promet_365_dana or 0)
+        preostali_limit = float(projections['preostali_limit'])
+
+        # Calculate progress percentage and color
+        progress_percentage = (promet_365_dana / ROLLING_LIMIT_365_DAYS) * 100 if ROLLING_LIMIT_365_DAYS > 0 else 0
+
+        # Determine progress color based on percentage
+        if progress_percentage < 70:
+            progress_color = 'success'
+        elif progress_percentage < 90:
+            progress_color = 'warning'
+        else:
+            progress_color = 'danger'
+
+        # Build base response
+        response_data = {
+            'rolling_limit': ROLLING_LIMIT_365_DAYS,
+            'promet_365_dana': promet_365_dana,
+            'preostali_limit': preostali_limit,
+            'progress_percentage': round(progress_percentage, 2),
+            'progress_color': progress_color,
+            'projekcija_7': float(projections['projekcija_7_dana']),
+            'projekcija_15': float(projections['projekcija_15_dana']),
+            'projekcija_30': float(projections['projekcija_30_dana'])
+        }
+
+        # Handle nova_faktura_iznos parameter (simulation)
+        nova_faktura_iznos = request.args.get('nova_faktura_iznos', 0, type=float)
+
+        if nova_faktura_iznos > 0:
+            # Calculate new limit after adding nova faktura
+            preostalo_nakon_nove = preostali_limit - nova_faktura_iznos
+            over_limit = preostalo_nakon_nove < 0
+
+            response_data['nova_faktura_iznos'] = nova_faktura_iznos
+            response_data['preostalo_nakon_nove'] = preostalo_nakon_nove
+            response_data['over_limit'] = over_limit
+            response_data['over_limit_amount'] = abs(preostalo_nakon_nove) if over_limit else 0
+        else:
+            # No simulation
+            response_data['nova_faktura_iznos'] = 0
+            response_data['preostalo_nakon_nove'] = preostali_limit
+            response_data['over_limit'] = False
+            response_data['over_limit_amount'] = 0
+
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        current_app.logger.error(f'Error fetching limit widget data for firma {firma_id}: {e}', exc_info=True)
+        return jsonify({
+            'error': f'Greška pri učitavanju podataka: {str(e)}'
+        }), 500
+
+
 @fakture_bp.route('/<int:faktura_id>/konvertuj', methods=['POST'])
 @login_required
 def konvertuj_profakturu(faktura_id):

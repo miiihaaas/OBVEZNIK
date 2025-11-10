@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Firme - {{ firma.naziv }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fa-solid fa-building me-2"></i>
+                Profil Firme - {{ firma.naziv }}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Zatvori"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Readonly View -->
+    <div id="readonly_view">
+        <!-- Sekcija 1: Osnovni Podaci Firme -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-building me-2"></i>
+                    Osnovni Podaci Firme
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Naziv firme</label>
+                        <p class="form-control-plaintext">{{ firma.naziv }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">PIB</label>
+                        <p class="form-control-plaintext">{{ firma.pib }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-bold">Matični broj</label>
+                        <p class="form-control-plaintext">{{ firma.maticni_broj }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Adresa</label>
+                        <p class="form-control-plaintext">{{ firma.adresa }}</p>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-bold">Broj</label>
+                        <p class="form-control-plaintext">{{ firma.broj }}</p>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-bold">Poštanski broj</label>
+                        <p class="form-control-plaintext">{{ firma.postanski_broj }}</p>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-bold">Mesto</label>
+                        <p class="form-control-plaintext">{{ firma.mesto }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Država</label>
+                        <p class="form-control-plaintext">{{ firma.drzava }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sekcija 2: Kontakt Informacije -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-address-book me-2"></i>
+                    Kontakt Informacije
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Telefon</label>
+                        <p class="form-control-plaintext">{{ firma.telefon }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <p class="form-control-plaintext">{{ firma.email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sekcija 3: Računi -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-landmark me-2"></i>
+                    Bankarski Računi
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-3">Dinarski računi</h6>
+                {% for racun in firma.dinarski_racuni %}
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Broj računa</label>
+                        <p class="form-control-plaintext">{{ racun.broj }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted">Banka</label>
+                        <p class="form-control-plaintext">{{ racun.banka }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <hr class="my-4">
+
+                <h6 class="mb-3">Devizni računi</h6>
+                {% if firma.devizni_racuni %}
+                    {% for racun in firma.devizni_racuni %}
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted">IBAN</label>
+                            <p class="form-control-plaintext">{{ racun.iban }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted">SWIFT</label>
+                            <p class="form-control-plaintext">{{ racun.swift }}</p>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label text-muted">Banka</label>
+                            <p class="form-control-plaintext">{{ racun.banka }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Nema deviznih računa</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sekcija 4: Faktura Konfiguracija -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-file-invoice me-2"></i>
+                    Faktura Konfiguracija
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Prefiks fakture</label>
+                        <p class="form-control-plaintext">{{ firma.prefiks_fakture or '-' }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Sufiks fakture</label>
+                        <p class="form-control-plaintext">{{ firma.sufiks_fakture or '-' }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Trenutni brojač fakture</label>
+                        <p class="form-control-plaintext">{{ firma.brojac_fakture }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sekcija 5: Limiti (Informativno) -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-chart-line me-2"></i>
+                    Paušalni Limiti (Informativno)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Rolling 365-dana limit</label>
+                        <p class="form-control-plaintext">{{ '{:,.2f}'.format(rolling_limit) }} RSD</p>
+                        <small class="text-muted">Maksimalni prihod u proteklih 365 dana</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Kalendarska godina limit</label>
+                        <p class="form-control-plaintext">{{ '{:,.2f}'.format(yearly_limit) }} RSD</p>
+                        <small class="text-muted">Maksimalni prihod u kalendarskoj godini</small>
+                    </div>
+                </div>
+                <div class="alert alert-info mb-0" role="alert">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> Sistem prati rolling limit (proteklih 365 dana) za dashboard i upozorenja.
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Button - Readonly Mode -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <button type="button" class="btn btn-primary btn-lg" onclick="enableEditMode()">
+                    <i class="fa-solid fa-edit me-2"></i>
+                    Izmeni
+                </button>
+                <a href="{{ url_for('dashboard.pausalac_dashboard') }}" class="btn btn-secondary btn-lg">
+                    <i class="fa-solid fa-arrow-left me-2"></i>
+                    Nazad na Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit View (Initially Hidden) -->
+    <div id="edit_view" style="display: none;">
+        <form method="POST" action="{{ url_for('dashboard.profil_firme_edit') }}" id="profil_form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <!-- Sekcija 1: Osnovni Podaci Firme -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-building me-2"></i>
+                        Osnovni Podaci Firme
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="naziv" class="form-label">Naziv firme</label>
+                            <input type="text" class="form-control" id="naziv" name="naziv" value="{{ firma.naziv }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                            {% if current_user.role == 'pausalac' %}
+                            <small class="text-muted">Ovo polje može izmeniti samo Admin</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="pib" class="form-label">PIB</label>
+                            <input type="text" class="form-control" id="pib" name="pib" value="{{ firma.pib }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                            {% if current_user.role == 'pausalac' %}
+                            <small class="text-muted">Ovo polje može izmeniti samo Admin</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="maticni_broj" class="form-label">Matični broj</label>
+                            <input type="text" class="form-control" id="maticni_broj" name="maticni_broj" value="{{ firma.maticni_broj }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                            {% if current_user.role == 'pausalac' %}
+                            <small class="text-muted">Ovo polje može izmeniti samo Admin</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="adresa" class="form-label">Adresa</label>
+                            <input type="text" class="form-control" id="adresa" name="adresa" value="{{ firma.adresa }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                            {% if current_user.role == 'pausalac' %}
+                            <small class="text-muted">Ovo polje može izmeniti samo Admin</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="broj" class="form-label">Broj</label>
+                            <input type="text" class="form-control" id="broj" name="broj" value="{{ firma.broj }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="postanski_broj" class="form-label">Poštanski broj</label>
+                            <input type="text" class="form-control" id="postanski_broj" name="postanski_broj" value="{{ firma.postanski_broj }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label for="mesto" class="form-label">Mesto</label>
+                            <input type="text" class="form-control" id="mesto" name="mesto" value="{{ firma.mesto }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="drzava" class="form-label">Država</label>
+                            <input type="text" class="form-control" id="drzava" name="drzava" value="{{ firma.drzava }}"
+                                   {% if current_user.role == 'pausalac' %}disabled{% endif %}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekcija 2: Kontakt Informacije -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-address-book me-2"></i>
+                        Kontakt Informacije
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="telefon" class="form-label">Telefon</label>
+                            <input type="tel" class="form-control" id="telefon" name="telefon"
+                                   value="{{ firma.telefon }}"
+                                   pattern="^(\+381|0)[0-9]{8,9}$"
+                                   title="Unesite važeći srpski broj telefona (npr. +381611234567 ili 0611234567)"
+                                   required>
+                            <small class="text-muted">Format: +381611234567 ili 0611234567</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ firma.email }}"
+                                   pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                                   title="Unesite važeću email adresu"
+                                   required>
+                            <small class="text-muted">Format: primer@domen.com</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekcija 3: Računi -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-landmark me-2"></i>
+                        Bankarski Računi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Dinarski računi</h6>
+                    <div id="dinarski_racuni_container">
+                        {% for racun in firma.dinarski_racuni %}
+                        <div class="row mb-2 dinarski-racun-row">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control dinarski-broj" placeholder="Broj računa" value="{{ racun.broj }}" required>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" class="form-control dinarski-banka" placeholder="Naziv banke" value="{{ racun.banka }}" required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger btn-sm remove-dinarski" onclick="removeDinarskiRacun(this)">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDinarskiRacun()">
+                        <i class="fa-solid fa-plus me-1"></i> Dodaj dinarski račun
+                    </button>
+                    <input type="hidden" id="dinarski_racuni" name="dinarski_racuni" value="">
+
+                    <hr class="my-4">
+
+                    <h6 class="mb-3">Devizni računi</h6>
+                    <div id="devizni_racuni_container">
+                        {% if firma.devizni_racuni %}
+                            {% for racun in firma.devizni_racuni %}
+                            <div class="row mb-2 devizni-racun-row">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control devizni-iban" placeholder="IBAN" value="{{ racun.iban }}" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control devizni-swift" placeholder="SWIFT" value="{{ racun.swift }}" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control devizni-banka" placeholder="Naziv banke" value="{{ racun.banka }}" required>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-danger btn-sm remove-devizni" onclick="removeDevizniRacun(this)">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDevizniRacun()">
+                        <i class="fa-solid fa-plus me-1"></i> Dodaj devizni račun
+                    </button>
+                    <input type="hidden" id="devizni_racuni" name="devizni_racuni" value="">
+                </div>
+            </div>
+
+            <!-- Sekcija 4: Faktura Konfiguracija -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-file-invoice me-2"></i>
+                        Faktura Konfiguracija
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="prefiks_fakture" class="form-label">Prefiks fakture</label>
+                            <input type="text" class="form-control" id="prefiks_fakture" name="prefiks_fakture"
+                                   value="{{ firma.prefiks_fakture or '' }}" placeholder="npr. INV">
+                            <small class="text-muted">Opciono - dodaje se pre broja fakture</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="sufiks_fakture" class="form-label">Sufiks fakture</label>
+                            <input type="text" class="form-control" id="sufiks_fakture" name="sufiks_fakture"
+                                   value="{{ firma.sufiks_fakture or '' }}" placeholder="npr. /2024">
+                            <small class="text-muted">Opciono - dodaje se posle broja fakture</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="brojac_fakture" class="form-label">Trenutni brojač fakture</label>
+                            <input type="text" class="form-control" id="brojac_fakture" value="{{ firma.brojac_fakture }}" disabled>
+                            <small class="text-muted">Automatski se uvećava - ne može se ručno menjati</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekcija 5: Limiti (Informativno) - Readonly in Edit Mode too -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-chart-line me-2"></i>
+                        Paušalni Limiti (Informativno)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Rolling 365-dana limit</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ '{:,.2f}'.format(rolling_limit) }}" disabled>
+                                <span class="input-group-text">RSD</span>
+                            </div>
+                            <small class="text-muted">Maksimalni prihod u proteklih 365 dana</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Kalendarska godina limit</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ '{:,.2f}'.format(yearly_limit) }}" disabled>
+                                <span class="input-group-text">RSD</span>
+                            </div>
+                            <small class="text-muted">Maksimalni prihod u kalendarskoj godini</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mb-0" role="alert">
+                        <i class="fa-solid fa-info-circle me-2"></i>
+                        <strong>Napomena:</strong> Sistem prati rolling limit (proteklih 365 dana) za dashboard i upozorenja.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons - Edit Mode -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-success btn-lg me-2" id="save_button">
+                        <i class="fa-solid fa-save me-2"></i>
+                        Sačuvaj Izmene
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="disableEditMode()">
+                        <i class="fa-solid fa-times me-2"></i>
+                        Otkaži
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Toggle between readonly and edit mode
+function enableEditMode() {
+    document.getElementById('readonly_view').style.display = 'none';
+    document.getElementById('edit_view').style.display = 'block';
+
+    // Add real-time validation listeners
+    addRealTimeValidation();
+}
+
+function disableEditMode() {
+    document.getElementById('edit_view').style.display = 'none';
+    document.getElementById('readonly_view').style.display = 'block';
+}
+
+// Real-time validation for telefon and email
+function addRealTimeValidation() {
+    const telefonField = document.getElementById('telefon');
+    const emailField = document.getElementById('email');
+
+    if (telefonField) {
+        telefonField.addEventListener('blur', function() {
+            const telefonPattern = /^(\+381|0)[0-9]{8,9}$/;
+            if (this.value.trim() && !telefonPattern.test(this.value.trim())) {
+                showValidationError('telefon', 'Unesite važeći srpski broj telefona (npr. +381611234567 ili 0611234567)');
+            } else {
+                clearFieldError('telefon');
+            }
+        });
+    }
+
+    if (emailField) {
+        emailField.addEventListener('blur', function() {
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (this.value.trim() && !emailPattern.test(this.value.trim())) {
+                showValidationError('email', 'Unesite važeću email adresu');
+            } else {
+                clearFieldError('email');
+            }
+        });
+    }
+}
+
+// Clear error for a specific field
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.remove('is-invalid');
+        const errorDiv = field.nextElementSibling;
+        if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+            errorDiv.style.display = 'none';
+        }
+    }
+}
+
+// Serialize dinarski racuni before form submit
+document.getElementById('profil_form').addEventListener('submit', function(e) {
+    // Clear any previous validation errors
+    clearValidationErrors();
+
+    let hasErrors = false;
+
+    // Validate telefon format
+    const telefon = document.getElementById('telefon').value.trim();
+    const telefonPattern = /^(\+381|0)[0-9]{8,9}$/;
+    if (!telefonPattern.test(telefon)) {
+        showValidationError('telefon', 'Unesite važeći srpski broj telefona (npr. +381611234567 ili 0611234567)');
+        hasErrors = true;
+    }
+
+    // Validate email format
+    const email = document.getElementById('email').value.trim();
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+        showValidationError('email', 'Unesite važeću email adresu');
+        hasErrors = true;
+    }
+
+    // Collect dinarski racuni
+    const dinarskiRows = document.querySelectorAll('.dinarski-racun-row');
+    const dinarskiRacuni = [];
+    dinarskiRows.forEach(row => {
+        const broj = row.querySelector('.dinarski-broj').value.trim();
+        const banka = row.querySelector('.dinarski-banka').value.trim();
+        if (broj && banka) {
+            dinarskiRacuni.push({ broj: broj, banka: banka });
+        }
+    });
+    document.getElementById('dinarski_racuni').value = JSON.stringify(dinarskiRacuni);
+
+    // Validate at least one dinarski racun
+    if (dinarskiRacuni.length === 0) {
+        e.preventDefault();
+        alert('Mora postojati bar jedan dinarski račun sa popunjenim brojem i bankom.');
+        return false;
+    }
+
+    // Collect devizni racuni
+    const devizniRows = document.querySelectorAll('.devizni-racun-row');
+    const devizniRacuni = [];
+    let invalidIban = false;
+    devizniRows.forEach(row => {
+        const iban = row.querySelector('.devizni-iban').value.trim();
+        const swift = row.querySelector('.devizni-swift').value.trim();
+        const banka = row.querySelector('.devizni-banka').value.trim();
+
+        // If any field is filled, all must be filled
+        if (iban || swift || banka) {
+            if (!iban || !swift || !banka) {
+                alert('Sva polja za devizni račun moraju biti popunjena (IBAN, SWIFT, Banka).');
+                e.preventDefault();
+                hasErrors = true;
+                return;
+            }
+
+            // Basic IBAN validation for Serbian IBAN (RS35...)
+            if (iban && !iban.match(/^RS[0-9]{2}[0-9A-Z]{18,30}$/)) {
+                showValidationError('devizni-iban', 'IBAN mora biti u formatu RS35... (22 karaktera)');
+                invalidIban = true;
+                hasErrors = true;
+            }
+
+            devizniRacuni.push({ iban: iban, swift: swift, banka: banka });
+        }
+    });
+    document.getElementById('devizni_racuni').value = JSON.stringify(devizniRacuni);
+
+    // Prevent submission if validation errors
+    if (hasErrors || invalidIban) {
+        e.preventDefault();
+        return false;
+    }
+
+    // Disable submit button to prevent double submission
+    document.getElementById('save_button').disabled = true;
+    document.getElementById('save_button').innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Čuvanje...';
+});
+
+// Helper function to show validation error
+function showValidationError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.add('is-invalid');
+
+        // Create or update error message
+        let errorDiv = field.nextElementSibling;
+        if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            field.parentNode.insertBefore(errorDiv, field.nextSibling);
+        }
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+}
+
+// Helper function to clear validation errors
+function clearValidationErrors() {
+    document.querySelectorAll('.is-invalid').forEach(field => {
+        field.classList.remove('is-invalid');
+    });
+    document.querySelectorAll('.invalid-feedback').forEach(feedback => {
+        feedback.style.display = 'none';
+    });
+}
+
+// Add dinarski racun row
+function addDinarskiRacun() {
+    const container = document.getElementById('dinarski_racuni_container');
+    const newRow = document.createElement('div');
+    newRow.className = 'row mb-2 dinarski-racun-row';
+    newRow.innerHTML = `
+        <div class="col-md-6">
+            <input type="text" class="form-control dinarski-broj" placeholder="Broj računa" required>
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control dinarski-banka" placeholder="Naziv banke" required>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-dinarski" onclick="removeDinarskiRacun(this)">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+// Remove dinarski racun row
+function removeDinarskiRacun(button) {
+    const row = button.closest('.dinarski-racun-row');
+    const container = document.getElementById('dinarski_racuni_container');
+
+    // Prevent removing last dinarski racun
+    if (container.querySelectorAll('.dinarski-racun-row').length <= 1) {
+        alert('Mora postojati bar jedan dinarski račun.');
+        return;
+    }
+
+    row.remove();
+}
+
+// Add devizni racun row
+function addDevizniRacun() {
+    const container = document.getElementById('devizni_racuni_container');
+    const newRow = document.createElement('div');
+    newRow.className = 'row mb-2 devizni-racun-row';
+    newRow.innerHTML = `
+        <div class="col-md-4">
+            <input type="text" class="form-control devizni-iban" placeholder="IBAN" required>
+        </div>
+        <div class="col-md-3">
+            <input type="text" class="form-control devizni-swift" placeholder="SWIFT" required>
+        </div>
+        <div class="col-md-4">
+            <input type="text" class="form-control devizni-banka" placeholder="Naziv banke" required>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-devizni" onclick="removeDevizniRacun(this)">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
+
+// Remove devizni racun row
+function removeDevizniRacun(button) {
+    const row = button.closest('.devizni-racun-row');
+    row.remove();
+}
+</script>
+{% endblock %}

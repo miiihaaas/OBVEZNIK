@@ -17,6 +17,9 @@
     <form method="POST" action="{{ url_for('fakture.nova_faktura') }}" id="fakturaForm">
         {{ form.hidden_tag() }}
 
+        <div class="row">
+            <!-- Main Form Content -->
+            <div class="col-lg-8">
         <!-- Tip Fakture -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
@@ -374,6 +377,105 @@
                 </div>
             </div>
         </div>
+            </div>
+            <!-- End col-lg-8 -->
+
+            <!-- Limit Tracking Widget Sidebar -->
+            <div class="col-lg-4">
+                <div class="position-sticky" style="top: 20px;">
+                    <div class="card border-0 shadow-sm mb-4" id="limit_widget">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fa-solid fa-chart-line me-2"></i> Limit Tracking</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Loading state -->
+                            <div id="limit_loading" class="text-center">
+                                <i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="text-muted mt-2">Učitavam...</p>
+                            </div>
+
+                            <!-- Widget content (populated via JS) -->
+                            <div id="limit_content" style="display: none;">
+                                <!-- Rolling limit info -->
+                                <div class="mb-3">
+                                    <small class="text-muted">Godišnji Limit (365 dana)</small>
+                                    <h3 class="mb-0" id="rolling_limit_display">8,000,000 RSD</h3>
+                                </div>
+
+                                <!-- Progress bar -->
+                                <div class="mb-3">
+                                    <div class="progress" style="height: 25px;">
+                                        <div id="progress_bar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+                                    </div>
+                                    <small class="text-muted">Proteklih 365 dana</small>
+                                </div>
+
+                                <!-- Current stats -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Promet 365 dana:</span>
+                                        <strong id="promet_365_display">0 RSD</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Preostalo:</span>
+                                        <strong id="preostali_limit_display" class="text-success">0 RSD</strong>
+                                    </div>
+                                </div>
+
+                                <!-- NEW INVOICE SIMULATION -->
+                                <div id="nova_faktura_section" class="alert alert-info mb-3" style="display: none;">
+                                    <h6 class="mb-2"><i class="fa-solid fa-file-invoice me-2"></i> Simulacija nove fakture:</h6>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Iznos nove fakture:</span>
+                                        <strong id="nova_faktura_iznos_display">0 RSD</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Preostalo nakon:</span>
+                                        <strong id="preostalo_nakon_display">0 RSD</strong>
+                                    </div>
+                                </div>
+
+                                <!-- OVER LIMIT WARNING -->
+                                <div id="over_limit_warning" class="alert alert-danger mb-3" style="display: none;">
+                                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                                    <strong>UPOZORENJE:</strong> Ova faktura će prekoračiti godišnji limit (365 dana) za <span id="over_limit_amount_display">0</span> RSD
+                                </div>
+
+                                <!-- Projekcije -->
+                                <div class="mb-3">
+                                    <h6 class="mb-2">Projekcije:</h6>
+                                    <small class="d-block mb-1">
+                                        <i class="fa-solid fa-calendar-day me-1 text-muted"></i> 7 dana: <strong id="projekcija_7_display">0 RSD</strong>
+                                    </small>
+                                    <small class="d-block mb-1">
+                                        <i class="fa-solid fa-calendar-week me-1 text-muted"></i> 15 dana: <strong id="projekcija_15_display">0 RSD</strong>
+                                    </small>
+                                    <small class="d-block">
+                                        <i class="fa-solid fa-calendar-alt me-1 text-muted"></i> 30 dana: <strong id="projekcija_30_display">0 RSD</strong>
+                                    </small>
+                                </div>
+
+                                <!-- Info tooltip -->
+                                <div class="alert alert-light mb-0">
+                                    <small class="text-muted">
+                                        <i class="fa-solid fa-info-circle me-1"></i>
+                                        Rolling limit prati proteklih 365 dana od danas.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Error state -->
+                            <div id="limit_error" class="alert alert-danger" style="display: none;">
+                                <i class="fa-solid fa-exclamation-circle me-2"></i>
+                                Greška pri učitavanju limit podataka.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End col-lg-4 -->
+        </div>
+        <!-- End row -->
     </form>
 </div>
 
@@ -433,7 +535,8 @@
         komitentiSearch: "{{ url_for('api.komitenti_search') }}",
         artikliSearch: "{{ url_for('api.artikli_search') }}",
         kursevi: "{{ url_for('api.get_kursevi') }}",
-        avansneIzdate: "{{ url_for('fakture.get_avansne_izdate') }}"  // Story 4.4
+        avansneIzdate: "{{ url_for('fakture.get_avansne_izdate') }}",  // Story 4.4
+        limitWidgetData: "{{ url_for('fakture.get_limit_widget_data') }}"  // Story 5.4
     };
 </script>
 <script>

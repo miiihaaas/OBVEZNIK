@@ -524,3 +524,102 @@ def test_admin_in_firm_context_can_access_pausalac_dashboard(client, app):
     assert 'Dashboard' in html or 'dashboard' in html.lower()
     # Admin should see firma details when in firm context
     assert 'Admin Context Firma' in html or firma_pib in html
+
+
+def test_pausalac_dashboard_api_monthly_revenue_chart(client, pausalac_test_data):
+    """Test /api/monthly-revenue-chart API endpoint."""
+    import json
+    from dateutil.relativedelta import relativedelta
+
+    pausalac = pausalac_test_data['pausalac']
+    firma = pausalac_test_data['firma']
+    komitent = pausalac_test_data['komitent']
+
+    # Login
+    client.post('/login', data={
+        'email': pausalac.email,
+        'password': 'testpass123'
+    }, follow_redirects=True)
+
+    with client.application.app_context():
+        # Create invoices in different months
+        today = date.today()
+
+        # 2 months ago
+        date_2m = today - relativedelta(months=2)
+        faktura_2m = Faktura(
+            firma_id=firma.id,
+            komitent_id=komitent.id,
+            user_id=pausalac.id,
+            broj_fakture='CHART-2M',
+            tip_fakture='domaca',
+            datum_prometa=date_2m,
+            ukupan_iznos_rsd=150000.00,
+            status='izdata'
+        )
+        db.session.add(faktura_2m)
+
+        # Current month
+        faktura_current = Faktura(
+            firma_id=firma.id,
+            komitent_id=komitent.id,
+            user_id=pausalac.id,
+            broj_fakture='CHART-NOW',
+            tip_fakture='domaca',
+            datum_prometa=today,
+            ukupan_iznos_rsd=250000.00,
+            status='izdata'
+        )
+        db.session.add(faktura_current)
+
+        db.session.commit()
+
+    # Call API endpoint
+    response = client.get('/api/monthly-revenue-chart?months=6')
+    assert response.status_code == 200
+
+    # Verify JSON response
+    data = json.loads(response.data)
+    assert 'labels' in data
+    assert 'data' in data
+    assert len(data['labels']) == 6
+    assert len(data['data']) == 6
+
+    # Verify current month has correct value
+    assert data['data'][-1] >= 250000.00  # At least the chart invoice
+
+    # Verify at least one label contains current month name
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec']
+    current_month_name = month_names[today.month - 1]
+    assert any(current_month_name in label for label in data['labels'])
+
+
+def test_pausalac_dashboard_api_monthly_revenue_chart_unauthorized(client):
+    """Test /api/monthly-revenue-chart API endpoint requires authentication."""
+    # Try to access API without login
+    response = client.get('/api/monthly-revenue-chart')
+    assert response.status_code == 302  # Redirect to login
+    assert '/login' in response.location or response.location.endswith('login')
+
+
+def test_pausalac_dashboard_chart_integration(client, pausalac_test_data):
+    """Test that dashboard page includes chart functionality."""
+    pausalac = pausalac_test_data['pausalac']
+
+    # Login
+    client.post('/login', data={
+        'email': pausalac.email,
+        'password': 'testpass123'
+    }, follow_redirects=True)
+
+    # Access dashboard
+    response = client.get('/dashboard')
+    assert response.status_code == 200
+
+    html = response.data.decode('utf-8')
+
+    # Verify chart canvas element exists
+    assert 'revenueChart' in html or 'canvas' in html.lower()
+
+    # Verify Chart.js library is loaded
+    assert 'chart.js' in html.lower() or 'chartjs' in html.lower()

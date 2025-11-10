@@ -448,10 +448,11 @@ def get_monthly_revenue_chart_data(firma_id: int, months: int = 12) -> Dict:
             'data': List[float]   # Revenue values for each month
         }
     """
+    from dateutil.relativedelta import relativedelta
     today = date.today()
 
     # Calculate start date (N months ago)
-    start_date = today - timedelta(days=months * 31)  # Approximate, will be adjusted in query
+    start_date = today - relativedelta(months=months)
 
     # Query monthly aggregates
     # Extract year and month from datum_prometa, group by them
@@ -489,8 +490,7 @@ def get_monthly_revenue_chart_data(firma_id: int, months: int = 12) -> Dict:
     current_date = today.replace(day=1)
     for i in range(months):
         # Go back i months
-        month_date = current_date - timedelta(days=i * 31)
-        month_date = month_date.replace(day=1)
+        month_date = current_date - relativedelta(months=i)
 
         # Format label
         month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec']
