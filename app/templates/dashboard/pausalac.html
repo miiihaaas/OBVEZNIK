@@ -4,46 +4,142 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <!-- Welcome Header -->
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-8">
-            <h1 class="mb-2"><i class="fa-solid fa-house me-2 text-primary"></i>Dobrodošli, {{ user.full_name }}!</h1>
-            <p class="text-muted-gray mb-0"><i class="fa-solid fa-chart-line me-1"></i> Pregled Vaših podataka i aktivnosti.</p>
-        </div>
-        <div class="col-md-4">
-            <!-- Limit Tracking Widget (Placeholder) -->
-            <div class="limit-tracking-widget shadow-sm">
-                <h4 class="mb-3"><i class="fa-solid fa-chart-line me-2"></i> Limit Praćenje</h4>
-                <div class="progress mb-2" style="height: 14px;">
-                    <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <!-- Firma Header -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-1"><i class="fa-solid fa-building me-2 text-primary"></i>{{ firma.naziv }}</h3>
+                            <p class="mb-0 text-muted">
+                                <small>
+                                    <i class="fa-solid fa-hashtag me-1"></i>PIB: <strong>{{ firma.pib }}</strong>
+                                    <span class="mx-2">|</span>
+                                    <i class="fa-solid fa-id-card me-1"></i>MB: <strong>{{ firma.maticni_broj }}</strong>
+                                </small>
+                            </p>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm" disabled data-bs-toggle="tooltip" title="Funkcionalnost će uskoro biti implementirana">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Izmeni podatke firme
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <p class="limit-text mb-0"><strong>0 RSD</strong> / 6,000,000 RSD</p>
-                <small class="text-white-50 d-block mt-1">Promet ovog meseca</small>
             </div>
         </div>
     </div>
 
-    <!-- Quick Stats Cards -->
-    <div class="row mb-4 g-3">
-        <div class="col-md-4">
-            <div class="stats-card shadow-sm border-0">
-                <h3 class="mb-3"><i class="fa-solid fa-file-invoice me-2 text-primary"></i> Fakture ovog meseca</h3>
-                <div class="stats-value">0</div>
-                <small class="text-muted d-block mt-2">Kreirane ovog meseca</small>
+    <!-- Welcome Header -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <div class="row mb-3">
+                <h1 class="mb-2"><i class="fa-solid fa-house me-2 text-primary"></i>Dobrodošli, {{ user.full_name }}!</h1>
+                <p class="text-muted-gray mb-0"><i class="fa-solid fa-chart-line me-1"></i> Pregled Vaših podataka i aktivnosti.</p>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="stats-card shadow-sm border-0">
+                        <h3 class="mb-3"><i class="fa-solid fa-chart-line me-2 text-success"></i> Promet ovog meseca</h3>
+                        <div class="stats-value">{{ "{:,.2f}".format(stats.promet_ovog_meseca) }} RSD</div>
+                        <small class="text-muted d-block mt-2">Ovog meseca</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stats-card shadow-sm border-0">
+                        <h3 class="mb-3"><i class="fa-solid fa-calendar-days me-2 text-info"></i> Promet 365 dana</h3>
+                        <div class="stats-value">{{ "{:,.2f}".format(stats.promet_365_dana) }} RSD</div>
+                        <small class="text-muted d-block mt-2">Proteklih 365 dana</small>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-5">
+                    <div class="stats-card shadow-sm border-0">
+                        <h3 class="mb-3"><i class="fa-solid fa-file-invoice me-2 text-primary"></i> Fakture ovog meseca</h3>
+                        <div class="stats-value">{{ stats.broj_faktura_ovog_meseca }}</div>
+                        <small class="text-muted d-block mt-2">Kreirane ovog meseca</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stats-card shadow-sm border-0">
+                        <h3 class="mb-3"><i class="fa-solid fa-address-book me-2 text-warning"></i> Komitenti</h3>
+                        <div class="stats-value">{{ stats.broj_komitenata }}</div>
+                        <small class="text-muted d-block mt-2">Ukupno komitenata</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card shadow-sm border-0">
+                        <h3 class="mb-3"><i class="fa-solid fa-box me-2 text-secondary"></i> Artikli</h3>
+                        <div class="stats-value">{{ stats.broj_artikala }}</div>
+                        <small class="text-muted d-block mt-2">Ukupno artikala</small>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="stats-card shadow-sm border-0">
-                <h3 class="mb-3"><i class="fa-solid fa-chart-line me-2 text-success"></i> Ukupan promet</h3>
-                <div class="stats-value">0,00 RSD</div>
-                <small class="text-muted d-block mt-2">Tekuća godina</small>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stats-card shadow-sm border-0">
-                <h3 class="mb-3"><i class="fa-regular fa-file me-2 text-warning"></i> Draft fakture</h3>
-                <div class="stats-value">0</div>
-                <small class="text-muted d-block mt-2">Na čekanju</small>
+            <!-- Limit Tracking Widget -->
+            <div class="limit-tracking-widget shadow-sm">
+                <h4 class="mb-3">
+                    <i class="fa-solid fa-chart-line me-2"></i> Limit Praćenje (tekuća godina)
+                    <i class="fa-solid fa-circle-info ms-1" data-bs-toggle="tooltip" title="Godišnji limit za tekuću kalendarsku godinu: 6,000,000 RSD"></i>
+                </h4>
+                <div class="progress mb-2" style="height: 18px;">
+                    <div class="progress-bar bg-{{ progress_color_godisnji }}" role="progressbar" style="width: {{ progress_percentage_godisnji|round(2) }}%"
+                         aria-valuenow="{{ progress_percentage_godisnji|round(2) }}" aria-valuemin="0" aria-valuemax="100">
+                        {{ progress_percentage_godisnji|round(1) }}%
+                    </div>
+                </div>
+                <p class="limit-text mb-0">
+                    <strong>{{ "{:,.2f}".format(stats.promet_tekuce_godine) }} RSD</strong> / {{ "{:,.0f}".format(yearly_limit) }} RSD
+                </p>
+                <small class="text-white-50 d-block mt-1">Tekuća godina ({{ current_year }})</small>
+
+                <hr class="my-3 border-light opacity-25">
+
+                <p class="mb-2"><strong class="text-success">Preostalo:</strong> {{ "{:,.2f}".format(stats.preostali_limit_godisnji) }} RSD</p>
+
+                <hr class="my-3 border-light opacity-25">
+
+                <!-- Rolling 365 dana info -->
+                <p class="limit-text mb-0">
+                    <strong>{{ "{:,.2f}".format(stats.promet_365_dana) }} RSD</strong> / {{ "{:,.0f}".format(rolling_limit) }} RSD
+                </p>
+                <small class="text-white-50 d-block mt-1">Proteklih 365 dana</small>
+                <p class="mb-2 mt-2"><strong class="text-success">Preostalo:</strong> {{ "{:,.2f}".format(stats.preostali_limit_365) }} RSD</p>
+
+                <!-- Projekcije -->
+                <div class="mt-3">
+                    <h6 class="mb-2 text-white-50">
+                        Projekcije (rolling 365-day)
+                        <i class="fa-solid fa-circle-info ms-1" data-bs-toggle="tooltip" title="Projekcije prikazuju preostali limit ako se odbace najstariji dani iz rolling perioda"></i>
+                    </h6>
+                    <small class="d-block mb-1">
+                        <i class="fa-solid fa-calendar-day me-1"></i> Za 7 dana:
+                        {% if projections.upozorenje_7_dana %}
+                            <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Prekoračenje!</span>
+                        {% else %}
+                            <span class="text-success">{{ "{:,.2f}".format(projections.projekcija_7_dana) }} RSD</span>
+                        {% endif %}
+                    </small>
+                    <small class="d-block mb-1">
+                        <i class="fa-solid fa-calendar-week me-1"></i> Za 15 dana:
+                        {% if projections.upozorenje_15_dana %}
+                            <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Prekoračenje!</span>
+                        {% else %}
+                            <span class="text-success">{{ "{:,.2f}".format(projections.projekcija_15_dana) }} RSD</span>
+                        {% endif %}
+                    </small>
+                    <small class="d-block">
+                        <i class="fa-solid fa-calendar-days me-1"></i> Za 30 dana:
+                        {% if projections.upozorenje_30_dana %}
+                            <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i>Prekoračenje!</span>
+                        {% else %}
+                            <span class="text-success">{{ "{:,.2f}".format(projections.projekcija_30_dana) }} RSD</span>
+                        {% endif %}
+                    </small>
+                </div>
             </div>
         </div>
     </div>
@@ -63,16 +159,16 @@
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">
-                                <i class="fa-solid fa-address-book d-block mb-2 fs-3"></i>
-                                <span class="d-block">Upravljanje Komitentima</span>
-                                <small class="text-white-50 d-block mt-2">Pregled i izmena</small>
+                            <a href="{{ url_for('komitenti.novi') }}" class="btn btn-primary w-100 h-100 py-4 shadow-sm">
+                                <i class="fa-solid fa-user-plus d-block mb-2 fs-3"></i>
+                                <span class="d-block">Dodaj Komitenta</span>
+                                <small class="text-white-50 d-block mt-2">Brzo kreiranje</small>
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ url_for('komitenti.novi') }}" class="btn btn-outline-primary w-100 h-100 py-4">
-                                <i class="fa-solid fa-user-plus d-block mb-2 fs-3"></i>
-                                <span class="d-block">Dodaj Komitenta</span>
+                            <a href="{{ url_for('artikli.novi') }}" class="btn btn-outline-primary w-100 h-100 py-4">
+                                <i class="fa-solid fa-box-open d-block mb-2 fs-3"></i>
+                                <span class="d-block">Dodaj Artikal</span>
                                 <small class="text-muted d-block mt-2">Brzo kreiranje</small>
                             </a>
                         </div>
@@ -81,30 +177,122 @@
             </div>
         </div>
     </div>
-
-    <!-- Info Alert -->
+    
+    <!-- Recent Fakture Tabela -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="alert alert-info border-0 shadow-sm" role="alert">
-                <div class="d-flex align-items-start">
-                    <i class="fa-solid fa-circle-info fs-4 me-3 mt-1"></i>
-                    <div class="flex-grow-1">
-                        <h5 class="alert-heading mb-2">Paušalac Dashboard (U razvoju)</h5>
-                        <p class="mb-2">Ovo je placeholder stranica za paušalac dashboard.</p>
-                        <hr class="my-3">
-                        <p class="mb-2 fw-semibold">Kompletan dashboard će biti implementiran u budućim pričama sa funkcionalnostima za:</p>
-                        <ul class="mb-0 ps-3">
-                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Pregled faktura</li>
-                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Kreiranje novih faktura</li>
-                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje komitentima (Implementirano)</strong></li>
-                            <li class="mb-1"><i class="fa-solid fa-check text-success me-1"></i> <strong>Upravljanje artiklima (Implementirano)</strong></li>
-                            <li class="mb-1"><i class="fa-solid fa-hourglass-half text-muted me-1"></i> Pregled statistika i KPO knjige</li>
-                        </ul>
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa-solid fa-file-invoice me-2 text-primary"></i> Poslednje fakture</h5>
+                    {% if recent_fakture and recent_fakture|length > 0 %}
+                    <a href="{{ url_for('fakture.lista') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fa-solid fa-list me-1"></i> Vidi sve
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_fakture and recent_fakture|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col"><i class="fa-solid fa-hashtag me-1"></i> Broj fakture</th>
+                                    <th scope="col"><i class="fa-solid fa-calendar me-1"></i> Datum</th>
+                                    <th scope="col"><i class="fa-solid fa-user me-1"></i> Komitent</th>
+                                    <th scope="col" class="text-end"><i class="fa-solid fa-money-bill me-1"></i> Iznos</th>
+                                    <th scope="col" class="text-center"><i class="fa-solid fa-info-circle me-1"></i> Status</th>
+                                    <th scope="col" class="text-center"><i class="fa-solid fa-cog me-1"></i> Akcije</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for faktura in recent_fakture %}
+                                <tr>
+                                    <td class="fw-semibold">{{ faktura.broj_fakture }}</td>
+                                    <td>{{ faktura.datum_prometa.strftime('%d.%m.%Y') if faktura.datum_prometa else 'N/A' }}</td>
+                                    <td>
+                                        {% if faktura.komitent %}
+                                        {{ faktura.komitent.naziv }}
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end fw-semibold">
+                                        {% if faktura.ukupan_iznos_rsd %}
+                                        {{ "{:,.2f}".format(faktura.ukupan_iznos_rsd) }} RSD
+                                        {% else %}
+                                        0.00 RSD
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if faktura.status == 'izdata' %}
+                                        <span class="badge bg-success">Izdata</span>
+                                        {% elif faktura.status == 'draft' %}
+                                        <span class="badge bg-warning text-dark">Draft</span>
+                                        {% elif faktura.status == 'stornirana' %}
+                                        <span class="badge bg-danger">Stornirana</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ faktura.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('fakture.detail', faktura_id=faktura.id) }}"
+                                               class="btn btn-outline-primary"
+                                               title="Pregled fakture">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                            {% if faktura.status == 'izdata' %}
+                                            <a href="{{ url_for('fakture.retry_pdf', faktura_id=faktura.id) }}"
+                                               class="btn btn-outline-danger"
+                                               title="Preuzmi PDF"
+                                               target="_blank">
+                                                <i class="fa-solid fa-file-pdf"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-file-invoice fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Još nema faktura</h5>
+                        <p class="text-muted mb-3">Kliknite 'Kreiraj Fakturu' da započnete.</p>
+                        <a href="{{ url_for('fakture.nova_faktura') }}" class="btn btn-primary">
+                            <i class="fa-solid fa-plus-circle me-1"></i> Kreiraj Fakturu
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Monthly Revenue Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Promet po mesecima (Poslednih 12 meseci)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="80"></canvas>
+                    <div id="chartLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Učitavanje...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Učitavanje grafikona...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- User Data Card -->
     <div class="row">
@@ -184,4 +372,152 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltip for info icon
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+    // Load monthly revenue chart
+    loadRevenueChart();
+});
+
+function loadRevenueChart() {
+    const canvas = document.getElementById('revenueChart');
+    const loadingDiv = document.getElementById('chartLoading');
+
+    if (!canvas) {
+        console.error('Canvas element not found');
+        return;
+    }
+
+    // Show loading state
+    canvas.style.display = 'none';
+    loadingDiv.style.display = 'block';
+
+    // Fetch chart data from API
+    fetch('{{ url_for("dashboard.monthly_revenue_chart_api") }}')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch chart data');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading state
+            loadingDiv.style.display = 'none';
+            canvas.style.display = 'block';
+
+            // Create chart
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Promet (RSD)',
+                        data: data.data,
+                        borderColor: '#8D696E',  // Primary color (bordo)
+                        backgroundColor: 'rgba(141, 105, 110, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#8D696E',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 13,
+                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                                },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('sr-RS', {
+                                            style: 'currency',
+                                            currency: 'RSD',
+                                            minimumFractionDigits: 2
+                                        }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('sr-RS', {
+                                        style: 'decimal',
+                                        minimumFractionDigits: 0
+                                    }).format(value) + ' RSD';
+                                },
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading chart:', error);
+            loadingDiv.innerHTML = `
+                <div class="text-center py-4 text-danger">
+                    <i class="fa-solid fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>Greška pri učitavanju grafikona.</p>
+                </div>
+            `;
+        });
+}
+</script>
 {% endblock %}

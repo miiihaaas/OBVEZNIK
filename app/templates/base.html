@@ -42,12 +42,12 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item">
-                        <a class="nav-link px-3" href="{{ url_for('admin_dashboard.dashboard') if current_user.role == 'admin' else url_for('dashboard.pausalac_dashboard') }}">
+                        <a class="nav-link px-3" href="{{ url_for('admin_dashboard.dashboard') if (current_user.role == 'admin' and not admin_selected_firma) else url_for('dashboard.pausalac_dashboard') }}">
                             <i class="fa-solid fa-house me-1" aria-hidden="true"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    {% if current_user.role != 'admin' %}
+                    {% if current_user.role != 'admin' or (current_user.role == 'admin' and admin_selected_firma) %}
                     <li class="nav-item">
                         <a class="nav-link px-3" href="{{ url_for('fakture.lista') }}">
                             <i class="fa-solid fa-file-invoice me-1" aria-hidden="true"></i>
@@ -79,7 +79,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    {% if current_user.role == 'admin' %}
+                    {% if current_user.role == 'admin' and not admin_selected_firma %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle px-3" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Admin meni">
                             <i class="fa-solid fa-shield-halved me-1" aria-hidden="true"></i>
@@ -160,6 +160,26 @@
             </div>
         </div>
     </nav>
+    {% endif %}
+
+    <!-- Admin Firm Context Banner -->
+    {% if current_user.is_authenticated and current_user.role == 'admin' and admin_selected_firma %}
+    <div class="alert alert-warning border-0 rounded-0 shadow-sm mb-0 d-flex align-items-center justify-content-between py-3" role="alert" style="background-color: #8D696E; border-bottom: 3px solid #6B4F53;">
+        <div class="d-flex align-items-center text-white">
+            <i class="fa-solid fa-shield-halved me-3 fs-4"></i>
+            <span class="fw-semibold">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                Admin mod - Radite kao <strong class="text-decoration-underline">{{ admin_selected_firma.naziv }}</strong>
+            </span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.clear_firma_context') }}" class="mb-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-light btn-sm shadow-sm">
+                <i class="fa-solid fa-right-from-bracket me-2"></i>
+                Izađi iz Firme (Nazad na Admin Dashboard)
+            </button>
+        </form>
+    </div>
     {% endif %}
 
     <!-- Flash Messages -->

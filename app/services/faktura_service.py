@@ -9,6 +9,7 @@ from app.models.faktura_stavka import FakturaStavka
 from app.models.pausaln_firma import PausalnFirma
 from app.services.nbs_kursna_service import get_kurs
 from app.services import kpo_service
+from app.utils.query_helpers import get_user_firma_id, get_admin_selected_firma_id
 
 # Security logger for audit trail
 security_logger = logging.getLogger('security')
@@ -150,7 +151,17 @@ def create_faktura(data, user):
         - Due date is calculated with weekend adjustment
         - Total amount is calculated as sum of all line items
     """
-    firma = user.firma
+    # Get firma_id using query_helpers (supports admin firm context)
+    firma_id = get_user_firma_id()
+
+    # SEC-001: Admin users must select a firma before creating faktura (no god mode)
+    if firma_id is None:
+        raise ValueError("Molimo selektujte firmu pre kreiranja fakture.")
+
+    # Load firma from database
+    firma = db.session.get(PausalnFirma, firma_id)
+    if not firma:
+        raise ValueError("Firma nije pronađena.")
 
     # Draft invoices get temporary number (will be replaced with DRAFT-{id} after flush)
     # Final number is assigned during finalization
@@ -348,6 +359,16 @@ def create_faktura(data, user):
         # CODE-001: Use quantize to ensure proper decimal precision (2 decimals for currency)
         faktura.ukupan_iznos_rsd = (ukupan_iznos * srednji_kurs).quantize(Decimal('0.01'))
 
+    # Security logging: Log when Admin creates faktura in firm context
+    if user.is_admin() and get_admin_selected_firma_id():
+        security_logger.info(
+            f"Admin created faktura in firm context: admin={user.email}, "
+            f"firma_id={firma.id}, firma_naziv={firma.naziv}, "
+            f"faktura_id={faktura.id}, broj_fakture={faktura.broj_fakture}, "
+            f"tip_fakture={tip_fakture}, ukupan_iznos_rsd={faktura.ukupan_iznos_rsd}, "
+            f"ip={request.remote_addr}, timestamp={datetime.now(timezone.utc).isoformat()}"
+        )
+
     db.session.commit()
 
     return faktura
@@ -453,8 +474,15 @@ def update_faktura(faktura_id, data, user):
     if not faktura:
         raise ValueError(f"Faktura with ID {faktura_id} not found.")
 
+    # Get firma_id using query_helpers (supports admin firm context)
+    firma_id = get_user_firma_id()
+
+    # SEC-001: Admin users must select a firma before updating faktura (no god mode)
+    if firma_id is None:
+        raise ValueError("Molimo selektujte firmu pre ažuriranja fakture.")
+
     # SEC-001: Tenant isolation - validate faktura belongs to user's firma
-    if faktura.firma_id != user.firma.id:
+    if faktura.firma_id != firma_id:
         raise ValueError("Faktura ne pripada vašoj firmi.")
 
     # Validation: Only draft invoices can be edited
@@ -489,7 +517,7 @@ def update_faktura(faktura_id, data, user):
         if not komitent:
             raise ValueError("Komitent nije pronađen.")
         # SEC-001: Tenant isolation - validate komitent belongs to user's firma
-        if komitent.firma_id != user.firma.id:
+        if komitent.firma_id != firma_id:
             raise ValueError("Komitent ne pripada vašoj firmi.")
         if not komitent.devizni_racuni or len(komitent.devizni_racuni) == 0:
             raise ValueError(
@@ -535,7 +563,7 @@ def update_faktura(faktura_id, data, user):
             raise ValueError("Samo izdate avansne fakture mogu biti zatvorene.")
 
         # SEC-001: Tenant isolation
-        if avansna_faktura_ref.firma_id != user.firma.id:
+        if avansna_faktura_ref.firma_id != firma_id:
             raise ValueError("Avansna faktura ne pripada vašoj firmi.")
 
         # Validation: Must be tip_fakture='avansna'
@@ -1046,7 +1074,15 @@ def storniraj_fakturu(faktura_id, razlog=None):
         )
 
     # SEC-001: Tenant isolation
-    if faktura.firma_id != current_user.firma.id:
+    # Use query_helpers to support admin firm context
+    from app.utils.query_helpers import get_user_firma_id
+    user_firma_id = get_user_firma_id()
+
+    # Admin in god mode (no firm context) should not be able to storniraj
+    if user_firma_id is None:
+        raise PermissionError("Molimo selektujte firmu pre storniranja fakture.")
+
+    if faktura.firma_id != user_firma_id:
         raise PermissionError("Faktura ne pripada vašoj firmi.")
 
     # Authorization: Only creator or admin

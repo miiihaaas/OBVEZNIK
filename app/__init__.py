@@ -144,6 +144,64 @@ def create_app(config_name='development'):
 
     # TODO: Register other blueprints when they are created in future stories
 
+    # Register before_request hook for session timeout
+    @app.before_request
+    def check_firm_context_timeout():
+        """
+        Check if admin firm context has timed out due to inactivity.
+
+        If admin has selected a firma context and has been inactive for more than
+        30 minutes, automatically clear the firm context and redirect to admin dashboard.
+
+        This prevents admins from accidentally working in the wrong firma context
+        after long periods of inactivity.
+        """
+        from flask import flash, redirect, url_for, request, session
+        from flask_login import current_user
+        from app.utils.query_helpers import get_admin_selected_firma_id, clear_admin_firm_context
+        from datetime import datetime, timedelta, timezone
+
+        # Only check for authenticated admin users with active firm context
+        if not current_user.is_authenticated or not current_user.is_admin():
+            return None
+
+        admin_selected_firma_id = get_admin_selected_firma_id()
+        if not admin_selected_firma_id:
+            return None  # No firm context active, nothing to timeout
+
+        # Get last activity time from session
+        last_activity = session.get('last_activity_time')
+        current_time = datetime.now(timezone.utc)
+
+        # Initialize last_activity if not set
+        if last_activity is None:
+            session['last_activity_time'] = current_time
+            return None
+
+        # Ensure last_activity is timezone-aware (handle deserialized naive datetimes)
+        if last_activity.tzinfo is None:
+            last_activity = last_activity.replace(tzinfo=timezone.utc)
+
+        # Check if session has timed out (30 minutes = 1800 seconds)
+        timeout_threshold = timedelta(minutes=30)
+        time_since_activity = current_time - last_activity
+
+        if time_since_activity > timeout_threshold:
+            # Session has timed out - clear firm context
+            clear_admin_firm_context()
+            session.pop('last_activity_time', None)
+            flash('Sesija firme je istekla zbog neaktivnosti. Vraćeni ste u God Mode.', 'warning')
+
+            # Redirect to admin dashboard (only for non-AJAX requests)
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            if not is_ajax and request.endpoint != 'admin_dashboard.dashboard':
+                return redirect(url_for('admin_dashboard.dashboard'))
+        else:
+            # Update last activity time
+            session['last_activity_time'] = current_time
+
+        return None
+
     # Register context processors
     @app.context_processor
     def inject_admin_firm_context():

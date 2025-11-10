@@ -7,11 +7,15 @@ from app import db
 from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
 from app.models.komitent import Komitent
+from app.models.artikal import Artikal
 from app.models.faktura import Faktura
 from app.services.dashboard_service import (
     get_admin_dashboard_stats,
     get_firma_list_with_stats,
     calculate_firma_rolling_limit_remaining,
+    get_pausalac_dashboard_stats,
+    get_pausalac_recent_fakture,
+    calculate_rolling_limit_projections,
     ROLLING_LIMIT_365_DAYS
 )
 
@@ -112,6 +116,31 @@ def test_data(app):
             drzava='Srbija'
         )
         db.session.add_all([komitent1, komitent2])
+        db.session.commit()
+
+        # Create artikli
+        artikal1 = Artikal(
+            firma_id=firma1.id,
+            naziv='Artikal 1',
+            opis='Test artikal 1',
+            podrazumevana_cena=Decimal('1000.00'),
+            jedinica_mere='kom'
+        )
+        artikal2 = Artikal(
+            firma_id=firma1.id,
+            naziv='Artikal 2',
+            opis='Test artikal 2',
+            podrazumevana_cena=Decimal('2000.00'),
+            jedinica_mere='kg'
+        )
+        artikal3 = Artikal(
+            firma_id=firma2.id,
+            naziv='Artikal 3',
+            opis='Test artikal 3',
+            podrazumevana_cena=Decimal('3000.00'),
+            jedinica_mere='kom'
+        )
+        db.session.add_all([artikal1, artikal2, artikal3])
         db.session.commit()
 
         # Create invoices for current month
@@ -255,6 +284,9 @@ def test_data(app):
             'pausalac2': pausalac2,
             'komitent1': komitent1,
             'komitent2': komitent2,
+            'artikal1': artikal1,
+            'artikal2': artikal2,
+            'artikal3': artikal3,
             'fakture': [faktura1, faktura2, faktura3, faktura4, faktura5, faktura6, faktura7, faktura8]
         }
 
@@ -573,3 +605,256 @@ def test_get_firma_list_poslednja_aktivnost(app, test_data):
 
         # XYZ should be more recent than ABC
         assert xyz_firma['poslednja_aktivnost'] > abc_firma['poslednja_aktivnost']
+
+
+def test_get_pausalac_dashboard_stats(app, test_data):
+    """Test aggregation of pausalac dashboard statistics."""
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        stats = get_pausalac_dashboard_stats(firma1.id)
+
+        # Verify stats structure
+        assert 'broj_faktura_ovog_meseca' in stats
+        assert 'promet_ovog_meseca' in stats
+        assert 'promet_tekuce_godine' in stats
+        assert 'preostali_limit_godisnji' in stats
+        assert 'promet_365_dana' in stats
+        assert 'preostali_limit_365' in stats
+        assert 'broj_komitenata' in stats
+        assert 'broj_artikala' in stats
+
+        # Firma1 has 2-3 invoices this month depending on today's date
+        # (faktura3 has datum_prometa = first_day + 10 days)
+        # If today is before that date, only 2 invoices will be counted
+        assert stats['broj_faktura_ovog_meseca'] >= 2
+        assert stats['promet_ovog_meseca'] >= 300000.00  # At least F1-001 + F1-002
+
+        # Firma1 rolling 365-day promet varies based on whether faktura3 is in past
+        # Minimum: 300k (F1-001 + F1-002) + 500k (F1-365) = 800k
+        # Maximum: 450k (all 3 this month) + 500k (F1-365) = 950k
+        assert stats['promet_365_dana'] >= 800000.00
+        assert stats['promet_365_dana'] <= 950000.00
+
+        # Remaining limit: 8M - promet_365_dana
+        # Minimum: 8M - 950k = 7,050,000
+        # Maximum: 8M - 800k = 7,200,000
+        assert stats['preostali_limit_365'] >= 7050000.00
+        assert stats['preostali_limit_365'] <= 7200000.00
+
+        # Firma1 has 1 komitent
+        assert stats['broj_komitenata'] == 1
+
+        # Firma1 has 2 artikli
+        assert stats['broj_artikala'] == 2
+
+
+def test_get_pausalac_recent_fakture(app, test_data):
+    """Test retrieval of recent fakture with proper ordering."""
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        # Get 10 most recent fakture
+        recent_fakture = get_pausalac_recent_fakture(firma1.id, limit=10)
+
+        # Firma1 has 6 total invoices (3 this month + stornirana + F1-365 + F1-OLD)
+        assert len(recent_fakture) == 6
+
+        # First faktura should be most recent (by datum_prometa DESC)
+        # F1-003 has datum_prometa = first_day_this_month + 10 days
+        assert recent_fakture[0].broj_fakture == 'F1-003'
+
+        # Each faktura should have komitent relationship loaded
+        for faktura in recent_fakture:
+            assert faktura.komitent is not None
+
+
+def test_get_pausalac_recent_fakture_pagination(app, test_data):
+    """Test that recent fakture limit works correctly."""
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        # Get only 3 most recent
+        recent_fakture = get_pausalac_recent_fakture(firma1.id, limit=3)
+
+        assert len(recent_fakture) == 3
+
+        # Should be F1-003, F1-004 (stornirana), F1-002 (by datum_prometa DESC)
+        assert recent_fakture[0].broj_fakture == 'F1-003'
+
+
+def test_calculate_rolling_limit_projections(app, test_data):
+    """Test rolling limit projections using sliding window approach (real DB data)."""
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        projections = calculate_rolling_limit_projections(firma1.id)
+
+        # Verify projections structure
+        assert 'preostali_limit' in projections
+        assert 'projekcija_7_dana' in projections
+        assert 'projekcija_15_dana' in projections
+        assert 'projekcija_30_dana' in projections
+        assert 'upozorenje_7_dana' in projections
+        assert 'upozorenje_15_dana' in projections
+        assert 'upozorenje_30_dana' in projections
+
+        # Preostali limit: 8M - 950k = 7,050,000
+        # NOTE: Može biti 950k ili manje zavisno od dana meseca kad se pokreće test
+        assert projections['preostali_limit'] >= 6850000.00  # Minimalno ako su sve fakture uključene
+        assert projections['preostali_limit'] <= 8000000.00  # Maksimalno
+
+        # Test data fakture timeline:
+        # - 3 fakture ovog meseca (100k, 200k, 150k)
+        # - 1 faktura od pre 200 dana (500k)
+        # - 1 faktura od pre 400 dana (1M) - IZVAN rolling perioda
+        # - Nema fakture sa budućim datumima
+        # Total u rolling 365: zavisi od trenutnog dana (može biti 950k, 800k, 600k itd)
+
+        # Projekcije koriste sliding window:
+        # Za +7 dana: promet od (danas - 358) do (danas + 7)
+        # Za +15 dana: promet od (danas - 350) do (danas + 15)
+        # Za +30 dana: promet od (danas - 335) do (danas + 30)
+
+        # Projekcije mogu RASTI (ako se odbacuju stare fakture) ili PADATI (ako postoje buduće fakture)
+        # Za test podatke, projekcije zavise od datuma pokretanja testa:
+        # - Ako je faktura3 već u prošlosti, projekcije će rasti (stare fakture ispadaju)
+        # - Ako je faktura3 još u budućnosti, projekcija može pasti kada faktura3 uđe u prozor
+        # Zato proveravamo samo da su vrednosti razumne i u rastućem/padajućem nizu
+        assert projections['projekcija_7_dana'] >= 6500000.00  # Minimalna razumna vrednost
+        assert projections['projekcija_15_dana'] >= 6500000.00
+        assert projections['projekcija_30_dana'] >= 6500000.00
+
+        # Projekcije bi trebale biti u monoton rastućem ili monoton padajućem nizu
+        # (ili iste ako nema promena u rolling prozoru)
+        assert (projections['projekcija_7_dana'] <= projections['projekcija_15_dana'] <= projections['projekcija_30_dana'] or
+                projections['projekcija_7_dana'] >= projections['projekcija_15_dana'] >= projections['projekcija_30_dana'])
+
+        # Sve projekcije moraju biti pozitivne (nema upozorenja)
+        assert projections['projekcija_7_dana'] > 0
+        assert projections['projekcija_15_dana'] > 0
+        assert projections['projekcija_30_dana'] > 0
+        assert projections['upozorenje_7_dana'] is False
+        assert projections['upozorenje_15_dana'] is False
+        assert projections['upozorenje_30_dana'] is False
+
+
+def test_calculate_rolling_limit_projections_with_future_invoices(app):
+    """Test that projections correctly account for future-dated invoices."""
+    with app.app_context():
+        # Create test firma
+        firma = PausalnFirma(
+            pib='999999999',
+            maticni_broj='99999999',
+            naziv='Future Invoice Firma',
+            adresa='Adresa',
+            broj='1',
+            postanski_broj='11000',
+            mesto='Beograd',
+            telefon='011111111',
+            email='future@test.com',
+            dinarski_racuni=[{'banka': 'Test', 'racun': '999-999999-99'}]
+        )
+        db.session.add(firma)
+        db.session.flush()
+
+        # Create user and komitent
+        user = User(email='futureuser@test.com', full_name='Future User', role='pausalac', firma_id=firma.id)
+        user.set_password('password123')
+        db.session.add(user)
+
+        komitent = Komitent(
+            firma_id=firma.id,
+            pib='888888888',
+            maticni_broj='88888888',
+            naziv='Future Komitent',
+            adresa='Test',
+            broj='1',
+            postanski_broj='11000',
+            mesto='Beograd',
+            drzava='Srbija',
+            email='future@komitent.com'
+        )
+        db.session.add(komitent)
+        db.session.flush()
+
+        today = date.today()
+
+        # Create one current invoice
+        faktura_current = Faktura(
+            firma_id=firma.id,
+            komitent_id=komitent.id,
+            user_id=user.id,
+            broj_fakture='CURR-001',
+            tip_fakture='standardna',
+            valuta_fakture='RSD',
+            datum_prometa=today,
+            valuta_placanja=30,
+            datum_dospeca=today + timedelta(days=30),
+            ukupan_iznos_rsd=Decimal('1000000.00'),
+            status='izdata'
+        )
+        db.session.add(faktura_current)
+
+        # Create future invoice (3 days from now)
+        faktura_future = Faktura(
+            firma_id=firma.id,
+            komitent_id=komitent.id,
+            user_id=user.id,
+            broj_fakture='FUT-001',
+            tip_fakture='standardna',
+            valuta_fakture='RSD',
+            datum_prometa=today + timedelta(days=3),
+            valuta_placanja=30,
+            datum_dospeca=today + timedelta(days=33),
+            ukupan_iznos_rsd=Decimal('500000.00'),
+            status='izdata'
+        )
+        db.session.add(faktura_future)
+        db.session.commit()
+
+        # Get projections
+        projections = calculate_rolling_limit_projections(firma.id)
+
+        # Current limit: 8M - 1M = 7M
+        assert projections['preostali_limit'] == 7000000.00
+
+        # Projection for +7 days should include the future invoice (3 days from now)
+        # 7 days from now: 8M - (1M + 500k) = 6.5M
+        assert projections['projekcija_7_dana'] == 6500000.00
+
+        # Projection for +15 days should also include the future invoice
+        assert projections['projekcija_15_dana'] == 6500000.00
+
+        # Projection for +30 days should also include the future invoice
+        assert projections['projekcija_30_dana'] == 6500000.00
+
+        # In this case, projekcija_7_dana < preostali_limit (future invoice reduces available limit)
+        assert projections['projekcija_7_dana'] < projections['preostali_limit']
+
+
+def test_rolling_limit_calculation_excludes_stornirane(app, test_data):
+    """Test that stornirane fakture are excluded from rolling limit calculation."""
+    with app.app_context():
+        firma1 = test_data['firma1']
+
+        stats = get_pausalac_dashboard_stats(firma1.id)
+
+        # Firma1 has 3 regular invoices this month + 1 stornirana (50k)
+        # Depending on current day, may have 2-3 invoices in "ovog meseca"
+        # (faktura3 is on first_day + 10, may not be counted if today < day 10)
+
+        # Stornirana (50k) should be excluded from both monthly and rolling
+        # Monthly promet should be 300k-450k (depending on which invoices are counted)
+        assert stats['promet_ovog_meseca'] >= 300000.00  # At least faktura1 + faktura2
+        assert stats['promet_ovog_meseca'] <= 450000.00  # At most all 3 regular invoices
+
+        # Rolling 365-day: varies based on which invoices fall within period
+        # Should include faktura from 200 days ago (500k) + some/all of this month's invoices
+        # But stornirana (50k) must be excluded
+        assert stats['promet_365_dana'] >= 800000.00  # Minimum: 500k + 300k (2 invoices)
+        assert stats['promet_365_dana'] <= 950000.00  # Maximum: 500k + 450k (3 invoices)
+
+        # Preostali limit should be positive and reasonable
+        assert stats['preostali_limit_365'] >= 7050000.00  # Minimum if all included
+        assert stats['preostali_limit_365'] <= 7200000.00  # Maximum if some excluded

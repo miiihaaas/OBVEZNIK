@@ -3,13 +3,17 @@ from app import db
 from app.models.pausaln_firma import PausalnFirma
 from app.models.faktura import Faktura
 from app.models.user import User
+from app.models.komitent import Komitent
+from app.models.artikal import Artikal
 from sqlalchemy import func, and_, or_
+from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta, date
 from typing import Optional, Dict, List, Tuple
 
 
 # Constants
-ROLLING_LIMIT_365_DAYS = 8_000_000  # RSD
+ROLLING_LIMIT_365_DAYS = 8_000_000  # RSD - Rolling 365-day limit
+YEARLY_LIMIT = 6_000_000  # RSD - Calendar year limit (Jan 1 - Dec 31)
 
 
 def get_admin_dashboard_stats(date_from: Optional[date] = None, date_to: Optional[date] = None) -> Dict:
@@ -213,3 +217,293 @@ def calculate_firma_rolling_limit_remaining(firma_id: int) -> float:
     preostali_limit = ROLLING_LIMIT_365_DAYS - float(promet_365_days or 0)
 
     return preostali_limit
+
+
+def get_pausalac_dashboard_stats(firma_id: int) -> Dict:
+    """
+    Get aggregated statistics for pausalac dashboard.
+
+    Args:
+        firma_id: ID of the firma
+
+    Returns:
+        dict: {
+            'broj_faktura_ovog_meseca': int,
+            'promet_ovog_meseca': float,
+            'promet_tekuce_godine': float,
+            'preostali_limit_godisnji': float,
+            'promet_365_dana': float,
+            'preostali_limit_365': float,
+            'broj_komitenata': int,
+            'broj_artikala': int
+        }
+    """
+    # Date ranges
+    today = date.today()
+    first_day_of_month = today.replace(day=1)
+    first_day_of_year = today.replace(month=1, day=1)
+    date_365_days_ago = today - timedelta(days=365)
+
+    # Aggregate fakture for current month (excluding stornirana)
+    faktura_stats_month = db.session.query(
+        func.count(Faktura.id).label('count'),
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0).label('total_rsd')
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= first_day_of_month,
+            Faktura.datum_prometa <= today,
+            Faktura.status != 'stornirana'
+        )
+    ).first()
+
+    # Aggregate fakture for current calendar year (excluding stornirana)
+    promet_tekuce_godine = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= first_day_of_year,
+            Faktura.datum_prometa <= today,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+
+    # Calculate remaining yearly limit
+    preostali_limit_godisnji = YEARLY_LIMIT - float(promet_tekuce_godine or 0)
+
+    # Aggregate fakture for rolling 365 days (excluding stornirana)
+    promet_365_days = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= date_365_days_ago,
+            Faktura.datum_prometa <= today,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+
+    # Calculate remaining rolling 365-day limit
+    preostali_limit_365 = ROLLING_LIMIT_365_DAYS - float(promet_365_days or 0)
+
+    # Count komitenti
+    broj_komitenata = Komitent.query.filter_by(firma_id=firma_id).count()
+
+    # Count artikli
+    broj_artikala = Artikal.query.filter_by(firma_id=firma_id).count()
+
+    return {
+        'broj_faktura_ovog_meseca': faktura_stats_month.count if faktura_stats_month else 0,
+        'promet_ovog_meseca': float(faktura_stats_month.total_rsd) if faktura_stats_month else 0.0,
+        'promet_tekuce_godine': float(promet_tekuce_godine or 0),
+        'preostali_limit_godisnji': preostali_limit_godisnji,
+        'promet_365_dana': float(promet_365_days or 0),
+        'preostali_limit_365': preostali_limit_365,
+        'broj_komitenata': broj_komitenata,
+        'broj_artikala': broj_artikala
+    }
+
+
+def get_pausalac_recent_fakture(firma_id: int, limit: int = 10) -> List[Faktura]:
+    """
+    Get most recent fakture for a firma.
+
+    Args:
+        firma_id: ID of the firma
+        limit: Number of fakture to return (default: 10)
+
+    Returns:
+        List of Faktura objects with komitent relationship loaded
+    """
+    fakture = Faktura.query.options(
+        joinedload(Faktura.komitent)
+    ).filter(
+        Faktura.firma_id == firma_id
+    ).order_by(
+        Faktura.datum_prometa.desc(),
+        Faktura.created_at.desc()
+    ).limit(limit).all()
+
+    return fakture
+
+
+def calculate_rolling_limit_projections(firma_id: int) -> Dict:
+    """
+    Calculate rolling limit projections for 7, 15, and 30 days using REAL data.
+
+    Uses sliding window approach: shifts the rolling 365-day window forward by N days
+    to simulate what the limit will be in the future based on ACTUAL data from DB.
+
+    Logic:
+    - Current rolling 365: (today - 365) to today
+    - Projection for +7 days: (today - 358) to (today + 7) → includes future invoices
+    - Projection for +15 days: (today - 350) to (today + 15) → includes future invoices
+    - Projection for +30 days: (today - 335) to (today + 30) → includes future invoices
+
+    This gives REAL projections based on actual DB data, including future-dated invoices.
+
+    Args:
+        firma_id: ID of the firma
+
+    Returns:
+        dict: {
+            'preostali_limit': float,
+            'projekcija_7_dana': float,
+            'projekcija_15_dana': float,
+            'projekcija_30_dana': float,
+            'upozorenje_7_dana': bool,
+            'upozorenje_15_dana': bool,
+            'upozorenje_30_dana': bool
+        }
+    """
+    today = date.today()
+
+    # Current rolling 365-day promet (baseline)
+    # Only includes invoices up to today (not future-dated invoices)
+    date_365_days_ago = today - timedelta(days=365)
+    promet_365_current = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= date_365_days_ago,
+            Faktura.datum_prometa <= today,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+
+    preostali_limit_current = ROLLING_LIMIT_365_DAYS - float(promet_365_current or 0)
+
+    # Projection for +7 days: rolling window from (today - 358) to (today + 7)
+    # This simulates: old invoices falling off + future invoices entering the window
+    start_7 = today - timedelta(days=358)
+    end_7 = today + timedelta(days=7)
+    promet_7 = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= start_7,
+            Faktura.datum_prometa <= end_7,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+    projekcija_7 = ROLLING_LIMIT_365_DAYS - float(promet_7 or 0)
+
+    # Projection for +15 days: rolling window from (today - 350) to (today + 15)
+    start_15 = today - timedelta(days=350)
+    end_15 = today + timedelta(days=15)
+    promet_15 = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= start_15,
+            Faktura.datum_prometa <= end_15,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+    projekcija_15 = ROLLING_LIMIT_365_DAYS - float(promet_15 or 0)
+
+    # Projection for +30 days: rolling window from (today - 335) to (today + 30)
+    start_30 = today - timedelta(days=335)
+    end_30 = today + timedelta(days=30)
+    promet_30 = db.session.query(
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0)
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= start_30,
+            Faktura.datum_prometa <= end_30,
+            Faktura.status != 'stornirana'
+        )
+    ).scalar()
+    projekcija_30 = ROLLING_LIMIT_365_DAYS - float(promet_30 or 0)
+
+    return {
+        'preostali_limit': preostali_limit_current,
+        'projekcija_7_dana': projekcija_7,
+        'projekcija_15_dana': projekcija_15,
+        'projekcija_30_dana': projekcija_30,
+        'upozorenje_7_dana': projekcija_7 < 0,
+        'upozorenje_15_dana': projekcija_15 < 0,
+        'upozorenje_30_dana': projekcija_30 < 0
+    }
+
+
+def get_monthly_revenue_chart_data(firma_id: int, months: int = 12) -> Dict:
+    """
+    Get monthly revenue data for chart visualization.
+
+    Returns revenue aggregated by month for the last N months.
+
+    Args:
+        firma_id: ID of the firma
+        months: Number of months to include (default: 12)
+
+    Returns:
+        dict: {
+            'labels': List[str],  # Month labels (e.g., "Jan 2025", "Feb 2025")
+            'data': List[float]   # Revenue values for each month
+        }
+    """
+    today = date.today()
+
+    # Calculate start date (N months ago)
+    start_date = today - timedelta(days=months * 31)  # Approximate, will be adjusted in query
+
+    # Query monthly aggregates
+    # Extract year and month from datum_prometa, group by them
+    from sqlalchemy import extract
+
+    monthly_data = db.session.query(
+        extract('year', Faktura.datum_prometa).label('year'),
+        extract('month', Faktura.datum_prometa).label('month'),
+        func.coalesce(func.sum(Faktura.ukupan_iznos_rsd), 0).label('revenue')
+    ).filter(
+        and_(
+            Faktura.firma_id == firma_id,
+            Faktura.datum_prometa >= start_date,
+            Faktura.status != 'stornirana'
+        )
+    ).group_by(
+        extract('year', Faktura.datum_prometa),
+        extract('month', Faktura.datum_prometa)
+    ).order_by(
+        extract('year', Faktura.datum_prometa).asc(),
+        extract('month', Faktura.datum_prometa).asc()
+    ).all()
+
+    # Build complete list of months (fill in missing months with 0)
+    labels = []
+    data = []
+
+    # Create map of existing data
+    revenue_map = {}
+    for row in monthly_data:
+        year_month_key = f"{int(row.year)}-{int(row.month):02d}"
+        revenue_map[year_month_key] = float(row.revenue)
+
+    # Generate last N months
+    current_date = today.replace(day=1)
+    for i in range(months):
+        # Go back i months
+        month_date = current_date - timedelta(days=i * 31)
+        month_date = month_date.replace(day=1)
+
+        # Format label
+        month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec']
+        label = f"{month_names[month_date.month - 1]} {month_date.year}"
+
+        # Get revenue for this month (0 if not found)
+        year_month_key = f"{month_date.year}-{month_date.month:02d}"
+        revenue = revenue_map.get(year_month_key, 0.0)
+
+        labels.insert(0, label)  # Insert at beginning to maintain chronological order
+        data.insert(0, revenue)
+
+    return {
+        'labels': labels,
+        'data': data
+    }

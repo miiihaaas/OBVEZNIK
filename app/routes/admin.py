@@ -498,12 +498,8 @@ def switch_firma(firma_id):
     # Flash success message
     flash(f'Selektovana firma: {firma.naziv}', 'success')
 
-    # Redirect to referer or dashboard
-    referer = request.referrer
-    if referer and referer.startswith(request.host_url):
-        return redirect(referer)
-    else:
-        return redirect(url_for('admin_dashboard.admin_dashboard'))
+    # Redirect to pausalac dashboard (admin now in firm context)
+    return redirect(url_for('dashboard.pausalac_dashboard'))
 
 
 @admin_bp.route('/clear-firma-context', methods=['POST'])
@@ -531,12 +527,8 @@ def clear_firma_context():
     # Flash success message
     flash('Selektovane su sve firme (God Mode)', 'info')
 
-    # Redirect to referer or dashboard
-    referer = request.referrer
-    if referer and referer.startswith(request.host_url):
-        return redirect(referer)
-    else:
-        return redirect(url_for('admin_dashboard.admin_dashboard'))
+    # Redirect to admin dashboard (admin now in god mode)
+    return redirect(url_for('admin_dashboard.dashboard'))
 
 
 @admin_bp.route('/firma/<int:firma_id>/view-komitenti')
