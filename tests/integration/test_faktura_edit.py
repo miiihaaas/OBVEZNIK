@@ -402,3 +402,27 @@ def test_izmeni_button_visible_only_for_draft_fakture(client, pausalac_with_draf
     assert response.status_code == 200
     # Check that "Izmeni" button is NOT present
     assert b'Finalizuj' not in response.data  # Draft-only actions should be hidden
+
+
+def test_limit_tracking_widget_present_on_edit_form(client, pausalac_with_draft_faktura):
+    """Test: Limit Tracking Widget je prisutan u edit formi (Story 5.4)."""
+    user, firma, komitent, faktura = pausalac_with_draft_faktura
+
+    # Login
+    client.post('/login', data={
+        'email': 'pausalac@test.com',
+        'password': 'password123'
+    }, follow_redirects=True)
+
+    # Access edit route
+    response = client.get(f'/fakture/{faktura.id}/edit')
+
+    assert response.status_code == 200
+    response_text = response.data.decode('utf-8')
+
+    # Check for limit widget elements
+    assert 'Limit Tracking' in response_text
+    assert 'limit_widget' in response_text
+    assert 'Godišnji Limit (365 dana)' in response_text
+    assert 'Rolling limit prati proteklih 365 dana' in response_text
+    assert 'limitWidgetData' in response_text  # Check API URL is present
