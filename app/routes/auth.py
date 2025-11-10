@@ -25,7 +25,7 @@ def login():
     # If user is already logged in, redirect to appropriate dashboard
     if current_user.is_authenticated:
         if current_user.is_admin():
-            return redirect(url_for('admin_dashboard.admin_dashboard'))
+            return redirect(url_for('admin_dashboard.dashboard'))
         else:
             return redirect(url_for('dashboard.pausalac_dashboard'))
 
@@ -61,7 +61,7 @@ def login():
 
             # Redirect to appropriate dashboard based on role
             if user.is_admin():
-                return redirect(url_for('admin_dashboard.admin_dashboard'))
+                return redirect(url_for('admin_dashboard.dashboard'))
             else:
                 return redirect(url_for('dashboard.pausalac_dashboard'))
         else:

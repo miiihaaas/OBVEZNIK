@@ -1,12 +1,77 @@
 """Routes for KPO (Knjiga Prometa Obveznika) management."""
 import logging
 from datetime import datetime
-from flask import Blueprint, render_template, request, flash, send_file, current_app
+from flask import Blueprint, render_template, request, flash, send_file, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from app import db, limiter
 
 kpo_bp = Blueprint('kpo', __name__, url_prefix='/kpo')
 logger = logging.getLogger(__name__)
+
+
+def _parse_kpo_filters(show_detailed_errors=True):
+    """
+    Parse KPO filter query parameters from request.args.
+
+    Args:
+        show_detailed_errors: If True, show detailed flash messages and logging.
+                            If False, show brief flash messages (for redirects).
+
+    Returns:
+        dict: Parsed filters dictionary
+        bool: Whether parsing succeeded (False means invalid date format encountered)
+    """
+    filters = {}
+    parse_success = True
+
+    # Godina filter
+    if request.args.get('godina'):
+        filters['godina'] = request.args.get('godina', type=int)
+    else:
+        # Default to current year
+        filters['godina'] = datetime.now().year
+
+    # Date filters
+    datum_od_str = request.args.get('datum_od')
+    if datum_od_str:
+        try:
+            filters['datum_od'] = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
+        except ValueError:
+            if show_detailed_errors:
+                logger.warning(f"Invalid datum_od format: {datum_od_str}, user: {current_user.email}")
+                flash('Neispravan format datuma "od". Koristite YYYY-MM-DD format.', 'warning')
+            else:
+                flash('Neispravan format datuma "od".', 'warning')
+            parse_success = False
+
+    datum_do_str = request.args.get('datum_do')
+    if datum_do_str:
+        try:
+            filters['datum_do'] = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
+        except ValueError:
+            if show_detailed_errors:
+                logger.warning(f"Invalid datum_do format: {datum_do_str}, user: {current_user.email}")
+                flash('Neispravan format datuma "do". Koristite YYYY-MM-DD format.', 'warning')
+            else:
+                flash('Neispravan format datuma "do".', 'warning')
+            parse_success = False
+
+    # Komitent search filter
+    if request.args.get('komitent_search'):
+        filters['komitent_search'] = request.args.get('komitent_search').strip()
+
+    # Status filter (default: 'izdata' per AC: 3)
+    filters['status_filter'] = request.args.get('status_filter', 'izdata')
+
+    # Valuta filter
+    if request.args.get('valuta_filter'):
+        filters['valuta_filter'] = request.args.get('valuta_filter')
+
+    # Admin-only: firma filter
+    if current_user.role == 'admin' and request.args.get('firma_id'):
+        filters['firma_id'] = request.args.get('firma_id', type=int)
+
+    return filters, parse_success
 
 
 @kpo_bp.route('/')
@@ -36,47 +101,8 @@ def lista():
     sort_by = request.args.get('sort_by', 'datum_prometa')
     sort_order = request.args.get('sort_order', 'desc')
 
-    # Build filters dictionary
-    filters = {}
-
-    # Godina filter
-    if request.args.get('godina'):
-        filters['godina'] = request.args.get('godina', type=int)
-    else:
-        # Default to current year
-        filters['godina'] = datetime.now().year
-
-    # Date filters
-    datum_od_str = request.args.get('datum_od')
-    if datum_od_str:
-        try:
-            filters['datum_od'] = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
-        except ValueError:
-            logger.warning(f"Invalid datum_od format: {datum_od_str}, user: {current_user.email}")
-            flash('Neispravan format datuma "od". Koristite YYYY-MM-DD format.', 'warning')
-
-    datum_do_str = request.args.get('datum_do')
-    if datum_do_str:
-        try:
-            filters['datum_do'] = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
-        except ValueError:
-            logger.warning(f"Invalid datum_do format: {datum_do_str}, user: {current_user.email}")
-            flash('Neispravan format datuma "do". Koristite YYYY-MM-DD format.', 'warning')
-
-    # Komitent search filter
-    if request.args.get('komitent_search'):
-        filters['komitent_search'] = request.args.get('komitent_search').strip()
-
-    # Status filter (default: 'izdata' per AC: 3)
-    filters['status_filter'] = request.args.get('status_filter', 'izdata')
-
-    # Valuta filter
-    if request.args.get('valuta_filter'):
-        filters['valuta_filter'] = request.args.get('valuta_filter')
-
-    # Admin-only: firma filter
-    if current_user.role == 'admin' and request.args.get('firma_id'):
-        filters['firma_id'] = request.args.get('firma_id', type=int)
+    # Build filters dictionary using helper function (DRY refactor - CODE-001 fix)
+    filters, parse_success = _parse_kpo_filters(show_detailed_errors=True)
 
     # Call service layer to get paginated KPO entries
     from app.services.kpo_service import list_kpo_entries, calculate_total_promet_with_filters
@@ -140,46 +166,12 @@ def export_pdf():
     Returns:
         PDF file download
     """
-    # Parse filters (same as lista route)
-    filters = {}
+    # Parse filters using helper function (DRY refactor - CODE-001 fix)
+    filters, parse_success = _parse_kpo_filters(show_detailed_errors=False)
 
-    # Godina filter
-    if request.args.get('godina'):
-        filters['godina'] = request.args.get('godina', type=int)
-    else:
-        filters['godina'] = datetime.now().year
-
-    # Date filters
-    datum_od_str = request.args.get('datum_od')
-    if datum_od_str:
-        try:
-            filters['datum_od'] = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('Neispravan format datuma "od".', 'warning')
-            return redirect(url_for('kpo.lista'))
-
-    datum_do_str = request.args.get('datum_do')
-    if datum_do_str:
-        try:
-            filters['datum_do'] = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
-        except ValueError:
-            flash('Neispravan format datuma "do".', 'warning')
-            return redirect(url_for('kpo.lista'))
-
-    # Komitent search filter
-    if request.args.get('komitent_search'):
-        filters['komitent_search'] = request.args.get('komitent_search').strip()
-
-    # Status filter
-    filters['status_filter'] = request.args.get('status_filter', 'izdata')
-
-    # Valuta filter
-    if request.args.get('valuta_filter'):
-        filters['valuta_filter'] = request.args.get('valuta_filter')
-
-    # Admin-only: firma filter
-    if current_user.role == 'admin' and request.args.get('firma_id'):
-        filters['firma_id'] = request.args.get('firma_id', type=int)
+    # Redirect to lista if parsing failed
+    if not parse_success:
+        return redirect(url_for('kpo.lista'))
 
     # Get KPO entries (no pagination for PDF export)
     from app.services.kpo_service import get_kpo_entries_list, calculate_total_promet_with_filters
@@ -244,5 +236,4 @@ def export_csv():
     """
     # TODO: Implement CSV export (Phase 2)
     flash('CSV export nije jos implementiran. Koristite PDF export.', 'info')
-    from flask import redirect, url_for
     return redirect(url_for('kpo.lista'))

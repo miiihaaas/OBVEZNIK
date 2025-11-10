@@ -103,8 +103,11 @@ def create_app(config_name='development'):
     app.register_blueprint(auth_bp)
 
     # Register dashboard blueprints
-    from app.routes.dashboard import dashboard_bp, admin_dashboard_bp
+    from app.routes.dashboard import dashboard_bp
     app.register_blueprint(dashboard_bp)
+
+    # Register admin dashboard blueprint
+    from app.routes.admin_dashboard import admin_dashboard_bp
     app.register_blueprint(admin_dashboard_bp)
 
     # Register admin user management blueprint

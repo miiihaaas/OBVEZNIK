@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - OBVEZNIK{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fa-solid fa-chart-line me-2"></i>
+            Admin Dashboard
+        </h1>
+    </div>
+
+    <!-- Summary Cards Section -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Total Firme -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded p-3">
+                                <i class="fa-solid fa-building fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted text-uppercase mb-1 small">Ukupno Firmi</h6>
+                            <h2 class="mb-0">{{ stats.total_firme }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Total Users -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success bg-opacity-10 text-success rounded p-3">
+                                <i class="fa-solid fa-users fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted text-uppercase mb-1 small">Ukupno Korisnika</h6>
+                            <h2 class="mb-0">{{ stats.total_users }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Total Fakture Period -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info bg-opacity-10 text-info rounded p-3">
+                                <i class="fa-solid fa-file-invoice fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted text-uppercase mb-1 small">Fakture (Period)</h6>
+                            <h2 class="mb-0">{{ stats.total_fakture_period }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Total Promet Period -->
+        <div class="col-md-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning bg-opacity-10 text-warning rounded p-3">
+                                <i class="fa-solid fa-coins fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted text-uppercase mb-1 small">Promet (Period) RSD</h6>
+                            <h2 class="mb-0">{{ "{:,.0f}".format(stats.total_promet_period_rsd) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_dashboard.dashboard') }}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label small text-muted">Datum Od</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label small text-muted">Datum Do</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label small text-muted">Pretraga (Naziv ili PIB)</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Pretražite po nazivu ili PIB-u..." value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-filter me-1"></i>
+                        Filtriraj
+                    </button>
+                </div>
+            </form>
+            <div class="mt-2">
+                <a href="{{ url_for('admin_dashboard.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-rotate-left me-1"></i>
+                    Resetuj Filtere
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firma Table Section -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Paušalne Firme ({{ total_count }})</h5>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="?sort_by=naziv&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    Naziv
+                                    {% if sort_by == 'naziv' %}<i class="fa-solid fa-sort-down ms-1"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>PIB</th>
+                            <th class="text-end">
+                                <a href="?sort_by=broj_faktura&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    Broj Faktura
+                                    {% if sort_by == 'broj_faktura' %}<i class="fa-solid fa-sort-down ms-1"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th class="text-end">
+                                <a href="?sort_by=promet&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    Promet (RSD)
+                                    {% if sort_by == 'promet' %}<i class="fa-solid fa-sort-down ms-1"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th class="text-end">
+                                <a href="?sort_by=limit&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    Preostali Limit (RSD)
+                                    {% if sort_by == 'limit' %}<i class="fa-solid fa-sort-down ms-1"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>Poslednja Aktivnost</th>
+                            <th class="text-end">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if firma_list %}
+                            {% for firma in firma_list %}
+                            <tr>
+                                <td>
+                                    <strong>{{ firma.naziv }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ firma.pib }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-info text-dark">{{ firma.broj_faktura }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="text-muted">{{ "{:,.0f}".format(firma.promet_rsd) }}</span>
+                                </td>
+                                <td class="text-end">
+                                    {% if firma.preostali_limit_rsd < 0 %}
+                                        <span class="badge bg-danger">{{ "{:,.0f}".format(firma.preostali_limit_rsd) }}</span>
+                                    {% elif firma.preostali_limit_rsd < 1000000 %}
+                                        <span class="badge bg-warning text-dark">{{ "{:,.0f}".format(firma.preostali_limit_rsd) }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ "{:,.0f}".format(firma.preostali_limit_rsd) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if firma.poslednja_aktivnost %}
+                                        <small class="text-muted">{{ firma.poslednja_aktivnost.strftime('%d.%m.%Y') }}</small>
+                                    {% else %}
+                                        <small class="text-muted">-</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('admin.firma_detail', firma_id=firma.id) }}" class="btn btn-outline-primary" title="Pregled">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('kpo.lista', firma_id=firma.id) }}" class="btn btn-outline-secondary" title="KPO Knjiga">
+                                            <i class="fa-solid fa-book"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fa-solid fa-inbox fs-1 mb-2 d-block"></i>
+                                    Nema podataka za prikaz
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page - 1 }}&sort_by={{ sort_by }}&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                        {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ p }}&sort_by={{ sort_by }}&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ p }}</a>
+                            </li>
+                        {% elif p == page - 3 or p == page + 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not has_next %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page + 1 }}&sort_by={{ sort_by }}&date_from={{ date_from }}&date_to={{ date_to }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

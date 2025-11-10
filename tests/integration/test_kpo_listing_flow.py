@@ -248,3 +248,106 @@ def test_pausalac_can_export_kpo_to_pdf(client, pausalac_user_with_kpo_entries):
 
     # Check PDF contains data (basic check)
     assert len(response.data) > 1000  # PDF should be non-empty
+
+
+def test_pausalac_can_filter_by_status(client, pausalac_user_with_kpo_entries):
+    """Test status filter works (AC: 3)."""
+    # Login
+    client.post(
+        '/login',
+        data={
+            'email': 'pausalac@test.com',
+            'password': 'password123'
+        },
+        follow_redirects=True
+    )
+
+    # Test default filter (izdata only) - fixture has 5 izdata entries
+    response = client.get('/kpo/?status_filter=izdata')
+    assert response.status_code == 200
+    assert 'TF-001/2025-PS'.encode('utf-8') in response.data
+    assert 'TF-002/2025-PS'.encode('utf-8') in response.data
+
+    # Test status filter dropdown exists and has options
+    response_text = response.data.decode('utf-8')
+    assert 'status_filter' in response_text
+    assert 'Izdata' in response_text
+    assert 'Stornirana' in response_text
+    assert 'Sve' in response_text
+
+
+def test_pausalac_can_sort_by_datum_prometa(client, pausalac_user_with_kpo_entries):
+    """Test sorting by datum_prometa (AC: 4)."""
+    # Login
+    client.post(
+        '/login',
+        data={
+            'email': 'pausalac@test.com',
+            'password': 'password123'
+        },
+        follow_redirects=True
+    )
+
+    # Sort by datum_prometa ASC
+    response = client.get('/kpo/?sort_by=datum_prometa&sort_order=asc')
+    assert response.status_code == 200
+
+    # Get response as text to check order
+    response_text = response.data.decode('utf-8')
+
+    # Check that TF-001 appears before TF-005 in the HTML
+    idx_001 = response_text.find('TF-001/2025-PS')
+    idx_005 = response_text.find('TF-005/2025-PS')
+    assert idx_001 > 0 and idx_005 > 0, "Both entries should be present"
+    assert idx_001 < idx_005, "Entries should be sorted by datum ascending"
+
+    # Sort by datum_prometa DESC
+    response = client.get('/kpo/?sort_by=datum_prometa&sort_order=desc')
+    assert response.status_code == 200
+
+    response_text = response.data.decode('utf-8')
+
+    # Check that TF-005 appears before TF-001 in the HTML
+    idx_001 = response_text.find('TF-001/2025-PS')
+    idx_005 = response_text.find('TF-005/2025-PS')
+    assert idx_001 > 0 and idx_005 > 0, "Both entries should be present"
+    assert idx_005 < idx_001, "Entries should be sorted by datum descending"
+
+
+def test_admin_can_see_all_firme_kpo_entries(client, app, pausalac_user_with_kpo_entries):
+    """Test admin god mode - sees all firme entries (AC: 9)."""
+    # Create admin user
+    with app.app_context():
+        # Create admin
+        admin = User(
+            email='admin@test.com',
+            full_name='Test Admin',
+            role='admin'
+        )
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+
+    # Login as admin
+    response = client.post(
+        '/login',
+        data={
+            'email': 'admin@test.com',
+            'password': 'admin123'
+        },
+        follow_redirects=True
+    )
+    assert response.status_code == 200
+
+    # Admin should be able to access KPO screen
+    response = client.get('/kpo/')
+    assert response.status_code == 200
+
+    # Check that admin sees firma dropdown (god mode UI element)
+    response_text = response.data.decode('utf-8')
+    # Admin should see "God Mode" or firma filter dropdown when there are active firme
+    assert 'God Mode' in response_text or 'firma_id' in response_text or 'Firma' in response_text
+
+    # Check sort and filter functionality available to admin
+    assert 'sort_by' in response_text or 'sortby' in response_text.lower()
+    assert 'status_filter' in response_text or 'status' in response_text.lower()

@@ -182,29 +182,29 @@
     <table>
         <thead>
             <tr>
-                <th class="text-center" style="width: 8%;">Redni<br>Broj</th>
-                <th style="width: 12%;">Broj Fakture</th>
+                <th class="text-center" style="width: 7%;">Redni<br>Broj</th>
+                <th style="width: 11%;">Broj Fakture</th>
                 <th class="text-center" style="width: 9%;">Datum<br>Prometa</th>
                 <th class="text-center" style="width: 9%;">Datum<br>Dospeća</th>
-                <th style="width: 25%;">Komitent</th>
-                <th style="width: 5%;">PIB</th>
-                <th class="text-right" style="width: 12%;">Iznos (RSD)</th>
+                <th style="width: 24%;">Komitent</th>
+                <th class="text-center" style="width: 7%;">PIB</th>
+                <th class="text-right" style="width: 13%;">Iznos (RSD)</th>
                 <th class="text-center" style="width: 6%;">Valuta</th>
-                <th class="text-center" style="width: 10%;">Status</th>
+                <th class="text-center" style="width: 14%;">Status</th>
             </tr>
         </thead>
         <tbody>
             {% for entry in kpo_entries %}
             <tr>
-                <td class="text-center fw-bold">{{ entry.redni_broj }}/{{ entry.godina }}</td>
-                <td>{{ entry.broj_fakture }}</td>
-                <td class="text-center">{{ entry.datum_prometa.strftime('%d.%m.%Y') }}</td>
-                <td class="text-center">{{ entry.datum_dospeca.strftime('%d.%m.%Y') }}</td>
-                <td>{{ entry.komitent_naziv }}</td>
-                <td class="text-center">{{ entry.komitent_pib }}</td>
-                <td class="text-right">{{ "{:,.2f}".format(entry.iznos_rsd) }}</td>
-                <td class="text-center">{{ entry.valuta }}</td>
-                <td class="text-center {% if entry.status_fakture == 'izdata' %}status-izdata{% else %}status-stornirana{% endif %}">
+                <td class="text-center fw-bold" style="width: 7%;">{{ entry.redni_broj }}/{{ entry.godina }}</td>
+                <td style="width: 11%;">{{ entry.broj_fakture }}</td>
+                <td class="text-center" style="width: 9%;">{{ entry.datum_prometa.strftime('%d.%m.%Y') }}</td>
+                <td class="text-center" style="width: 9%;">{{ entry.datum_dospeca.strftime('%d.%m.%Y') }}</td>
+                <td style="width: 24%;">{{ entry.komitent_naziv }}</td>
+                <td class="text-center" style="width: 7%;">{{ entry.komitent_pib }}</td>
+                <td class="text-right" style="width: 13%;">{{ "{:,.2f}".format(entry.iznos_rsd) }}</td>
+                <td class="text-center" style="width: 6%;">{{ entry.valuta }}</td>
+                <td class="text-center {% if entry.status_fakture == 'izdata' %}status-izdata{% else %}status-stornirana{% endif %}" style="width: 14%;">
                     {{ entry.status_fakture|upper }}
                 </td>
             </tr>
