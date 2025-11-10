@@ -414,6 +414,13 @@ function loadRevenueChart() {
             loadingDiv.style.display = 'none';
             canvas.style.display = 'block';
 
+            // Get CSS custom properties for colors
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+            const primaryRgba = primaryColor.replace('#', '');
+            const r = parseInt(primaryRgba.substr(0, 2), 16);
+            const g = parseInt(primaryRgba.substr(2, 2), 16);
+            const b = parseInt(primaryRgba.substr(4, 2), 16);
+
             // Create chart
             const ctx = canvas.getContext('2d');
             new Chart(ctx, {
@@ -423,13 +430,13 @@ function loadRevenueChart() {
                     datasets: [{
                         label: 'Promet (RSD)',
                         data: data.data,
-                        borderColor: '#8D696E',  // Primary color (bordo)
-                        backgroundColor: 'rgba(141, 105, 110, 0.1)',
+                        borderColor: primaryColor,
+                        backgroundColor: `rgba(${r}, ${g}, ${b}, 0.1)`,
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
                         pointRadius: 4,
-                        pointBackgroundColor: '#8D696E',
+                        pointBackgroundColor: primaryColor,
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
                         pointHoverRadius: 6

@@ -1,10 +1,19 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}Faktura {{ faktura.broj_fakture }}{% endblock %}
 
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'Fakture', 'url': url_for('fakture.lista')},
+    {'text': 'Faktura #' ~ faktura.broj_fakture, 'url': ''}
+]) }}
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Faktura {{ faktura.broj_fakture }}</h2>
+<div class="container mt-4 mb-5">
+    <h1 class="mb-4"><i class="fa-solid fa-file-invoice me-2 text-primary"></i>Faktura {{ faktura.broj_fakture }}</h1>
 
     <div class="card mb-3">
         <div class="card-body">

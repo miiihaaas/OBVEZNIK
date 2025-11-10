@@ -1,0 +1,28 @@
+{#
+    Breadcrumbs Macro
+    Usage:
+        {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+        {% block breadcrumbs %}
+        {{ render_breadcrumbs([
+            {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard')},
+            {'text': 'Fakture', 'url': url_for('fakture.lista')},
+            {'text': 'Faktura #123', 'url': ''}
+        ]) }}
+        {% endblock %}
+#}
+
+{% macro render_breadcrumbs(items) %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+        {% for item in items %}
+            {% if loop.last %}
+                <li class="breadcrumb-item active" aria-current="page">{{ item.text }}</li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ item.url }}">{{ item.text }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endmacro %}

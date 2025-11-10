@@ -1,6 +1,15 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}Nova Faktura - OBVEZNIK{% endblock %}
+
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'Fakture', 'url': url_for('fakture.lista')},
+    {'text': 'Nova Faktura', 'url': ''}
+]) }}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-5">
@@ -9,7 +18,7 @@
             <i class="fa-solid fa-file-invoice fs-3 text-muted"></i>
         </div>
         <div>
-            <h1 class="mb-1">Kreiranje Nove Fakture</h1>
+            <h1 class="mb-4">Kreiranje Nove Fakture</h1>
             <p class="text-muted mb-0">Unesite podatke za novu fakturu.</p>
         </div>
     </div>

@@ -415,6 +415,14 @@ footer p {
 }
 
 /* ============================================================
+   5B. ADMIN FIRM CONTEXT BANNER
+   ============================================================ */
+.admin-firm-banner {
+    background-color: var(--color-primary);
+    border-bottom: 3px solid #6B4F53; /* Darker shade of primary for subtle depth */
+}
+
+/* ============================================================
    6. LOGIN PAGE STYLES
    ============================================================ */
 .login-container {
@@ -849,6 +857,12 @@ footer p {
     width: 80%;
 }
 
+/* Active navigation link styling */
+.navbar-nav .nav-link.active {
+    color: #fff !important;
+    font-weight: var(--font-weight-semibold);
+}
+
 /* Dropdown Menu Improvements */
 .dropdown-menu {
     animation: fadeInDown 0.3s ease-in-out;
@@ -893,15 +907,41 @@ footer p {
         padding-left: var(--spacing-md);
         padding-right: var(--spacing-md);
     }
-    
+
     .btn-group {
         display: flex;
         flex-direction: column;
     }
-    
+
     .btn-group .btn {
         border-radius: var(--radius-small) !important;
         margin-bottom: 4px;
+    }
+
+    /* Admin firm context banner mobile */
+    .admin-firm-banner {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--spacing-md);
+    }
+
+    .admin-firm-banner form {
+        width: 100%;
+    }
+
+    .admin-firm-banner form button {
+        width: 100%;
+    }
+
+    /* Navigation touch targets */
+    .navbar-nav .nav-link {
+        padding: var(--spacing-md) var(--spacing-lg) !important;
+        min-height: 44px;
+    }
+
+    /* Dropdown menu mobile */
+    .dropdown-menu {
+        max-width: 100vw;
     }
 }
 
@@ -928,6 +968,47 @@ footer p {
 
 @keyframes spinner {
     to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   BREADCRUMBS
+   ============================================================ */
+.breadcrumb {
+    font-size: var(--font-size-small);
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.breadcrumb-item {
+    color: var(--color-neutral-text-gray);
+}
+
+.breadcrumb-item a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumb-item a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: var(--color-neutral-text-gray);
+    font-weight: var(--font-weight-semibold);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--color-neutral-border);
+}
+
+/* Mobile breadcrumbs optimization */
+@media (max-width: 768px) {
+    .breadcrumb {
+        font-size: var(--font-size-caption); /* 12px */
+    }
 }
 
 /* ============================================================

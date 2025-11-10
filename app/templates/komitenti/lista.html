@@ -1,12 +1,20 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}Komitenti - OBVEZNIK{% endblock %}
+
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'Komitenti', 'url': ''}
+]) }}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="mb-2"><i class="fa-solid fa-address-book me-2 text-primary"></i> Komitenti</h1>
+            <h1 class="mb-4"><i class="fa-solid fa-address-book me-2 text-primary"></i> Komitenti</h1>
             <p class="text-muted mb-0">Upravljanje komitentima Vaše firme.</p>
         </div>
         <a href="{{ url_for('komitenti.novi') }}" class="btn btn-primary btn-lg shadow-sm">

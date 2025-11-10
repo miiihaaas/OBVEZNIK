@@ -1,6 +1,15 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}Dodaj Artikal - OBVEZNIK{% endblock %}
+
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'Artikli', 'url': url_for('artikli.lista')},
+    {'text': 'Novi Artikal', 'url': ''}
+]) }}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-5">

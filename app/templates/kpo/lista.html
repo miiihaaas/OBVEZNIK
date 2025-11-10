@@ -1,13 +1,21 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}KPO Knjiga - OBVEZNIK{% endblock %}
+
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'KPO Knjiga', 'url': ''}
+]) }}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-5">
     <!-- Page Header -->
     <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <h1 class="mb-2">
+            <h1 class="mb-4">
                 <i class="fa-solid fa-book me-2 text-primary"></i>
                 KPO Knjiga {% if current_filters.get('godina') %}({{ current_filters.get('godina') }}){% endif %}
             </h1>

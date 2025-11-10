@@ -1,6 +1,16 @@
 {% extends "base.html" %}
+{% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 
 {% block title %}Izmena Fakture - OBVEZNIK{% endblock %}
+
+{% block breadcrumbs %}
+{{ render_breadcrumbs([
+    {'text': 'Dashboard', 'url': url_for('dashboard.pausalac_dashboard') if current_user.role != 'admin' else url_for('admin_dashboard.dashboard')},
+    {'text': 'Fakture', 'url': url_for('fakture.lista')},
+    {'text': 'Faktura #' + faktura.broj_fakture|string, 'url': url_for('fakture.detail', faktura_id=faktura.id)},
+    {'text': 'Izmeni', 'url': ''}
+]) }}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4 mb-5">
