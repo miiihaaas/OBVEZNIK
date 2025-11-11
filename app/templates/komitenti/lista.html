@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/empty_state.html" import render_empty_state %}
 
 {% block title %}Komitenti - OBVEZNIK{% endblock %}
 
@@ -218,20 +219,26 @@
 
     {% else %}
     <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="fa-solid fa-address-book display-1 text-muted mb-3"></i>
+        <div class="card-body">
             {% if search_term %}
-                <h4 class="mb-2">Nema rezultata pretrage</h4>
-                <p class="text-muted mb-4">Nema rezultata pretrage za "<strong>{{ search_term }}</strong>". Pokušajte sa drugim pojmom.</p>
+            {{ render_empty_state(
+                icon='search',
+                heading='Nema rezultata pretrage',
+                description='Nema rezultata pretrage za "' ~ search_term ~ '". Pokušajte sa drugim pojmom.'
+            ) }}
+            <div class="text-center mt-3">
                 <a href="{{ url_for('komitenti.lista') }}" class="btn btn-primary">
                     <i class="fa-solid fa-times me-2"></i> Očisti pretragu
                 </a>
+            </div>
             {% else %}
-                <h4 class="mb-2">Nemate nijednog komitenta</h4>
-                <p class="text-muted mb-4">Kliknite na dugme ispod da kreirate prvog komitenta.</p>
-                <a href="{{ url_for('komitenti.novi') }}" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-plus me-2"></i> Dodaj Komitenta
-                </a>
+            {{ render_empty_state(
+                icon='address-book',
+                heading='Nema komitenata',
+                description='Još nema dodanih komitenata. Dodajte komitenta da biste mogli kreirati fakture.',
+                cta_text='Dodaj Komitenta',
+                cta_url=url_for('komitenti.novi')
+            ) }}
             {% endif %}
         </div>
     </div>

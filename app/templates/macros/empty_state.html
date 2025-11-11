@@ -1,0 +1,97 @@
+{# Empty State Macros - Reusable empty state components #}
+
+{#
+    Generic empty state component
+
+    Usage:
+    {% from "macros/empty_state.html" import render_empty_state %}
+    {{ render_empty_state(
+        icon='folder-open',
+        heading='Nema faktura',
+        description='Još nema kreiranih faktura. Kliknite dugme ispod da kreirate prvu fakturu.',
+        cta_text='Kreiraj Fakturu',
+        cta_url=url_for('fakture.nova')
+    ) }}
+
+    Without CTA button:
+    {{ render_empty_state(
+        icon='book',
+        heading='Nema unosa',
+        description='KPO knjiga je prazna. Unosi će se automatski dodavati nakon kreiranja faktura.'
+    ) }}
+#}
+{% macro render_empty_state(icon, heading, description, cta_text=None, cta_url=None) %}
+<div class="empty-state">
+    <i class="fa-solid fa-{{ icon }} text-muted"></i>
+    <h3>{{ heading }}</h3>
+    <p>{{ description }}</p>
+    {% if cta_text and cta_url %}
+        <a href="{{ cta_url }}" class="btn btn-primary">
+            {{ cta_text }}
+        </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{#
+    Fakturu lista empty state
+#}
+{% macro empty_state_fakture() %}
+{{ render_empty_state(
+    icon='folder-open',
+    heading='Nema faktura',
+    description='Još nema kreiranih faktura. Kliknite dugme ispod da kreirate prvu fakturu.',
+    cta_text='Kreiraj Fakturu',
+    cta_url=url_for('fakture.nova')
+) }}
+{% endmacro %}
+
+{#
+    Komitenti lista empty state
+#}
+{% macro empty_state_komitenti() %}
+{{ render_empty_state(
+    icon='address-book',
+    heading='Nema komitenata',
+    description='Još nema dodanih komitenata. Dodajte komitenta da biste mogli kreirati fakture.',
+    cta_text='Dodaj Komitenta',
+    cta_url=url_for('komitenti.novi')
+) }}
+{% endmacro %}
+
+{#
+    Artikli lista empty state
+#}
+{% macro empty_state_artikli() %}
+{{ render_empty_state(
+    icon='box',
+    heading='Nema artikala',
+    description='Još nema dodanih artikala. Dodajte artikle koje najčešće fakturišete.',
+    cta_text='Dodaj Artikal',
+    cta_url=url_for('artikli.novi')
+) }}
+{% endmacro %}
+
+{#
+    KPO knjiga empty state
+#}
+{% macro empty_state_kpo() %}
+{{ render_empty_state(
+    icon='book',
+    heading='Nema unosa',
+    description='KPO knjiga je prazna. Unosi će se automatski dodavati nakon kreiranja faktura.'
+) }}
+{% endmacro %}
+
+{#
+    Admin dashboard - paušalne firme empty state
+#}
+{% macro empty_state_pausaln_firma() %}
+{{ render_empty_state(
+    icon='building',
+    heading='Nema paušalnih firmi',
+    description='Još nema kreiranih paušalnih firmi. Kreirajte prvu firmu da biste započeli.',
+    cta_text='Kreiraj Paušalnu Firmu',
+    cta_url=url_for('admin.pausaln_firma_create')
+) }}
+{% endmacro %}

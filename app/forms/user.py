@@ -4,6 +4,7 @@ from wtforms import StringField, PasswordField, SelectField
 from wtforms.validators import DataRequired, Email, ValidationError, Optional
 from app.models.user import User
 from app.models.pausaln_firma import PausalnFirma
+from app.utils.validators import validate_password_strength
 
 
 class UserCreateForm(FlaskForm):
@@ -26,8 +27,11 @@ class UserCreateForm(FlaskForm):
 
     password = PasswordField(
         'Lozinka',
-        validators=[DataRequired(message='Lozinka je obavezna.')],
-        render_kw={'class': 'form-control', 'placeholder': 'Unesite lozinku'}
+        validators=[
+            DataRequired(message='Lozinka je obavezna.'),
+            validate_password_strength
+        ],
+        render_kw={'class': 'form-control', 'placeholder': 'Minimum 8 karaktera, bar 1 broj'}
     )
 
     role = SelectField(
@@ -83,10 +87,10 @@ class UserEditForm(UserCreateForm):
 
     password = PasswordField(
         'Nova Lozinka (opciono)',
-        validators=[Optional()],
+        validators=[Optional(), validate_password_strength],
         render_kw={
             'class': 'form-control',
-            'placeholder': 'Ostavite prazno da zadržite postojeću lozinku'
+            'placeholder': 'Minimum 8 karaktera, bar 1 broj (ostavite prazno za postojeću)'
         }
     )
 

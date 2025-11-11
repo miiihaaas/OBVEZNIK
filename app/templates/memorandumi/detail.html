@@ -20,6 +20,7 @@
                 <i class="fa-solid fa-edit"></i> Izmeni
             </a>
             <form method="POST" action="{{ url_for('memorandumi.obrisi', id=memorandum.id) }}" style="display:inline;" onsubmit="return confirm('Da li ste sigurni?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i> Obriši</button>
             </form>
             <a href="{{ url_for('memorandumi.lista') }}" class="btn btn-outline-secondary">Nazad na listu</a>

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/modals.html" import render_delete_modal %}
 
 {% block title %}{{ artikal.naziv }} - OBVEZNIK{% endblock %}
 
@@ -138,42 +139,19 @@
             </div>
         </div>
     </div>
+
+    {# Hidden delete form #}
+    <form id="deleteArtikalForm" method="post" action="{{ url_for('artikli.obrisi', id=artikal.id) }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
 </div>
 
-{# Delete Confirmation Modal #}
-<div class="modal fade" id="deleteArtikalModal" tabindex="-1"
-     aria-labelledby="deleteArtikalModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title" id="deleteArtikalModalLabel">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="mb-3">Da li ste sigurni da želite da obrišete artikal?</p>
-                <div class="alert alert-light border mb-3">
-                    <strong><i class="fa-solid fa-box me-2"></i>{{ artikal.naziv }}</strong>
-                </div>
-                <div class="alert alert-info mb-0">
-                    <i class="fa-solid fa-info-circle me-2"></i>
-                    <strong>Napomena:</strong> Brisanje artikla neće uticati na postojeće fakture.
-                    Podaci o artiklu su već kopirani u stavke faktura.
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times me-2"></i> Otkaži
-                </button>
-                <form method="post" action="{{ url_for('artikli.obrisi', id=artikal.id) }}" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-trash me-2"></i> Obriši Artikal
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{# Delete Confirmation Modal using macro #}
+{{ render_delete_modal(
+    modal_id='deleteArtikalModal',
+    entity_name=artikal.naziv,
+    entity_type='artikla',
+    form_id='deleteArtikalForm'
+) }}
+
 {% endblock %}

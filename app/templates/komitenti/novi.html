@@ -362,8 +362,7 @@ document.getElementById('nbsSearchBtn').addEventListener('click', function() {
     this.disabled = true;
     this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pretražujem...';
 
-    fetch(`${NBS_FIRMA_LOOKUP_URL}${pib}`)
-        .then(response => response.json())
+    apiFetch(`${NBS_FIRMA_LOOKUP_URL}${pib}`)
         .then(data => {
             if (data.success && data.data) {
                 // Auto-fill form fields
@@ -397,7 +396,13 @@ document.getElementById('nbsSearchBtn').addEventListener('click', function() {
         .catch(error => {
             console.error('NBS API error:', error);
             alertDiv.className = 'alert alert-danger';
-            alertDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Greška pri pretrazi NBS baze. Molimo unesite podatke ručno.';
+
+            // User-friendly error message based on error type
+            if (error.isNetworkError) {
+                alertDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Greška u komunikaciji sa serverom. Proverite internet konekciju i pokušajte ponovo.';
+            } else {
+                alertDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Greška pri pretrazi NBS baze. ' + (error.message || 'Molimo unesite podatke ručno.');
+            }
             alertDiv.style.display = 'block';
         })
         .finally(() => {

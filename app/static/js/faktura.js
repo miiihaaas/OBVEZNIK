@@ -70,15 +70,21 @@ function initializeKomitentAutocomplete() {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`${window.API_URLS.komitentiSearch}?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
+            apiFetch(`${window.API_URLS.komitentiSearch}?q=${encodeURIComponent(query)}`)
                 .then(data => {
                     renderKomitentResults(data);
                 })
                 .catch(error => {
                     console.error('Komitent search error:', error);
-                    resultsDiv.innerHTML = '<div class="list-group-item text-danger">Greška pri pretrazi komitenata</div>';
+                    resultsDiv.innerHTML = '<div class="list-group-item text-danger"><i class="fa-solid fa-circle-exclamation me-2"></i>Greška pri pretrazi komitenata</div>';
                     resultsDiv.style.display = 'block';
+
+                    // Show user-friendly error message
+                    if (error.isNetworkError) {
+                        showErrorMessage('Greška u komunikaciji sa serverom. Proverite internet konekciju.');
+                    } else {
+                        showErrorMessage(error.message || 'Greška pri pretrazi komitenata.');
+                    }
                 });
         }, 300);
     });
@@ -312,13 +318,19 @@ function initializeArtikalAutocomplete(stavkaRow) {
 
         // Debounce search
         searchTimeout = setTimeout(() => {
-            fetch(`${window.API_URLS.artikliSearch}?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
+            apiFetch(`${window.API_URLS.artikliSearch}?q=${encodeURIComponent(query)}`)
                 .then(data => {
                     renderArtikalResults(data, resultsDiv, searchInput, artikalIdInput, nazivInput, kolicinaInput, jedinicaInput, cenaInput);
                 })
                 .catch(error => {
                     console.error('Artikal search error:', error);
+
+                    // Show user-friendly error message
+                    if (error.isNetworkError) {
+                        showErrorMessage('Greška u komunikaciji sa serverom. Proverite internet konekciju.');
+                    } else {
+                        showErrorMessage(error.message || 'Greška pri pretrazi artikala.');
+                    }
                 });
         }, 300);
     });
@@ -776,13 +788,7 @@ function fetchNBSKurs() {
     document.getElementById('kurs_error').style.display = 'none';
 
     // AJAX call to NBS kursna API
-    fetch(`${window.API_URLS.kursevi}?valuta=${valuta}&datum=${datum}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('NBS kurs not available');
-            }
-            return response.json();
-        })
+    apiFetch(`${window.API_URLS.kursevi}?valuta=${valuta}&datum=${datum}`)
         .then(data => {
             document.getElementById('kurs_loading').style.display = 'none';
 
@@ -808,6 +814,13 @@ function fetchNBSKurs() {
             document.getElementById('kurs_loading').style.display = 'none';
             document.getElementById('kurs_error').style.display = 'inline';
             srednjiKursInput.value = '';
+
+            // Show user-friendly error message
+            if (error.isNetworkError) {
+                showErrorMessage('Greška u komunikaciji sa serverom. Nije moguće učitati NBS kurs.');
+            } else {
+                showErrorMessage(error.message || 'NBS kurs nije dostupan za izabrani datum.');
+            }
         });
 }
 
@@ -912,13 +925,7 @@ function loadLimitData(novaFakturaIznos = 0) {
     const apiUrl = `${window.API_URLS.limitWidgetData}?nova_faktura_iznos=${novaFakturaIznos}`;
 
     // Fetch data from API
-    fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
+    apiFetch(apiUrl)
         .then(data => {
             // Handle success - update widget with data
             updateLimitWidget(data);
@@ -929,6 +936,11 @@ function loadLimitData(novaFakturaIznos = 0) {
             document.getElementById('limit_loading').style.display = 'none';
             document.getElementById('limit_content').style.display = 'none';
             document.getElementById('limit_error').style.display = 'block';
+
+            // Show user-friendly error message (optional - widget already shows error state)
+            if (error.isNetworkError) {
+                showErrorMessage('Greška u komunikaciji sa serverom. Limit widget nije dostupan.');
+            }
         });
 }
 

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/empty_state.html" import render_empty_state %}
 
 {% block title %}Artikli - OBVEZNIK{% endblock %}
 
@@ -225,20 +226,26 @@
 
     {% else %}
     <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="fa-solid fa-box display-1 text-muted mb-3"></i>
+        <div class="card-body">
             {% if search_term %}
-                <h4 class="mb-2">Nema rezultata pretrage</h4>
-                <p class="text-muted mb-4">Nema rezultata pretrage za "<strong>{{ search_term }}</strong>". Pokušajte sa drugim pojmom.</p>
+            {{ render_empty_state(
+                icon='search',
+                heading='Nema rezultata pretrage',
+                description='Nema rezultata pretrage za "' ~ search_term ~ '". Pokušajte sa drugim pojmom.'
+            ) }}
+            <div class="text-center mt-3">
                 <a href="{{ url_for('artikli.lista') }}" class="btn btn-primary">
                     <i class="fa-solid fa-times me-2"></i> Očisti pretragu
                 </a>
+            </div>
             {% else %}
-                <h4 class="mb-2">Nemate nijedan artikal</h4>
-                <p class="text-muted mb-4">Kliknite na dugme ispod da kreirate prvi artikal.</p>
-                <a href="{{ url_for('artikli.novi') }}" class="btn btn-primary btn-lg">
-                    <i class="fa-solid fa-plus me-2"></i> Dodaj Artikal
-                </a>
+            {{ render_empty_state(
+                icon='box',
+                heading='Nema artikala',
+                description='Još nema dodanih artikala. Dodajte artikle koje najčešće fakturišete.',
+                cta_text='Dodaj Artikal',
+                cta_url=url_for('artikli.novi')
+            ) }}
             {% endif %}
         </div>
     </div>

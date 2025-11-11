@@ -14,7 +14,7 @@ auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per 5 minutes")  # Rate limit: max 5 login attempts per 5 minutes per IP
+@limiter.limit("5 per 15 minutes")  # Rate limit: max 5 login attempts per 15 minutes per IP
 def login():
     """
     Login route.

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/modals.html" import render_storno_modal %}
 
 {% block title %}Faktura {{ faktura.broj_fakture }}{% endblock %}
 
@@ -276,6 +277,12 @@
     {% endif %}
 
         <a href="{{ url_for('fakture.lista') }}" class="btn btn-secondary mt-3">Nazad na listu faktura</a>
+
+    {# Hidden storniraj form #}
+    <form id="stornirajForm" method="POST" action="{{ url_for('fakture.storniraj', faktura_id=faktura.id) }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="razlog" id="razlog_hidden" value="">
+    </form>
 </div>
 
 <!-- Email Modal -->
@@ -366,49 +373,12 @@
     </div>
 </div>
 
-<!-- Storniraj Modal (Story 4.5) -->
-<div class="modal fade" id="stornirajModal" tabindex="-1" aria-labelledby="stornirajModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="stornirajModalLabel">
-                    <i class="bi bi-exclamation-triangle"></i> Storniraj Fakturu
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    <strong>Da li ste sigurni da želite da stornirate fakturu {{ faktura.broj_fakture }}?</strong>
-                </div>
-                <p class="text-danger"><strong>Ova akcija je nepovratna.</strong></p>
-                <p>Stornirana faktura:</p>
-                <ul>
-                    <li>Neće biti uključena u KPO izveštaje</li>
-                    <li>Ostaće vidljiva u listi faktura sa oznakom "Stornirana"</li>
-                    <li>PDF će se regenerisati sa watermark-om</li>
-                </ul>
-                
-                <form id="stornirajForm" method="POST" action="{{ url_for('fakture.storniraj', faktura_id=faktura.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div class="mb-3">
-                        <label for="razlog" class="form-label">Razlog storniranja (opciono):</label>
-                        <textarea class="form-control" id="razlog" name="razlog" rows="3" 
-                                  placeholder="Npr. Greška u unosu, duplikat, pogrešan komitent..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Otkaži
-                </button>
-                <button type="submit" form="stornirajForm" class="btn btn-danger">
-                    <i class="bi bi-check-circle"></i> Potvrdi Storniranje
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{# Storniraj Modal using macro (Story 5.7) #}
+{{ render_storno_modal(
+    modal_id='stornirajModal',
+    faktura_broj=faktura.broj_fakture,
+    form_id='stornirajForm'
+) }}
 
 <script>
 // API URL-ovi generisani pomoću url_for za podršku subfolder deployments

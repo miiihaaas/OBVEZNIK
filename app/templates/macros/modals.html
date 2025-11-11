@@ -1,0 +1,166 @@
+{#
+Reusable Confirmation Modal Macros
+Story 5.7 - Error Handling & User Feedback
+
+Usage:
+{% from 'macros/modals.html' import render_confirmation_modal %}
+
+{{ render_confirmation_modal(
+    modal_id='deleteKomitentModal',
+    title='Brisanje komitenta',
+    message='Da li ste sigurni da želite da obrišete komitenta?',
+    confirm_text='Obriši',
+    cancel_text='Otkaži',
+    confirm_class='danger',
+    confirm_action='document.getElementById("deleteForm").submit();'
+) }}
+#}
+
+{% macro render_confirmation_modal(modal_id, title, message, confirm_text='Potvrdi', cancel_text='Otkaži', confirm_class='danger', confirm_action='') %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    {% if confirm_class == 'danger' %}
+                        <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                    {% elif confirm_class == 'warning' %}
+                        <i class="fa-solid fa-exclamation-circle text-warning me-2"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-info text-info me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body">
+                {# SECURITY WARNING: | safe filter disables auto-escaping.
+                   Only use with server-generated content, NEVER with user input. #}
+                {{ message | safe }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    {{ cancel_text }}
+                </button>
+                <button type="button" class="btn btn-{{ confirm_class }}" id="{{ modal_id }}ConfirmBtn"
+                        {% if confirm_action %}onclick="{{ confirm_action }}"{% endif %}>
+                    {% if confirm_class == 'danger' %}
+                        <i class="fa-solid fa-trash me-1"></i>
+                    {% else %}
+                        <i class="fa-solid fa-check me-1"></i>
+                    {% endif %}
+                    {{ confirm_text }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{#
+Simple Delete Confirmation Modal
+Simplified version specifically for delete actions
+#}
+{% macro render_delete_modal(modal_id, entity_name, entity_type='item', form_id='') %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Brisanje {{ entity_type }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Da li ste sigurni da želite da obrišete <strong>{{ entity_name }}</strong>?</p>
+                <p class="text-muted small mb-0">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Ova akcija se ne može opozvati.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    Otkaži
+                </button>
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('{{ form_id }}').submit();">
+                    <i class="fa-solid fa-trash me-1"></i>
+                    Obriši
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{#
+Storno Fakture Confirmation Modal
+Specialized for invoice cancellation
+#}
+{% macro render_storno_modal(modal_id, faktura_broj, form_id='') %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    Storniranje fakture
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Da li ste sigurni da želite da stornirate fakturu <strong>#{{ faktura_broj }}</strong>?</p>
+                <div class="alert alert-warning mb-0">
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                    <strong>Napomena:</strong> Stornirana faktura će ostati u KPO knjizi sa statusom "Stornirana".
+                    Prihodi od ove fakture će biti uključeni u ukupan promet.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    Otkaži
+                </button>
+                <button type="button" class="btn btn-warning" onclick="document.getElementById('{{ form_id }}').submit();">
+                    <i class="fa-solid fa-ban me-1"></i>
+                    Storniraj
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{#
+Generic Confirmation Modal with Custom Body
+For more complex confirmation scenarios
+#}
+{% macro render_custom_modal(modal_id, title, body_content, confirm_text='Potvrdi', cancel_text='Otkaži', confirm_class='primary', form_id='') %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">{{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body">
+                {# SECURITY WARNING: | safe filter disables auto-escaping.
+                   Only use with server-generated HTML, NEVER with user input. #}
+                {{ body_content | safe }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancel_text }}</button>
+                <button type="button" class="btn btn-{{ confirm_class }}"
+                        {% if form_id %}onclick="document.getElementById('{{ form_id }}').submit();"{% endif %}>
+                    {{ confirm_text }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

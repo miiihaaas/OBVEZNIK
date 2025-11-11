@@ -70,6 +70,7 @@
                                 <a href="{{ url_for('memorandumi.detail', id=memo.id) }}" class="btn btn-sm btn-outline-primary">Pregledaj</a>
                                 <a href="{{ url_for('memorandumi.izmeni', id=memo.id) }}" class="btn btn-sm btn-outline-secondary">Izmeni</a>
                                 <form method="POST" action="{{ url_for('memorandumi.obrisi', id=memo.id) }}" style="display:inline;" onsubmit="return confirm('Da li ste sigurni da želite da obrišete ovaj memorandum?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Obriši</button>
                                 </form>
                             </td>

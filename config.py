@@ -120,6 +120,9 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True  # HTTPS only
     SESSION_COOKIE_SAMESITE = 'Strict'  # Stricter CSRF protection
 
+    # Rate limiter storage (use Redis in production instead of memory://)
+    RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/0'
+
     # In production, enforce environment variables
     @classmethod
     def init_app(cls, app):
@@ -128,6 +131,7 @@ class ProductionConfig(Config):
         # Ensure critical environment variables are set
         assert os.environ.get('SECRET_KEY'), 'SECRET_KEY must be set in production'
         assert os.environ.get('DATABASE_URL'), 'DATABASE_URL must be set in production'
+        assert os.environ.get('REDIS_URL'), 'REDIS_URL must be set in production'
 
 
 class TestingConfig(Config):

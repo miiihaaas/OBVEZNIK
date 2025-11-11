@@ -1,0 +1,105 @@
+{# Loading Spinner Macros - Reusable loading state components #}
+
+{#
+    Full-page overlay spinner
+    Koristi se za kritične operacije (PDF generisanje, bulk import)
+
+    Usage:
+    {% from "macros/loading.html" import render_fullpage_spinner %}
+    {{ render_fullpage_spinner('spinner-pdf', 'Generišem PDF...') }}
+
+    Show/hide sa JavaScript:
+    showFullPageSpinner('spinner-pdf');  // show
+    hideFullPageSpinner('spinner-pdf');  // hide
+#}
+{% macro render_fullpage_spinner(id, message='Molim vas sačekajte...') %}
+<div id="{{ id }}" class="loading-overlay" style="display: none;">
+    <div class="spinner spinner-lg"></div>
+    <p class="loading-text">{{ message }}</p>
+</div>
+{% endmacro %}
+
+{#
+    Inline spinner
+    Koristi se za search polja, dinamičke tabele, AJAX fetch operacije
+
+    Usage:
+    {% from "macros/loading.html" import render_inline_spinner %}
+    {{ render_inline_spinner('spinner-search', 'Pretražujem...') }}
+
+    Show/hide sa JavaScript:
+    showInlineSpinner('spinner-search');
+    hideInlineSpinner('spinner-search');
+#}
+{% macro render_inline_spinner(id, message='Učitavanje...', size='sm') %}
+<div id="{{ id }}" class="inline-spinner" style="display: none;">
+    <div class="spinner {{ 'spinner-sm' if size == 'sm' else '' }}"></div>
+    <span class="text-muted">{{ message }}</span>
+</div>
+{% endmacro %}
+
+{#
+    Button loading state
+    Koristi se tokom form submission
+
+    Usage:
+    {% from "macros/loading.html" import render_submit_button %}
+    {{ render_submit_button('submit-btn', 'Sačuvaj', btn_class='btn-primary') }}
+
+    JavaScript usage:
+    showButtonLoading('submit-btn');  // show loading state
+    hideButtonLoading('submit-btn');  // hide loading state
+
+    The .btn.loading CSS class automatically hides text and shows spinner
+#}
+{% macro render_submit_button(id, text, btn_class='btn-primary', type='submit') %}
+<button type="{{ type }}" id="{{ id }}" class="btn {{ btn_class }}">
+    {{ text }}
+</button>
+{% endmacro %}
+
+{#
+    Font Awesome spinner icon (alternative to CSS spinner)
+
+    Usage:
+    {% from "macros/loading.html" import render_fa_spinner %}
+    {{ render_fa_spinner('Učitavanje podataka...') }}
+#}
+{% macro render_fa_spinner(message='Učitavanje...', size='2x') %}
+<div class="text-center py-4">
+    <i class="fa-solid fa-spinner fa-spin fa-{{ size }} text-primary mb-3"></i>
+    <p class="text-muted">{{ message }}</p>
+</div>
+{% endmacro %}
+
+{#
+    Table skeleton loader (for tables during data loading)
+
+    Usage:
+    {% from "macros/loading.html" import render_table_skeleton %}
+    <div id="table-skeleton" style="display: none;">
+        {{ render_table_skeleton(columns=5, rows=3) }}
+    </div>
+#}
+{% macro render_table_skeleton(columns=4, rows=3) %}
+<div class="table-skeleton">
+    <table class="table">
+        <thead>
+            <tr>
+                {% for i in range(columns) %}
+                <th><div class="skeleton skeleton-text"></div></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in range(rows) %}
+            <tr>
+                {% for col in range(columns) %}
+                <td><div class="skeleton skeleton-text"></div></td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}

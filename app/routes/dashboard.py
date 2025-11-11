@@ -191,7 +191,7 @@ def profil_firme_edit():
 
     if not firma_id:
         # Admin in god mode (no firm context) - redirect with error
-        flash('Molimo selektujte firmu pre izmene podataka.', 'error')
+        flash('Molimo selektujte firmu pre izmene podataka.', 'danger')
         return redirect(url_for('admin_dashboard.dashboard'))
 
     # Load firma object
@@ -222,7 +222,7 @@ def profil_firme_edit():
                 email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
                 if not email_pattern.match(value):
                     db.session.rollback()
-                    flash('Nevažeći format email adrese. Primer: korisnik@domen.com', 'error')
+                    flash('Nevažeći format email adrese. Primer: korisnik@domen.com', 'danger')
                     return redirect(url_for('dashboard.profil_firme'))
                 validated_data[field] = value
 
@@ -231,7 +231,7 @@ def profil_firme_edit():
                 telefon_pattern = re.compile(r'^(\+381|0)[0-9]{8,9}$')
                 if not telefon_pattern.match(value):
                     db.session.rollback()
-                    flash('Nevažeći format broja telefona. Primer: +381611234567 ili 0611234567', 'error')
+                    flash('Nevažeći format broja telefona. Primer: +381611234567 ili 0611234567', 'danger')
                     return redirect(url_for('dashboard.profil_firme'))
                 validated_data[field] = value
 
@@ -244,73 +244,73 @@ def profil_firme_edit():
                     if field == 'dinarski_racuni':
                         if not isinstance(json_value, list) or len(json_value) == 0:
                             db.session.rollback()
-                            flash('Mora postojati bar jedan dinarski račun.', 'error')
+                            flash('Mora postojati bar jedan dinarski račun.', 'danger')
                             return redirect(url_for('dashboard.profil_firme'))
 
                         # Validate structure of each dinarski račun
                         for racun in json_value:
                             if not isinstance(racun, dict):
                                 db.session.rollback()
-                                flash('Nevažeća struktura dinarskog računa.', 'error')
+                                flash('Nevažeća struktura dinarskog računa.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
                             if 'broj' not in racun or 'banka' not in racun:
                                 db.session.rollback()
-                                flash('Dinarski račun mora imati broj i banku.', 'error')
+                                flash('Dinarski račun mora imati broj i banku.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
                             if not isinstance(racun['broj'], str) or not isinstance(racun['banka'], str):
                                 db.session.rollback()
-                                flash('Broj računa i banka moraju biti tekstualne vrednosti.', 'error')
+                                flash('Broj računa i banka moraju biti tekstualne vrednosti.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
                             if not racun['broj'].strip() or not racun['banka'].strip():
                                 db.session.rollback()
-                                flash('Broj računa i banka ne smeju biti prazni.', 'error')
+                                flash('Broj računa i banka ne smeju biti prazni.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
 
                     # Validate devizni_racuni structure
                     if field == 'devizni_racuni':
                         if not isinstance(json_value, list):
                             db.session.rollback()
-                            flash('Nevažeća struktura deviznih računa.', 'error')
+                            flash('Nevažeća struktura deviznih računa.', 'danger')
                             return redirect(url_for('dashboard.profil_firme'))
 
                         for racun in json_value:
                             if not isinstance(racun, dict):
                                 db.session.rollback()
-                                flash('Nevažeća struktura deviznog računa.', 'error')
+                                flash('Nevažeća struktura deviznog računa.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
                             if 'iban' not in racun or 'swift' not in racun or 'banka' not in racun:
                                 db.session.rollback()
-                                flash('Devizni račun mora imati IBAN, SWIFT i banku.', 'error')
+                                flash('Devizni račun mora imati IBAN, SWIFT i banku.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
                             if not isinstance(racun['iban'], str) or not isinstance(racun['swift'], str) or not isinstance(racun['banka'], str):
                                 db.session.rollback()
-                                flash('IBAN, SWIFT i banka moraju biti tekstualne vrednosti.', 'error')
+                                flash('IBAN, SWIFT i banka moraju biti tekstualne vrednosti.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
 
                             # Validate IBAN format (Serbian IBAN: RS + 2 digits + 18 alphanumeric chars = 22 total)
                             iban = racun['iban'].strip()
                             if not re.match(r'^RS[0-9]{2}[0-9A-Z]{18}$', iban):
                                 db.session.rollback()
-                                flash('IBAN mora biti u formatu RS35... (22 karaktera).', 'error')
+                                flash('IBAN mora biti u formatu RS35... (22 karaktera).', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
 
                             # Validate SWIFT format (8-11 characters, alphanumeric)
                             swift = racun['swift'].strip()
                             if not re.match(r'^[A-Z0-9]{8,11}$', swift):
                                 db.session.rollback()
-                                flash('SWIFT kod mora biti 8-11 karaktera (slova i brojevi).', 'error')
+                                flash('SWIFT kod mora biti 8-11 karaktera (slova i brojevi).', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
 
                             if not racun['banka'].strip():
                                 db.session.rollback()
-                                flash('Naziv banke ne sme biti prazan.', 'error')
+                                flash('Naziv banke ne sme biti prazan.', 'danger')
                                 return redirect(url_for('dashboard.profil_firme'))
 
                     validated_data[field] = json_value
 
                 except json.JSONDecodeError:
                     db.session.rollback()
-                    flash(f'Nevažeći JSON format za polje {field}.', 'error')
+                    flash(f'Nevažeći JSON format za polje {field}.', 'danger')
                     return redirect(url_for('dashboard.profil_firme'))
 
             # Regular text fields (no special validation needed)
@@ -329,5 +329,5 @@ def profil_firme_edit():
     except Exception as e:
         # Rollback on any database error
         db.session.rollback()
-        flash(f'Greška pri čuvanju podataka: {str(e)}', 'error')
+        flash(f'Greška pri čuvanju podataka: {str(e)}', 'danger')
         return redirect(url_for('dashboard.profil_firme'))

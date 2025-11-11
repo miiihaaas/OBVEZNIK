@@ -234,6 +234,58 @@ def create_app(config_name='development'):
             admin_selected_firma=admin_selected_firma
         )
 
+    # Register security headers middleware
+    @app.after_request
+    def set_security_headers(response):
+        """
+        Set security headers on all HTTP responses.
+
+        Security headers prevent common web vulnerabilities:
+        - X-Content-Type-Options: Prevents MIME type sniffing attacks
+        - X-Frame-Options: Prevents clickjacking attacks
+        - Strict-Transport-Security (HSTS): Forces HTTPS connections
+        - Content-Security-Policy (CSP): Prevents XSS and data injection attacks
+
+        Note: These headers are also configured in Nginx for production,
+        but Flask middleware ensures they are set even in development/testing.
+
+        Args:
+            response: Flask response object
+
+        Returns:
+            Modified Flask response with security headers
+        """
+        # Prevent MIME type sniffing (force browser to respect Content-Type)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+
+        # Prevent clickjacking by disallowing iframe embedding
+        response.headers['X-Frame-Options'] = 'DENY'
+
+        # Force HTTPS for 1 year (only in production with HTTPS enabled)
+        if app.config.get('SESSION_COOKIE_SECURE', False):
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
+        # Content Security Policy - restrict resource loading to trusted sources
+        # - default-src 'self': Only load resources from same origin
+        # - script-src: Allow scripts from same origin, inline scripts, and Bootstrap CDN
+        # - style-src: Allow styles from same origin, inline styles, Bootstrap CDN, Font Awesome, and Google Fonts
+        # - font-src: Allow fonts from same origin, Bootstrap CDN, Font Awesome, and Google Fonts
+        # - img-src: Allow images from same origin and data: URIs (for inline images)
+        # - connect-src: Allow AJAX requests to same origin only
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+            "img-src 'self' data:; "
+            "connect-src 'self';"
+        )
+
+        return response
+
+    # Register error handlers
+    register_error_handlers(app)
+
     # Import models so they are registered with SQLAlchemy
     # This is necessary for Flask-Migrate to detect model changes
     with app.app_context():
@@ -244,3 +296,164 @@ def create_app(config_name='development'):
     register_commands(app)
 
     return app
+
+
+def register_error_handlers(app):
+    """
+    Register global error handlers for the application.
+
+    Handles:
+    - Custom API exceptions (ValidationError, NotFoundError, etc.)
+    - Standard HTTP errors (404, 500)
+    - Unexpected exceptions
+    """
+    from flask import jsonify, render_template, request
+    from app.utils.exceptions import APIError, ValidationError, NotFoundError, UnauthorizedError, ServerError
+
+    @app.errorhandler(APIError)
+    def handle_api_error(error):
+        """
+        Handle custom API errors.
+
+        Returns JSON for AJAX requests, HTML for regular requests.
+        """
+        app.logger.error(f'API Error: {error.message}', exc_info=True)
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.headers.get('Content-Type') == 'application/json' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            # Return JSON response for AJAX requests
+            response = jsonify(error.to_dict())
+            response.status_code = error.status_code
+            return response
+        else:
+            # Return HTML error page for regular requests
+            from flask import flash, redirect, url_for
+            flash(error.message, 'danger')
+
+            # Redirect back to referrer or home page
+            referrer = request.referrer
+            if referrer and referrer.startswith(request.url_root):
+                return redirect(referrer)
+            else:
+                return redirect(url_for('dashboard.pausalac_dashboard'))
+
+    @app.errorhandler(404)
+    def handle_404(error):
+        """
+        Handle 404 Not Found errors.
+        """
+        app.logger.warning(f'404 Not Found: {request.url}')
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            return jsonify({
+                'error': 'Resurs nije pronađen',
+                'status_code': 404
+            }), 404
+        else:
+            # Return custom 404 page (or flash message and redirect)
+            from flask import flash, redirect, url_for
+            flash('Stranica koju tražite nije pronađena.', 'warning')
+            return redirect(url_for('dashboard.pausalac_dashboard'))
+
+    @app.errorhandler(403)
+    def handle_403(error):
+        """
+        Handle 403 Forbidden errors.
+        """
+        app.logger.warning(f'403 Forbidden: {request.url}')
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            return jsonify({
+                'error': 'Nemate dozvolu za pristup ovom resursu',
+                'status_code': 403
+            }), 403
+        else:
+            from flask import flash, redirect, url_for
+            flash('Nemate dozvolu za pristup ovoj stranici.', 'danger')
+            return redirect(url_for('dashboard.pausalac_dashboard'))
+
+    @app.errorhandler(429)
+    def handle_rate_limit(error):
+        """
+        Handle 429 Too Many Requests (rate limit exceeded).
+
+        Triggered when user exceeds rate limit (e.g., max 5 login attempts per 15 minutes).
+        """
+        app.logger.warning(f'429 Rate Limit Exceeded: {request.url} from IP: {request.remote_addr}')
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            return jsonify({
+                'error': 'Previše neuspelih pokušaja. Pokušajte ponovo za 15 minuta.',
+                'status_code': 429
+            }), 429
+        else:
+            from flask import flash, redirect, url_for
+            flash('Previše neuspelih pokušaja. Pokušajte ponovo za 15 minuta.', 'warning')
+            return redirect(url_for('auth.login'))
+
+    @app.errorhandler(500)
+    def handle_500(error):
+        """
+        Handle 500 Internal Server Error.
+        """
+        app.logger.error(f'500 Internal Server Error: {request.url}', exc_info=True)
+
+        # Rollback database session in case of error
+        db.session.rollback()
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            return jsonify({
+                'error': 'Greška na serveru. Molimo pokušajte ponovo.',
+                'status_code': 500
+            }), 500
+        else:
+            # Return custom 500 page (or flash message and redirect)
+            from flask import flash, redirect, url_for
+            flash('Greška na serveru. Molimo pokušajte ponovo.', 'danger')
+            return redirect(url_for('dashboard.pausalac_dashboard'))
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        """
+        Handle unexpected exceptions.
+
+        This is a catch-all for any unhandled exceptions.
+        """
+        app.logger.error(f'Unexpected error: {str(error)}', exc_info=True)
+
+        # Rollback database session
+        db.session.rollback()
+
+        # Check if request is AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.path.startswith('/api/')
+
+        if is_ajax:
+            return jsonify({
+                'error': 'Neočekivana greška. Molimo pokušajte ponovo.',
+                'status_code': 500
+            }), 500
+        else:
+            from flask import flash, redirect, url_for
+            flash('Neočekivana greška. Molimo pokušajte ponovo.', 'danger')
+            return redirect(url_for('dashboard.pausalac_dashboard'))

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/modals.html" import render_delete_modal %}
 
 {% block title %}{{ komitent.naziv }} - OBVEZNIK{% endblock %}
 
@@ -164,43 +165,19 @@
             </div>
         </div>
     </div>
+
+    {# Hidden delete form #}
+    <form id="deleteKomitentForm" method="post" action="{{ url_for('komitenti.obrisi', id=komitent.id) }}" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
 </div>
 
-{# Delete Confirmation Modal #}
-<div class="modal fade" id="deleteKomitentModal" tabindex="-1"
-     aria-labelledby="deleteKomitentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title" id="deleteKomitentModalLabel">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="mb-3">Da li ste sigurni da želite da obrišete komitenta?</p>
-                <div class="alert alert-light border mb-3">
-                    <strong><i class="fa-solid fa-building me-2"></i>{{ komitent.naziv }}</strong><br>
-                    <small class="text-muted">PIB: {{ komitent.pib }}</small>
-                </div>
-                <div class="alert alert-warning mb-0">
-                    <i class="fa-solid fa-info-circle me-2"></i>
-                    <strong>Napomena:</strong> Ne možete obrisati komitenta koji ima fakture. 
-                    {{ 'Ovaj komitent ima %d faktura.' % komitent.fakture|length if komitent.fakture else 'Ovaj komitent nema faktura.' }}
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fa-solid fa-times me-2"></i> Otkaži
-                </button>
-                <form method="post" action="{{ url_for('komitenti.obrisi', id=komitent.id) }}" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fa-solid fa-trash me-2"></i> Obriši Komitenta
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{# Delete Confirmation Modal using macro #}
+{{ render_delete_modal(
+    modal_id='deleteKomitentModal',
+    entity_name=komitent.naziv ~ ' (PIB: ' ~ komitent.pib ~ ')',
+    entity_type='komitenta',
+    form_id='deleteKomitentForm'
+) }}
+
 {% endblock %}
