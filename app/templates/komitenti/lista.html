@@ -2,6 +2,7 @@
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
 {% from "macros/pagination.html" import render_pagination %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}Komitenti - OBVEZNIK{% endblock %}
 
@@ -14,15 +15,19 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-4"><i class="fa-solid fa-address-book me-2 text-primary"></i> Komitenti</h1>
-            <p class="text-muted mb-0">Upravljanje komitentima Vaše firme.</p>
-        </div>
-        <a href="{{ url_for('komitenti.novi') }}" class="btn btn-primary btn-lg shadow-sm">
-            <i class="fa-solid fa-plus me-2"></i> Dodaj Komitenta
-        </a>
-    </div>
+    {{ render_page_header(
+        title='Komitenti',
+        subtitle='Upravljanje komitentima Vaše firme.',
+        icon='fa-solid fa-address-book',
+        icon_style='inline',
+        primary_action={
+            'url': url_for('komitenti.novi'),
+            'text': 'Dodaj Komitenta',
+            'icon': 'fa-solid fa-plus',
+            'size': 'large'
+        },
+        layout='flex'
+    ) }}
 
     {# Search Form #}
     <div class="card border-0 shadow-sm mb-4">

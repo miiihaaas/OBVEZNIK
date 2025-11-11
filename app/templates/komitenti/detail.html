@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/modals.html" import render_delete_modal %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}{{ komitent.naziv }} - OBVEZNIK{% endblock %}
 
@@ -14,15 +15,14 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <div class="d-flex align-items-center mb-4">
-        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-            <i class="fa-solid fa-building fs-3 text-muted"></i>
-        </div>
-        <div>
-            <h1 class="mb-1">{{ komitent.naziv }}</h1>
-            <p class="text-muted mb-0"><i class="fa-solid fa-hashtag me-1"></i> PIB: {{ komitent.pib }}</p>
-        </div>
-    </div>
+    {% set subtitle_text = 'PIB: ' ~ komitent.pib %}
+    {{ render_page_header(
+        title=komitent.naziv,
+        subtitle=subtitle_text,
+        icon='fa-solid fa-building',
+        icon_style='avatar',
+        layout='flex'
+    ) }}
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom">

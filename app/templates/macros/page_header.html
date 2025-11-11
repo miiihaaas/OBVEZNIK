@@ -1,0 +1,151 @@
+{#
+  Page Header Macro - Standardized Page Headers
+
+  Usage:
+    {% from 'macros/page_header.html' import render_page_header %}
+
+    {{ render_page_header(
+        title='Komitenti',
+        subtitle='Upravljanje komitentima Vaše firme.',
+        icon='fa-solid fa-address-book',
+        primary_action={
+            'url': url_for('komitenti.novi'),
+            'text': 'Dodaj Komitenta',
+            'icon': 'fa-solid fa-plus'
+        },
+        layout='flex'
+    ) }}
+
+  Arguments:
+    - title (required): Page heading text
+    - subtitle (optional): Descriptive text below title
+    - icon (optional): Font Awesome icon class
+    - icon_style (optional): 'inline' (default) or 'avatar' (circular background)
+    - primary_action (optional): Dict with 'url', 'text', 'icon', 'size' ('normal' or 'large')
+    - layout (optional): 'flex' (default) or 'row'
+    - show_count_info (optional): Boolean to show pagination count info
+    - pagination (optional): Pagination object for count display
+#}
+
+{% macro render_page_header(
+    title,
+    subtitle=None,
+    icon=None,
+    icon_style='inline',
+    primary_action=None,
+    layout='flex',
+    show_count_info=False,
+    pagination=None
+) %}
+
+{# Determine container classes based on layout #}
+{% if layout == 'row' %}
+    {# Row layout (Bootstrap grid) #}
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            {# Icon + Title #}
+            <h1 class="mb-4">
+                {% if icon and icon_style == 'inline' %}
+                    <i class="{{ icon }} me-2 text-primary"></i>
+                {% endif %}
+                {{ title }}
+            </h1>
+
+            {# Subtitle or Count Info #}
+            {% if subtitle or show_count_info %}
+                <p class="text-muted mb-0">
+                    {% if icon_style == 'inline' %}
+                        <i class="fa-solid fa-list me-1"></i>
+                    {% endif %}
+
+                    {% if show_count_info and pagination %}
+                        Prikazano {{ ((pagination.page - 1) * 20) + 1 }}-{{ ((pagination.page - 1) * 20) + pagination.items|length }} od {{ pagination.total }}
+                        {% if pagination.total == 1 %}
+                            rezultat
+                        {% elif pagination.total < 5 %}
+                            rezultata
+                        {% else %}
+                            rezultata
+                        {% endif %}
+                    {% else %}
+                        {{ subtitle }}
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        {# Primary Action Button #}
+        {% if primary_action %}
+            <div class="col-md-4 text-end">
+                <a href="{{ primary_action.url }}"
+                   class="btn btn-primary {% if primary_action.get('size') == 'large' %}btn-lg{% endif %} shadow-sm"
+                   {% if primary_action.get('aria_label') %}aria-label="{{ primary_action.aria_label }}"{% endif %}>
+                    {% if primary_action.get('icon') %}
+                        <i class="{{ primary_action.icon }} me-2"></i>
+                    {% endif %}
+                    {{ primary_action.text }}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+{% else %}
+    {# Flex layout (d-flex) #}
+    <div class="{% if icon_style == 'avatar' %}d-flex align-items-center{% else %}d-flex justify-content-between align-items-center{% endif %} mb-4">
+
+        {# Avatar Icon Style #}
+        {% if icon and icon_style == 'avatar' %}
+            {% set avatar_size = primary_action.get('avatar_size', 60) if primary_action else 60 %}
+            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3"
+                 style="width: {{ avatar_size }}px; height: {{ avatar_size }}px;">
+                <i class="{{ icon }} fs-3 text-muted"></i>
+            </div>
+        {% endif %}
+
+        <div {% if primary_action and icon_style != 'avatar' %}class="flex-grow-1"{% endif %}>
+            {# Icon + Title (Inline Style) #}
+            <h1 class="{% if subtitle %}mb-4{% else %}mb-1{% endif %}">
+                {% if icon and icon_style == 'inline' %}
+                    <i class="{{ icon }} me-2 text-primary"></i>
+                {% endif %}
+                {{ title }}
+            </h1>
+
+            {# Subtitle or Count Info #}
+            {% if subtitle or show_count_info %}
+                <p class="text-muted mb-0">
+                    {% if show_count_info and pagination %}
+                        <i class="fa-solid fa-list me-1"></i>
+                        Prikazano {{ ((pagination.page - 1) * 20) + 1 }}-{{ ((pagination.page - 1) * 20) + pagination.items|length }} od {{ pagination.total }}
+                        {% if pagination.total == 1 %}
+                            rezultat
+                        {% elif pagination.total < 5 %}
+                            rezultata
+                        {% else %}
+                            rezultata
+                        {% endif %}
+                    {% else %}
+                        {% if icon_style == 'avatar' and icon %}
+                            <i class="fa-solid fa-hashtag me-1"></i>
+                        {% endif %}
+                        {{ subtitle }}
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        {# Primary Action Button (only if not avatar style) #}
+        {% if primary_action and icon_style != 'avatar' %}
+            <a href="{{ primary_action.url }}"
+               class="btn btn-primary {% if primary_action.get('size') == 'large' %}btn-lg{% endif %} shadow-sm"
+               {% if primary_action.get('aria_label') %}aria-label="{{ primary_action.aria_label }}"{% endif %}>
+                {% if primary_action.get('icon') %}
+                    <i class="{{ primary_action.icon }} me-2"></i>
+                {% endif %}
+                {{ primary_action.text }}
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% endmacro %}

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/pagination.html" import render_pagination %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}Memorandumi - OBVEZNIK{% endblock %}
 
@@ -13,15 +14,19 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-4"><i class="fa-solid fa-memo me-2 text-primary"></i> Memorandumi</h1>
-            <p class="text-muted mb-0">Interna dokumentacija i napomene.</p>
-        </div>
-        <a href="{{ url_for('memorandumi.novi') }}" class="btn btn-primary btn-lg shadow-sm">
-            <i class="fa-solid fa-plus me-2"></i> Kreiraj Memorandum
-        </a>
-    </div>
+    {{ render_page_header(
+        title='Memorandumi',
+        subtitle='Interna dokumentacija i napomene.',
+        icon='fa-solid fa-memo',
+        icon_style='inline',
+        primary_action={
+            'url': url_for('memorandumi.novi'),
+            'text': 'Kreiraj Memorandum',
+            'icon': 'fa-solid fa-plus',
+            'size': 'large'
+        },
+        layout='flex'
+    ) }}
 
     {# Search and Filter Form #}
     <div class="card border-0 shadow-sm mb-4">

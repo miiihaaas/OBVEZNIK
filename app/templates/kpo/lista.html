@@ -19,7 +19,7 @@
         <div class="col-md-8">
             <h1 class="mb-4">
                 <i class="fa-solid fa-book me-2 text-primary"></i>
-                KPO Knjiga {% if current_filters.get('godina') %}({{ current_filters.get('godina') }}){% endif %}
+                KPO Knjiga {% if current_filters and current_filters.get('godina') %}({{ current_filters.get('godina') }}){% endif %}
             </h1>
             <p class="text-muted mb-0">
                 <i class="fa-solid fa-list me-1"></i>
@@ -55,20 +55,24 @@
                                 <i class="fa-solid fa-calendar me-1"></i> Godina
                             </label>
                             <select name="godina" class="form-select">
-                                {% for year in available_years %}
-                                <option value="{{ year }}" {% if current_filters.get('godina') == year %}selected{% endif %}>{{ year }}</option>
-                                {% endfor %}
+                                {% if available_years %}
+                                    {% for year in available_years %}
+                                    <option value="{{ year }}" {% if current_filters and current_filters.get('godina') == year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="">N/A</option>
+                                {% endif %}
                             </select>
                         </div>
 
                         <!-- Date Range -->
                         <div class="col-md-2">
                             <label class="form-label small text-muted">Datum od</label>
-                            <input type="date" name="datum_od" class="form-control" value="{{ current_filters.get('datum_od').strftime('%Y-%m-%d') if current_filters.get('datum_od') else '' }}">
+                            <input type="date" name="datum_od" class="form-control" value="{% if current_filters and current_filters.get('datum_od') %}{{ current_filters.get('datum_od').strftime('%Y-%m-%d') }}{% endif %}">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label small text-muted">Datum do</label>
-                            <input type="date" name="datum_do" class="form-control" value="{{ current_filters.get('datum_do').strftime('%Y-%m-%d') if current_filters.get('datum_do') else '' }}">
+                            <input type="date" name="datum_do" class="form-control" value="{% if current_filters and current_filters.get('datum_do') %}{{ current_filters.get('datum_do').strftime('%Y-%m-%d') }}{% endif %}">
                         </div>
 
                         <!-- Komitent Search -->
@@ -76,16 +80,16 @@
                             <label class="form-label small text-muted">
                                 <i class="fa-solid fa-search me-1"></i> Komitent
                             </label>
-                            <input type="text" name="komitent_search" class="form-control" placeholder="Pretraži po nazivu" value="{{ current_filters.get('komitent_search', '') }}">
+                            <input type="text" name="komitent_search" class="form-control" placeholder="Pretraži po nazivu" value="{{ current_filters.get('komitent_search', '') if current_filters else '' }}">
                         </div>
 
                         <!-- Status Filter -->
                         <div class="col-md-2">
                             <label class="form-label small text-muted">Status</label>
                             <select name="status_filter" class="form-select">
-                                <option value="izdata" {% if current_filters.get('status_filter', 'izdata') == 'izdata' %}selected{% endif %}>Izdata</option>
-                                <option value="stornirana" {% if current_filters.get('status_filter') == 'stornirana' %}selected{% endif %}>Stornirana</option>
-                                <option value="all" {% if current_filters.get('status_filter') == 'all' %}selected{% endif %}>Sve</option>
+                                <option value="izdata" {% if not current_filters or current_filters.get('status_filter', 'izdata') == 'izdata' %}selected{% endif %}>Izdata</option>
+                                <option value="stornirana" {% if current_filters and current_filters.get('status_filter') == 'stornirana' %}selected{% endif %}>Stornirana</option>
+                                <option value="all" {% if current_filters and current_filters.get('status_filter') == 'all' %}selected{% endif %}>Sve</option>
                             </select>
                         </div>
 
@@ -94,11 +98,11 @@
                             <label class="form-label small text-muted">Valuta</label>
                             <select name="valuta_filter" class="form-select">
                                 <option value="">Sve</option>
-                                <option value="RSD" {% if current_filters.get('valuta_filter') == 'RSD' %}selected{% endif %}>RSD</option>
-                                <option value="EUR" {% if current_filters.get('valuta_filter') == 'EUR' %}selected{% endif %}>EUR</option>
-                                <option value="USD" {% if current_filters.get('valuta_filter') == 'USD' %}selected{% endif %}>USD</option>
-                                <option value="GBP" {% if current_filters.get('valuta_filter') == 'GBP' %}selected{% endif %}>GBP</option>
-                                <option value="CHF" {% if current_filters.get('valuta_filter') == 'CHF' %}selected{% endif %}>CHF</option>
+                                <option value="RSD" {% if current_filters and current_filters.get('valuta_filter') == 'RSD' %}selected{% endif %}>RSD</option>
+                                <option value="EUR" {% if current_filters and current_filters.get('valuta_filter') == 'EUR' %}selected{% endif %}>EUR</option>
+                                <option value="USD" {% if current_filters and current_filters.get('valuta_filter') == 'USD' %}selected{% endif %}>USD</option>
+                                <option value="GBP" {% if current_filters and current_filters.get('valuta_filter') == 'GBP' %}selected{% endif %}>GBP</option>
+                                <option value="CHF" {% if current_filters and current_filters.get('valuta_filter') == 'CHF' %}selected{% endif %}>CHF</option>
                             </select>
                         </div>
 
@@ -109,7 +113,7 @@
                             <select name="firma_id" class="form-select">
                                 <option value="">Sve firme (God Mode)</option>
                                 {% for firma in all_firme %}
-                                <option value="{{ firma.id }}" {% if current_filters.get('firma_id') == firma.id %}selected{% endif %}>
+                                <option value="{{ firma.id }}" {% if current_filters and current_filters.get('firma_id') == firma.id %}selected{% endif %}>
                                     {{ firma.naziv }}
                                 </option>
                                 {% endfor %}
@@ -145,10 +149,10 @@
                             <thead class="table-primary sticky-top">
                                 <tr>
                                     <th class="text-center">
-                                        <a href="{{ url_for('kpo.lista', sort_by='redni_broj', sort_order='asc' if sort_by == 'redni_broj' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                        <a href="{{ url_for('kpo.lista', sort_by='redni_broj', sort_order='asc' if (sort_by|default('') == 'redni_broj' and sort_order|default('') == 'desc') else 'desc', **(current_filters or {})) }}" class="text-decoration-none text-dark">
                                             Redni Broj
-                                            {% if sort_by == 'redni_broj' %}
-                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% if sort_by|default('') == 'redni_broj' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order|default('') == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
                                             {% else %}
                                                 <i class="fa-solid fa-sort ms-1 text-muted"></i>
                                             {% endif %}
@@ -156,10 +160,10 @@
                                     </th>
                                     <th>Broj Fakture</th>
                                     <th>
-                                        <a href="{{ url_for('kpo.lista', sort_by='datum_prometa', sort_order='asc' if sort_by == 'datum_prometa' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                        <a href="{{ url_for('kpo.lista', sort_by='datum_prometa', sort_order='asc' if (sort_by|default('') == 'datum_prometa' and sort_order|default('') == 'desc') else 'desc', **(current_filters or {})) }}" class="text-decoration-none text-dark">
                                             Datum Prometa
-                                            {% if sort_by == 'datum_prometa' %}
-                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% if sort_by|default('') == 'datum_prometa' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order|default('') == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
                                             {% else %}
                                                 <i class="fa-solid fa-sort ms-1 text-muted"></i>
                                             {% endif %}
@@ -168,10 +172,10 @@
                                     <th>Datum Dospeća</th>
                                     <th>Komitent</th>
                                     <th class="text-end">
-                                        <a href="{{ url_for('kpo.lista', sort_by='iznos_rsd', sort_order='asc' if sort_by == 'iznos_rsd' and sort_order == 'desc' else 'desc', **current_filters) }}" class="text-decoration-none text-dark">
+                                        <a href="{{ url_for('kpo.lista', sort_by='iznos_rsd', sort_order='asc' if (sort_by|default('') == 'iznos_rsd' and sort_order|default('') == 'desc') else 'desc', **(current_filters or {})) }}" class="text-decoration-none text-dark">
                                             Iznos (RSD)
-                                            {% if sort_by == 'iznos_rsd' %}
-                                                <i class="fa-solid fa-sort-{% if sort_order == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
+                                            {% if sort_by|default('') == 'iznos_rsd' %}
+                                                <i class="fa-solid fa-sort-{% if sort_order|default('') == 'asc' %}up{% else %}down{% endif %} ms-1"></i>
                                             {% else %}
                                                 <i class="fa-solid fa-sort ms-1 text-muted"></i>
                                             {% endif %}
@@ -221,7 +225,7 @@
                                         <i class="fa-solid fa-calculator me-2"></i>Ukupan Promet:
                                     </td>
                                     <td class="text-end fw-bold fs-5 text-success">
-                                        {{ "{:,.2f}".format(total_promet) }}
+                                        {{ "{:,.2f}".format(total_promet|default(0)) }}
                                     </td>
                                     <td class="text-center fw-bold">RSD</td>
                                     <td></td>
@@ -242,11 +246,7 @@
                     {{ render_pagination(
                         pagination=pagination,
                         endpoint='kpo.lista',
-                        preserve_args={
-                            'sort_by': sort_by,
-                            'sort_order': sort_order,
-                            **current_filters
-                        },
+                        preserve_args=dict(current_filters or {}, sort_by=sort_by or '', sort_order=sort_order or ''),
                         show_info=False
                     ) }}
                 </div>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/modals.html" import render_delete_modal %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}{{ artikal.naziv }} - OBVEZNIK{% endblock %}
 
@@ -14,15 +15,13 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <div class="d-flex align-items-center mb-4">
-        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-            <i class="fa-solid fa-box fs-3 text-muted"></i>
-        </div>
-        <div>
-            <h1 class="mb-1">{{ artikal.naziv }}</h1>
-            <p class="text-muted mb-0"><i class="fa-solid fa-tag me-1"></i> Artikal / Usluga</p>
-        </div>
-    </div>
+    {{ render_page_header(
+        title=artikal.naziv,
+        subtitle='Artikal / Usluga',
+        icon='fa-solid fa-box',
+        icon_style='avatar',
+        layout='flex'
+    ) }}
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom">

@@ -2,6 +2,7 @@
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
 {% from "macros/pagination.html" import render_pagination %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}Artikli - OBVEZNIK{% endblock %}
 
@@ -14,15 +15,19 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-4"><i class="fa-solid fa-box me-2 text-primary"></i> Artikli i Usluge</h1>
-            <p class="text-muted mb-0">Upravljanje artiklima i uslugama Vaše firme.</p>
-        </div>
-        <a href="{{ url_for('artikli.novi') }}" class="btn btn-primary btn-lg shadow-sm">
-            <i class="fa-solid fa-plus me-2"></i> Dodaj Artikal
-        </a>
-    </div>
+    {{ render_page_header(
+        title='Artikli i Usluge',
+        subtitle='Upravljanje artiklima i uslugama Vaše firme.',
+        icon='fa-solid fa-box',
+        icon_style='inline',
+        primary_action={
+            'url': url_for('artikli.novi'),
+            'text': 'Dodaj Artikal',
+            'icon': 'fa-solid fa-plus',
+            'size': 'large'
+        },
+        layout='flex'
+    ) }}
 
     {# Search and Sort Form #}
     <div class="card border-0 shadow-sm mb-4">

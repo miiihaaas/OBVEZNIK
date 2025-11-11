@@ -2,6 +2,7 @@
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
 {% from "macros/pagination.html" import render_pagination %}
+{% from "macros/page_header.html" import render_page_header %}
 
 {% block title %}Fakture - OBVEZNIK{% endblock %}
 
@@ -15,28 +16,21 @@
 {% block content %}
 <div class="container mt-4 mb-5">
     <!-- Page Header -->
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-8">
-            <h1 class="mb-4">
-                <i class="fa-solid fa-file-invoice me-2 text-primary"></i>
-                {% if current_user.role == 'admin' %}Admin - Sve Fakture{% else %}Moje Fakture{% endif %}
-            </h1>
-            <p class="text-muted mb-0">
-                <i class="fa-solid fa-list me-1"></i>
-                {% if pagination %}
-                    Prikazano {{ ((pagination.page - 1) * 20) + 1 }}-{{ ((pagination.page - 1) * 20) + pagination.items|length }} od {{ pagination.total }} faktura
-                {% else %}
-                    Pregled svih kreiranih faktura
-                {% endif %}
-            </p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ url_for('fakture.nova_faktura') }}" class="btn btn-primary shadow-sm">
-                <i class="fa-solid fa-plus-circle me-2"></i>
-                Kreiraj Novu Fakturu
-            </a>
-        </div>
-    </div>
+    {{ render_page_header(
+        title='Admin - Sve Fakture' if current_user.role == 'admin' else 'Moje Fakture',
+        subtitle='Pregled svih kreiranih faktura' if not pagination else None,
+        icon='fa-solid fa-file-invoice',
+        icon_style='inline',
+        primary_action={
+            'url': url_for('fakture.nova_faktura'),
+            'text': 'Kreiraj Novu Fakturu',
+            'icon': 'fa-solid fa-plus-circle',
+            'size': 'normal'
+        },
+        layout='row',
+        show_count_info=True if pagination else False,
+        pagination=pagination
+    ) }}
 
     <!-- Filters & Search -->
     <div class="row mb-4">
