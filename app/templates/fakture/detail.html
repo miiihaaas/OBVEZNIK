@@ -13,7 +13,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<div class="container mt-4 mb-5" id="fakturaDetailContainer"
+     data-faktura-id="{{ faktura.id }}"
+     data-retry-pdf-url="{{ url_for('fakture.retry_pdf', faktura_id=0) }}"
+     data-retry-email-url="{{ url_for('fakture.retry_email', faktura_id=0) }}"
+     data-send-email-url="{{ url_for('fakture.send_email', faktura_id=faktura.id) }}"
+     data-pdf-generating="{% if faktura.status == 'izdata' and faktura.status_pdf == 'generating' %}true{% else %}false{% endif %}">
     <h1 class="mb-4"><i class="fa-solid fa-file-invoice me-2 text-primary"></i>Faktura {{ faktura.broj_fakture }}</h1>
 
     <div class="card mb-3">
@@ -380,165 +385,8 @@
     form_id='stornirajForm'
 ) }}
 
-<script>
-// API URL-ovi generisani pomoću url_for za podršku subfolder deployments
-const RETRY_PDF_URL_TEMPLATE = "{{ url_for('fakture.retry_pdf', faktura_id=0) }}".replace('/0/', '/');
-
-// Auto-refresh countdown when PDF is generating
-{% if faktura.status == 'izdata' and faktura.status_pdf == 'generating' %}
-let countdown = 3;
-const countdownInterval = setInterval(() => {
-    countdown--;
-    const countdownElement = document.getElementById('countdown');
-    if (countdownElement) {
-        countdownElement.textContent = countdown;
-    }
-
-    if (countdown <= 0) {
-        clearInterval(countdownInterval);
-        window.location.reload();
-    }
-}, 1000);
-
-function checkPdfStatus() {
-    clearInterval(countdownInterval);
-    window.location.reload();
-}
-{% endif %}
-
-function retryPdfGeneration(fakturaId) {
-    // Show loading state
-    const statusDiv = document.getElementById('retry-status-' + fakturaId);
-    statusDiv.innerHTML = '<div class="alert alert-info"><span class="spinner-border spinner-border-sm me-2"></span>Pokušaj u toku...</div>';
-
-    // Make AJAX request
-    fetch(RETRY_PDF_URL_TEMPLATE.replace('/retry-pdf', '/' + fakturaId + '/retry-pdf'), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            statusDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-            // Reload page after 2 seconds to show generating status
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        } else {
-            statusDiv.innerHTML = '<div class="alert alert-danger">Greška: ' + data.message + '</div>';
-        }
-    })
-    .catch(error => {
-        statusDiv.innerHTML = '<div class="alert alert-danger">Greška pri komunikaciji sa serverom.</div>';
-        console.error('Error:', error);
-    });
-}
-
-// Retry email sending
-function retryEmail(fakturaId) {
-    // Show loading state
-    const statusDiv = document.getElementById('retry-email-status-' + fakturaId);
-    statusDiv.innerHTML = '<div class="alert alert-info"><span class="spinner-border spinner-border-sm me-2"></span>Pokušaj u toku...</div>';
-
-    // Make AJAX request
-    fetch("{{ url_for('fakture.retry_email', faktura_id=0) }}".replace('/0/', '/' + fakturaId + '/'), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            statusDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-            // Reload page after 2 seconds to show sending status
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        } else {
-            statusDiv.innerHTML = '<div class="alert alert-danger">Greška: ' + data.message + '</div>';
-        }
-    })
-    .catch(error => {
-        statusDiv.innerHTML = '<div class="alert alert-danger">Greška pri komunikaciji sa serverom.</div>';
-        console.error('Error:', error);
-    });
-}
-
-// Email sending functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const sendEmailBtn = document.getElementById('sendEmailBtn');
-    if (sendEmailBtn) {
-        sendEmailBtn.addEventListener('click', function() {
-            const form = document.getElementById('emailForm');
-            const formData = new FormData(form);
-            const data = {
-                recipient_email: formData.get('recipient_email'),
-                cc_email: formData.get('cc_email') || null
-            };
-
-            // Validate form
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-
-            // Show loading state
-            const spinner = document.getElementById('emailSpinner');
-            const icon = document.getElementById('emailIcon');
-            const btnText = document.getElementById('emailBtnText');
-            const alertContainer = document.getElementById('emailAlertContainer');
-
-            spinner.classList.remove('d-none');
-            icon.classList.add('d-none');
-            btnText.textContent = 'Slanje...';
-            sendEmailBtn.disabled = true;
-            alertContainer.innerHTML = '';
-
-            // Make AJAX POST request
-            fetch("{{ url_for('fakture.send_email', faktura_id=faktura.id) }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                spinner.classList.add('d-none');
-                icon.classList.remove('d-none');
-                btnText.textContent = 'Pošalji Email';
-                sendEmailBtn.disabled = false;
-
-                if (result.success) {
-                    alertContainer.innerHTML = '<div class="alert alert-success">Email uspešno poslat na ' + data.recipient_email + '</div>';
-                    // Close modal and reload page after 2 seconds
-                    setTimeout(() => {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
-                        modal.hide();
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    alertContainer.innerHTML = '<div class="alert alert-danger">Greška: ' + result.error + '</div>';
-                }
-            })
-            .catch(error => {
-                spinner.classList.add('d-none');
-                icon.classList.remove('d-none');
-                btnText.textContent = 'Pošalji Email';
-                sendEmailBtn.disabled = false;
-                alertContainer.innerHTML = '<div class="alert alert-danger">Greška pri komunikaciji sa serverom.</div>';
-                console.error('Error:', error);
-            });
-        });
-    }
-});
-</script>
+<!-- Faktura Detail External JS -->
+<script src="{{ url_for('static', filename='js/faktura-detail.js') }}"></script>
 
 
 <!-- Konvertuj Profakturu Modal (Story 4.2) -->
