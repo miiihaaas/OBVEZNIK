@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/form_field.html" import render_field, render_select, render_textarea %}
 
 {% block title %}Izmeni Memorandum - OBVEZNIK{% endblock %}
 
@@ -21,39 +22,26 @@
             <form method="POST" action="{{ url_for('memorandumi.izmeni', id=memorandum.id) }}" novalidate>
                 {{ form.hidden_tag() }}
 
-                <div class="mb-3">
-                    {{ form.naslov.label(class="form-label fw-semibold") }}
-                    {{ form.naslov(class="form-control" + (" is-invalid" if form.naslov.errors else "")) }}
-                    {% if form.naslov.errors %}
-                        <div class="invalid-feedback">{{ form.naslov.errors[0] }}</div>
-                    {% endif %}
-                </div>
+                {{ render_field(
+                    field=form.naslov
+                ) }}
 
-                <div class="mb-3">
-                    {{ form.sadrzaj.label(class="form-label fw-semibold") }}
-                    {{ form.sadrzaj(class="form-control" + (" is-invalid" if form.sadrzaj.errors else "")) }}
-                    {% if form.sadrzaj.errors %}
-                        <div class="invalid-feedback">{{ form.sadrzaj.errors[0] }}</div>
-                    {% endif %}
-                </div>
+                {{ render_textarea(
+                    field=form.sadrzaj,
+                    rows=5
+                ) }}
 
-                <div class="mb-3">
-                    {{ form.datum.label(class="form-label fw-semibold") }}
-                    {{ form.datum(class="form-control" + (" is-invalid" if form.datum.errors else "")) }}
-                    {% if form.datum.errors %}
-                        <div class="invalid-feedback">{{ form.datum.errors[0] }}</div>
-                    {% endif %}
-                </div>
+                {{ render_field(
+                    field=form.datum
+                ) }}
 
-                <div class="mb-3">
-                    {{ form.komitent_id.label(class="form-label fw-semibold") }}
-                    {{ form.komitent_id(class="form-select") }}
-                </div>
+                {{ render_select(
+                    field=form.komitent_id
+                ) }}
 
-                <div class="mb-3">
-                    {{ form.faktura_id.label(class="form-label fw-semibold") }}
-                    {{ form.faktura_id(class="form-select") }}
-                </div>
+                {{ render_select(
+                    field=form.faktura_id
+                ) }}
 
                 <div class="d-flex gap-2">
                     {{ form.submit(class="btn btn-primary btn-lg") }}

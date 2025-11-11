@@ -1,0 +1,267 @@
+{#
+  Form Field Macro - Standardized Form Input Fields
+
+  Usage:
+    {% from 'macros/form_field.html' import render_field %}
+
+    {{ render_field(
+        field=form.naziv,
+        label='Naziv Komitenta',
+        icon='fa-solid fa-building',
+        required=True,
+        help_text='Puni naziv komitenta',
+        size='large'
+    ) }}
+
+  Arguments:
+    - field (required): WTForms field object
+    - label (optional): Custom label text (defaults to field.label.text)
+    - icon (optional): Font Awesome icon class for label
+    - required (optional): Show asterisk for required fields (default: False)
+    - help_text (optional): Small help text below input
+    - size (optional): 'normal' or 'large' (default: 'normal')
+    - input_group (optional): If True, wraps input in input-group with icon prefix
+    - input_group_icon (optional): Icon for input-group prefix (only if input_group=True)
+    - placeholder (optional): Input placeholder text
+    - extra_classes (optional): Additional CSS classes for input field
+    - col_class (optional): Column class for wrapper div (e.g., 'col-md-6')
+#}
+
+{% macro render_field(
+    field,
+    label=None,
+    icon=None,
+    required=False,
+    help_text=None,
+    size='normal',
+    input_group=False,
+    input_group_icon=None,
+    placeholder=None,
+    extra_classes='',
+    col_class=None
+) %}
+
+{% set wrapper_class = col_class if col_class else '' %}
+
+<div {% if wrapper_class %}class="{{ wrapper_class }}"{% endif %}>
+    {# Label #}
+    {% if label or field.label %}
+    <label for="{{ field.id }}" class="form-label fw-semibold">
+        {% if icon %}
+        <i class="{{ icon }} me-1 text-muted"></i>
+        {% endif %}
+        {{ label if label else field.label.text }}
+        {% if required %}
+        <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+    {% endif %}
+
+    {# Input Group Pattern (with icon prefix) #}
+    {% if input_group %}
+    <div class="input-group {% if size == 'large' %}input-group-lg{% endif %}">
+        {% if input_group_icon %}
+        <span class="input-group-text bg-light">
+            <i class="{{ input_group_icon }} text-muted"></i>
+        </span>
+        {% endif %}
+
+        {# Render the actual field #}
+        {% set field_classes = "form-control" %}
+        {% if size == 'large' %}
+            {% set field_classes = field_classes ~ " form-control-lg" %}
+        {% endif %}
+        {% if field.errors %}
+            {% set field_classes = field_classes ~ " is-invalid" %}
+        {% endif %}
+        {% if extra_classes %}
+            {% set field_classes = field_classes ~ " " ~ extra_classes %}
+        {% endif %}
+
+        {{ field(class=field_classes, placeholder=placeholder if placeholder else field.description) }}
+
+        {# Error Feedback #}
+        {% if field.errors %}
+        <div class="invalid-feedback">
+            {{ field.errors[0] }}
+        </div>
+        {% endif %}
+    </div>
+
+    {# Simple Pattern (no input-group) #}
+    {% else %}
+        {# Render the actual field #}
+        {% set field_classes = "form-control" %}
+        {% if size == 'large' %}
+            {% set field_classes = field_classes ~ " form-control-lg" %}
+        {% endif %}
+        {% if field.errors %}
+            {% set field_classes = field_classes ~ " is-invalid" %}
+        {% endif %}
+        {% if extra_classes %}
+            {% set field_classes = field_classes ~ " " ~ extra_classes %}
+        {% endif %}
+
+        {{ field(class=field_classes, placeholder=placeholder if placeholder else field.description) }}
+
+        {# Error Feedback #}
+        {% if field.errors %}
+        <div class="invalid-feedback">
+            {{ field.errors[0] }}
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {# Help Text #}
+    {% if help_text %}
+    <small class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+</div>
+
+{% endmacro %}
+
+
+{#
+  Render Select Field (Dropdown) - Specialized macro for select fields
+#}
+{% macro render_select(
+    field,
+    label=None,
+    icon=None,
+    required=False,
+    help_text=None,
+    size='normal',
+    col_class=None
+) %}
+
+{% set wrapper_class = col_class if col_class else '' %}
+
+<div {% if wrapper_class %}class="{{ wrapper_class }}"{% endif %}>
+    {# Label #}
+    {% if label or field.label %}
+    <label for="{{ field.id }}" class="form-label fw-semibold">
+        {% if icon %}
+        <i class="{{ icon }} me-1 text-muted"></i>
+        {% endif %}
+        {{ label if label else field.label.text }}
+        {% if required %}
+        <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+    {% endif %}
+
+    {# Select Field #}
+    {% set field_classes = "form-select" %}
+    {% if size == 'large' %}
+        {% set field_classes = field_classes ~ " form-select-lg" %}
+    {% endif %}
+    {% if field.errors %}
+        {% set field_classes = field_classes ~ " is-invalid" %}
+    {% endif %}
+
+    {{ field(class=field_classes) }}
+
+    {# Error Feedback #}
+    {% if field.errors %}
+    <div class="invalid-feedback">
+        {{ field.errors[0] }}
+    </div>
+    {% endif %}
+
+    {# Help Text #}
+    {% if help_text %}
+    <small class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+</div>
+
+{% endmacro %}
+
+
+{#
+  Render Textarea Field - Specialized macro for textarea fields
+#}
+{% macro render_textarea(
+    field,
+    label=None,
+    icon=None,
+    required=False,
+    help_text=None,
+    rows=3,
+    placeholder=None,
+    col_class=None
+) %}
+
+{% set wrapper_class = col_class if col_class else '' %}
+
+<div {% if wrapper_class %}class="{{ wrapper_class }}"{% endif %}>
+    {# Label #}
+    {% if label or field.label %}
+    <label for="{{ field.id }}" class="form-label fw-semibold">
+        {% if icon %}
+        <i class="{{ icon }} me-1 text-muted"></i>
+        {% endif %}
+        {{ label if label else field.label.text }}
+        {% if required %}
+        <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+    {% endif %}
+
+    {# Textarea Field #}
+    {% set field_classes = "form-control form-control-lg" %}
+    {% if field.errors %}
+        {% set field_classes = field_classes ~ " is-invalid" %}
+    {% endif %}
+
+    {{ field(class=field_classes, rows=rows, placeholder=placeholder if placeholder else field.description) }}
+
+    {# Error Feedback #}
+    {% if field.errors %}
+    <div class="invalid-feedback">
+        {{ field.errors[0] }}
+    </div>
+    {% endif %}
+
+    {# Help Text #}
+    {% if help_text %}
+    <small class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+</div>
+
+{% endmacro %}
+
+
+{#
+  Render Checkbox Field
+#}
+{% macro render_checkbox(
+    field,
+    label=None,
+    help_text=None,
+    col_class=None
+) %}
+
+{% set wrapper_class = col_class if col_class else '' %}
+
+<div {% if wrapper_class %}class="{{ wrapper_class }}"{% endif %}>
+    <div class="form-check">
+        {{ field(class="form-check-input" ~ (" is-invalid" if field.errors else "")) }}
+        <label class="form-check-label" for="{{ field.id }}">
+            {{ label if label else field.label.text }}
+        </label>
+
+        {# Error Feedback #}
+        {% if field.errors %}
+        <div class="invalid-feedback">
+            {{ field.errors[0] }}
+        </div>
+        {% endif %}
+    </div>
+
+    {# Help Text #}
+    {% if help_text %}
+    <small class="form-text text-muted d-block mt-1">{{ help_text }}</small>
+    {% endif %}
+</div>
+
+{% endmacro %}

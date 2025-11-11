@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/form_field.html" import render_field, render_select, render_textarea %}
 
 {% block title %}Dodaj Artikal - OBVEZNIK{% endblock %}
 
@@ -32,46 +33,46 @@
             </div>
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-12">
-                        <label for="naziv" class="form-label fw-semibold">
-                            <i class="fa-solid fa-tag me-1 text-muted"></i> Naziv Artikla ili Usluge *
-                        </label>
-                        {{ form.naziv(class="form-control form-control-lg" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv", placeholder="Unesite naziv") }}
-                        {% if form.naziv.errors %}
-                            <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Naziv artikla ili usluge koji će se pojavljivati na fakturama.</small>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="opis" class="form-label fw-semibold">
-                            <i class="fa-solid fa-align-left me-1 text-muted"></i> Opis (opciono)
-                        </label>
-                        {{ form.opis(class="form-control form-control-lg" ~ (" is-invalid" if form.opis.errors else ""), id="opis", rows="3", placeholder="Detaljan opis artikla ili usluge") }}
-                        {% if form.opis.errors %}
-                            <div class="invalid-feedback">{{ form.opis.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Detaljan opis artikla ili usluge (opciono).</small>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="podrazumevana_cena" class="form-label fw-semibold">
-                            <i class="fa-solid fa-coins me-1 text-muted"></i> Podrazumevana Cena (RSD)
-                        </label>
-                        {{ form.podrazumevana_cena(class="form-control form-control-lg" ~ (" is-invalid" if form.podrazumevana_cena.errors else ""), id="podrazumevana_cena", placeholder="0.00") }}
-                        {% if form.podrazumevana_cena.errors %}
-                            <div class="invalid-feedback">{{ form.podrazumevana_cena.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Podrazumevana cena (opciono).</small>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="jedinica_mere" class="form-label fw-semibold">
-                            <i class="fa-solid fa-ruler me-1 text-muted"></i> Jedinica Mere *
-                        </label>
-                        {{ form.jedinica_mere(class="form-select form-select-lg" ~ (" is-invalid" if form.jedinica_mere.errors else ""), id="jedinica_mere") }}
-                        {% if form.jedinica_mere.errors %}
-                            <div class="invalid-feedback">{{ form.jedinica_mere.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Izaberite jedinicu mere.</small>
-                    </div>
+                    {{ render_field(
+                        field=form.naziv,
+                        label='Naziv Artikla ili Usluge',
+                        icon='fa-solid fa-tag',
+                        required=True,
+                        help_text='Naziv artikla ili usluge koji će se pojavljivati na fakturama.',
+                        size='large',
+                        placeholder='Unesite naziv',
+                        col_class='col-md-12'
+                    ) }}
+
+                    {{ render_textarea(
+                        field=form.opis,
+                        label='Opis (opciono)',
+                        icon='fa-solid fa-align-left',
+                        help_text='Detaljan opis artikla ili usluge (opciono).',
+                        rows=3,
+                        placeholder='Detaljan opis artikla ili usluge',
+                        col_class='col-md-12'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.podrazumevana_cena,
+                        label='Podrazumevana Cena (RSD)',
+                        icon='fa-solid fa-coins',
+                        help_text='Podrazumevana cena (opciono).',
+                        size='large',
+                        placeholder='0.00',
+                        col_class='col-md-6'
+                    ) }}
+
+                    {{ render_select(
+                        field=form.jedinica_mere,
+                        label='Jedinica Mere',
+                        icon='fa-solid fa-ruler',
+                        required=True,
+                        help_text='Izaberite jedinicu mere.',
+                        size='large',
+                        col_class='col-md-6'
+                    ) }}
                 </div>
             </div>
         </div>

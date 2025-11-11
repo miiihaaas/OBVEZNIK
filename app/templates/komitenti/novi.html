@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
+{% from "macros/form_field.html" import render_field, render_textarea %}
 
 {% block title %}Dodaj Komitenta - OBVEZNIK{% endblock %}
 
@@ -68,24 +69,25 @@
             </div>
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-12">
-                        <label for="naziv" class="form-label fw-semibold">
-                            <i class="fa-solid fa-building me-1 text-muted"></i> Naziv Komitenta *
-                        </label>
-                        {{ form.naziv(class="form-control form-control-lg" ~ (" is-invalid" if form.naziv.errors else ""), id="naziv", placeholder="Unesite naziv komitenta") }}
-                        {% if form.naziv.errors %}
-                            <div class="invalid-feedback">{{ form.naziv.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <label for="maticni_broj" class="form-label fw-semibold">
-                            <i class="fa-solid fa-id-card me-1 text-muted"></i> Matični Broj *
-                        </label>
-                        {{ form.maticni_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.maticni_broj.errors else ""), id="maticni_broj", placeholder="Matični broj") }}
-                        {% if form.maticni_broj.errors %}
-                            <div class="invalid-feedback">{{ form.maticni_broj.errors[0] }}</div>
-                        {% endif %}
-                    </div>
+                    {{ render_field(
+                        field=form.naziv,
+                        label='Naziv Komitenta',
+                        icon='fa-solid fa-building',
+                        required=True,
+                        size='large',
+                        placeholder='Unesite naziv komitenta',
+                        col_class='col-md-12'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.maticni_broj,
+                        label='Matični Broj',
+                        icon='fa-solid fa-id-card',
+                        required=True,
+                        size='large',
+                        placeholder='Matični broj',
+                        col_class='col-md-6'
+                    ) }}
                 </div>
             </div>
         </div>
@@ -97,51 +99,55 @@
             </div>
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-8">
-                        <label for="adresa" class="form-label fw-semibold">
-                            <i class="fa-solid fa-road me-1 text-muted"></i> Ulica *
-                        </label>
-                        {{ form.adresa(class="form-control form-control-lg" ~ (" is-invalid" if form.adresa.errors else ""), id="adresa", placeholder="Naziv ulice") }}
-                        {% if form.adresa.errors %}
-                            <div class="invalid-feedback">{{ form.adresa.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="broj" class="form-label fw-semibold">
-                            <i class="fa-solid fa-hashtag me-1 text-muted"></i> Broj *
-                        </label>
-                        {{ form.broj(class="form-control form-control-lg" ~ (" is-invalid" if form.broj.errors else ""), id="broj", placeholder="Broj") }}
-                        {% if form.broj.errors %}
-                            <div class="invalid-feedback">{{ form.broj.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="postanski_broj" class="form-label fw-semibold">
-                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Poštanski Broj *
-                        </label>
-                        {{ form.postanski_broj(class="form-control form-control-lg" ~ (" is-invalid" if form.postanski_broj.errors else ""), id="postanski_broj", placeholder="Poštanski broj") }}
-                        {% if form.postanski_broj.errors %}
-                            <div class="invalid-feedback">{{ form.postanski_broj.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="mesto" class="form-label fw-semibold">
-                            <i class="fa-solid fa-city me-1 text-muted"></i> Mesto *
-                        </label>
-                        {{ form.mesto(class="form-control form-control-lg" ~ (" is-invalid" if form.mesto.errors else ""), id="mesto", placeholder="Naziv mesta") }}
-                        {% if form.mesto.errors %}
-                            <div class="invalid-feedback">{{ form.mesto.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-4">
-                        <label for="drzava" class="form-label fw-semibold">
-                            <i class="fa-solid fa-flag me-1 text-muted"></i> Država *
-                        </label>
-                        {{ form.drzava(class="form-control form-control-lg" ~ (" is-invalid" if form.drzava.errors else ""), id="drzava", placeholder="Država") }}
-                        {% if form.drzava.errors %}
-                            <div class="invalid-feedback">{{ form.drzava.errors[0] }}</div>
-                        {% endif %}
-                    </div>
+                    {{ render_field(
+                        field=form.adresa,
+                        label='Ulica',
+                        icon='fa-solid fa-road',
+                        required=True,
+                        size='large',
+                        placeholder='Naziv ulice',
+                        col_class='col-md-8'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.broj,
+                        label='Broj',
+                        icon='fa-solid fa-hashtag',
+                        required=True,
+                        size='large',
+                        placeholder='Broj',
+                        col_class='col-md-4'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.postanski_broj,
+                        label='Poštanski Broj',
+                        icon='fa-solid fa-envelope',
+                        required=True,
+                        size='large',
+                        placeholder='Poštanski broj',
+                        col_class='col-md-4'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.mesto,
+                        label='Mesto',
+                        icon='fa-solid fa-city',
+                        required=True,
+                        size='large',
+                        placeholder='Naziv mesta',
+                        col_class='col-md-4'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.drzava,
+                        label='Država',
+                        icon='fa-solid fa-flag',
+                        required=True,
+                        size='large',
+                        placeholder='Država',
+                        col_class='col-md-4'
+                    ) }}
                 </div>
             </div>
         </div>
@@ -153,35 +159,35 @@
             </div>
             <div class="card-body p-4">
                 <div class="row g-3">
-                    <div class="col-md-12">
-                        <label for="email" class="form-label fw-semibold">
-                            <i class="fa-solid fa-envelope me-1 text-muted"></i> Email *
-                        </label>
-                        {{ form.email(class="form-control form-control-lg" ~ (" is-invalid" if form.email.errors else ""), id="email", placeholder="email@primer.com") }}
-                        {% if form.email.errors %}
-                            <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-12">
-                        <label for="kontakt_osoba" class="form-label fw-semibold">
-                            <i class="fa-solid fa-user me-1 text-muted"></i> Kontakt Osoba (opciono)
-                        </label>
-                        {{ form.kontakt_osoba(class="form-control form-control-lg" ~ (" is-invalid" if form.kontakt_osoba.errors else ""), id="kontakt_osoba", placeholder="Ime i prezime kontakt osobe") }}
-                        {% if form.kontakt_osoba.errors %}
-                            <div class="invalid-feedback">{{ form.kontakt_osoba.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Ime i prezime kontakt osobe u firmi (opciono).</small>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="napomene" class="form-label fw-semibold">
-                            <i class="fa-solid fa-sticky-note me-1 text-muted"></i> Dodatne Napomene (opciono)
-                        </label>
-                        {{ form.napomene(class="form-control form-control-lg" ~ (" is-invalid" if form.napomene.errors else ""), id="napomene", rows="3", placeholder="Unesite dodatne napomene o komitentu") }}
-                        {% if form.napomene.errors %}
-                            <div class="invalid-feedback">{{ form.napomene.errors[0] }}</div>
-                        {% endif %}
-                        <small class="form-text text-muted">Dodatne napomene o komitentu (opciono).</small>
-                    </div>
+                    {{ render_field(
+                        field=form.email,
+                        label='Email',
+                        icon='fa-solid fa-envelope',
+                        required=True,
+                        size='large',
+                        placeholder='email@primer.com',
+                        col_class='col-md-12'
+                    ) }}
+
+                    {{ render_field(
+                        field=form.kontakt_osoba,
+                        label='Kontakt Osoba (opciono)',
+                        icon='fa-solid fa-user',
+                        help_text='Ime i prezime kontakt osobe u firmi (opciono).',
+                        size='large',
+                        placeholder='Ime i prezime kontakt osobe',
+                        col_class='col-md-12'
+                    ) }}
+
+                    {{ render_textarea(
+                        field=form.napomene,
+                        label='Dodatne Napomene (opciono)',
+                        icon='fa-solid fa-sticky-note',
+                        help_text='Dodatne napomene o komitentu (opciono).',
+                        rows=3,
+                        placeholder='Unesite dodatne napomene o komitentu',
+                        col_class='col-md-12'
+                    ) }}
                 </div>
             </div>
         </div>
