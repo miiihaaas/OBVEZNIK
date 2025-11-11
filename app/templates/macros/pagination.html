@@ -1,0 +1,177 @@
+{# <!-- Powered by BMAD" Core --> #}
+{#
+  Pagination Component Macro
+
+  Purpose: Unified pagination component for all list views
+  Author: Sally (UX Expert)
+  Date: 2025-11-11
+
+  Usage:
+    {% from 'macros/pagination.html' import render_pagination %}
+
+    {{ render_pagination(
+        pagination=pagination,
+        endpoint='fakture.lista',
+        preserve_args={
+            'search': request.args.get('search', ''),
+            'sort': request.args.get('sort', ''),
+            'order': request.args.get('order', '')
+        }
+    ) }}
+
+  Args:
+    - pagination: Flask-SQLAlchemy pagination object (required)
+    - endpoint: Flask route name for url_for() (required)
+    - preserve_args: Dict of query params to preserve in pagination links (optional)
+    - show_info: Show page info below pagination (default: True)
+    - aria_label: Custom aria-label for nav element (default: 'Pagination')
+#}
+
+{% macro render_pagination(pagination, endpoint, preserve_args={}, show_info=True, aria_label='Pagination') %}
+
+{# Only render if there are multiple pages #}
+{% if pagination and pagination.pages > 1 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="{{ aria_label }}">
+            <ul class="pagination justify-content-center">
+
+                {# Previous Button #}
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    {% if pagination.has_prev %}
+                        <a class="page-link"
+                           href="{{ url_for(endpoint, page=pagination.prev_num, **preserve_args) }}"
+                           aria-label="Prethodna stranica"
+                           rel="prev">
+                            <i class="fa-solid fa-chevron-left me-1"></i>
+                            <span class="d-none d-sm-inline">Prethodna</span>
+                        </a>
+                    {% else %}
+                        <span class="page-link" aria-disabled="true">
+                            <i class="fa-solid fa-chevron-left me-1"></i>
+                            <span class="d-none d-sm-inline">Prethodna</span>
+                        </span>
+                    {% endif %}
+                </li>
+
+                {# Page Numbers with Smart Ellipsis #}
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {# Regular Page Number #}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            {% if page_num == pagination.page %}
+                                <span class="page-link">
+                                    {{ page_num }}
+                                    <span class="visually-hidden">(trenutna stranica)</span>
+                                </span>
+                            {% else %}
+                                <a class="page-link"
+                                   href="{{ url_for(endpoint, page=page_num, **preserve_args) }}"
+                                   aria-label="Idi na stranicu {{ page_num }}">
+                                    {{ page_num }}
+                                </a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        {# Ellipsis for skipped pages #}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Button #}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    {% if pagination.has_next %}
+                        <a class="page-link"
+                           href="{{ url_for(endpoint, page=pagination.next_num, **preserve_args) }}"
+                           aria-label="Sledeća stranica"
+                           rel="next">
+                            <span class="d-none d-sm-inline">Sledeća</span>
+                            <i class="fa-solid fa-chevron-right ms-1"></i>
+                        </a>
+                    {% else %}
+                        <span class="page-link" aria-disabled="true">
+                            <span class="d-none d-sm-inline">Sledeća</span>
+                            <i class="fa-solid fa-chevron-right ms-1"></i>
+                        </span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+
+        {# Page Info (optional) #}
+        {% if show_info %}
+        <div class="text-center text-muted small mt-2">
+            Stranica {{ pagination.page }} od {{ pagination.pages }}
+            {% if pagination.total > 0 %}
+                ({{ pagination.total }}
+                {% if pagination.total == 1 %}
+                    rezultat
+                {% elif pagination.total >= 2 and pagination.total <= 4 %}
+                    rezultata
+                {% else %}
+                    rezultata
+                {% endif %})
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endmacro %}
+
+
+{#
+  Simple Pagination Macro (Minimal Version)
+
+  Purpose: Lighter version without page numbers, just prev/next
+  Use when: Space is limited or for mobile views
+
+  Usage:
+    {{ render_simple_pagination(pagination, endpoint, preserve_args) }}
+#}
+
+{% macro render_simple_pagination(pagination, endpoint, preserve_args={}) %}
+
+{% if pagination and pagination.pages > 1 %}
+<div class="d-flex justify-content-between align-items-center mt-4">
+    {# Previous Button #}
+    <div>
+        {% if pagination.has_prev %}
+            <a class="btn btn-outline-secondary"
+               href="{{ url_for(endpoint, page=pagination.prev_num, **preserve_args) }}"
+               rel="prev">
+                <i class="fa-solid fa-chevron-left me-2"></i> Prethodna
+            </a>
+        {% else %}
+            <button class="btn btn-outline-secondary" disabled>
+                <i class="fa-solid fa-chevron-left me-2"></i> Prethodna
+            </button>
+        {% endif %}
+    </div>
+
+    {# Page Info #}
+    <div class="text-muted small">
+        Stranica {{ pagination.page }} od {{ pagination.pages }}
+    </div>
+
+    {# Next Button #}
+    <div>
+        {% if pagination.has_next %}
+            <a class="btn btn-outline-secondary"
+               href="{{ url_for(endpoint, page=pagination.next_num, **preserve_args) }}"
+               rel="next">
+                Sledeća <i class="fa-solid fa-chevron-right ms-2"></i>
+            </a>
+        {% else %}
+            <button class="btn btn-outline-secondary" disabled>
+                Sledeća <i class="fa-solid fa-chevron-right ms-2"></i>
+            </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endmacro %}

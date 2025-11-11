@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
+{% from "macros/pagination.html" import render_pagination %}
 
 {% block title %}Artikli - OBVEZNIK{% endblock %}
 
@@ -137,50 +138,17 @@
                                        class="btn btn-sm btn-outline-primary" title="Izmeni artikal">
                                         <i class="fa-solid fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Obriši artikal"
-                                            data-bs-toggle="modal" data-bs-target="#deleteModal{{ artikal.id }}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger js-delete-artikal"
+                                            title="Obriši artikal"
+                                            data-artikal-id="{{ artikal.id }}"
+                                            data-artikal-naziv="{{ artikal.naziv }}"
+                                            data-artikal-cena="{% if artikal.podrazumevana_cena %}{{ '%.2f' % artikal.podrazumevana_cena }} RSD{% else %}N/A{% endif %}"
+                                            data-delete-url="{{ url_for('artikli.obrisi', id=artikal.id) }}">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-
-                        {# Delete Confirmation Modal #}
-                        <div class="modal fade" id="deleteModal{{ artikal.id }}" tabindex="-1"
-                             aria-labelledby="deleteModalLabel{{ artikal.id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-danger text-white border-0">
-                                        <h5 class="modal-title" id="deleteModalLabel{{ artikal.id }}">
-                                            <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
-                                        </h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <p class="mb-3">Da li ste sigurni da želite da obrišete artikal?</p>
-                                        <div class="alert alert-light border mb-3">
-                                            <strong><i class="fa-solid fa-box me-2"></i>{{ artikal.naziv }}</strong>
-                                        </div>
-                                        <div class="alert alert-info mb-0">
-                                            <i class="fa-solid fa-info-circle me-2"></i>
-                                            <strong>Napomena:</strong> Brisanje artikla neće uticati na postojeće fakture.
-                                            Podaci o artiklu su već kopirani u stavke faktura.
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                            <i class="fa-solid fa-times me-2"></i> Otkaži
-                                        </button>
-                                        <form method="post" action="{{ url_for('artikli.obrisi', id=artikal.id) }}" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="fa-solid fa-trash me-2"></i> Obriši Artikal
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -189,40 +157,14 @@
     </div>
 
     {# Pagination Controls #}
-    {% if pagination.pages > 1 %}
-    <nav aria-label="Navigacija stranica">
-        <ul class="pagination justify-content-center">
-            {# Previous button #}
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('artikli.lista', page=pagination.prev_num, sort_by=sort_by, search=search_term) if pagination.has_prev else '#' }}">
-                    <i class="fa-solid fa-chevron-left"></i> Prethodna
-                </a>
-            </li>
-
-            {# Page numbers #}
-            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page_num %}
-                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('artikli.lista', page=page_num, sort_by=sort_by, search=search_term) }}">
-                            {{ page_num }}
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-                {% endif %}
-            {% endfor %}
-
-            {# Next button #}
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('artikli.lista', page=pagination.next_num, sort_by=sort_by, search=search_term) if pagination.has_next else '#' }}">
-                    Sledeća <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            </li>
-        </ul>
-    </nav>
-    {% endif %}
+    {{ render_pagination(
+        pagination=pagination,
+        endpoint='artikli.lista',
+        preserve_args={
+            'sort_by': sort_by,
+            'search': search_term
+        }
+    ) }}
 
     {% else %}
     <div class="card border-0 shadow-sm">
@@ -255,6 +197,43 @@
         <a href="{{ url_for('dashboard.pausalac_dashboard') }}" class="btn btn-outline-secondary">
             <i class="fa-solid fa-arrow-left me-2"></i> Nazad na Dashboard
         </a>
+    </div>
+</div>
+
+{# Delete Confirmation Modal - Single instance for all artikli #}
+<div class="modal fade" id="deleteArtikalModal" tabindex="-1" aria-labelledby="deleteArtikalModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title" id="deleteArtikalModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">Da li ste sigurni da želite da obrišete artikal?</p>
+                <div class="alert alert-light border mb-3">
+                    <strong><i class="fa-solid fa-box me-2"></i><span id="modalArtikalNaziv"></span></strong><br>
+                    <small class="text-muted">Cena: <span id="modalArtikalCena"></span></small>
+                </div>
+                <div class="alert alert-info mb-0">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> Brisanje artikla neće uticati na postojeće fakture.
+                    Podaci o artiklu su već kopirani u stavke faktura.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-times me-2"></i> Otkaži
+                </button>
+                <form method="post" id="deleteArtikalForm" action="" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash me-2"></i> Obriši Artikal
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

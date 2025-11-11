@@ -345,3 +345,96 @@ function hideInlineSpinner(spinnerId) {
         spinner.style.display = 'none';
     }
 }
+
+// =============================================================================
+// DELETE MODAL HANDLING (Dynamic Modal Content)
+// =============================================================================
+
+/**
+ * Setup delete modal for Komitenti list
+ * Handles dynamic modal content population for delete confirmation
+ */
+function setupKomitentDeleteModal() {
+    // Find all delete buttons
+    const deleteButtons = document.querySelectorAll('.js-delete-komitent');
+
+    if (deleteButtons.length === 0) return;
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Extract data from button data attributes
+            const komitentId = this.dataset.komitentId;
+            const komitentNaziv = this.dataset.komitentNaziv;
+            const komitentPib = this.dataset.komitentPib;
+            const deleteUrl = this.dataset.deleteUrl;
+
+            // Get modal elements
+            const modal = document.getElementById('deleteKomitentModal');
+            const modalNaziv = document.getElementById('modalKomitentNaziv');
+            const modalPib = document.getElementById('modalKomitentPib');
+            const form = document.getElementById('deleteKomitentForm');
+
+            // Populate modal with data
+            if (modalNaziv) modalNaziv.textContent = komitentNaziv;
+            if (modalPib) modalPib.textContent = komitentPib;
+            if (form) form.action = deleteUrl;
+
+            // Open modal using Bootstrap 5 Modal API
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        });
+    });
+}
+
+/**
+ * Setup delete modal for Artikli list
+ * Handles dynamic modal content population for delete confirmation
+ */
+function setupArtikalDeleteModal() {
+    // Find all delete buttons
+    const deleteButtons = document.querySelectorAll('.js-delete-artikal');
+
+    if (deleteButtons.length === 0) return;
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Extract data from button data attributes
+            const artikalId = this.dataset.artikalId;
+            const artikalNaziv = this.dataset.artikalNaziv;
+            const artikalCena = this.dataset.artikalCena;
+            const deleteUrl = this.dataset.deleteUrl;
+
+            // Get modal elements
+            const modal = document.getElementById('deleteArtikalModal');
+            const modalNaziv = document.getElementById('modalArtikalNaziv');
+            const modalCena = document.getElementById('modalArtikalCena');
+            const form = document.getElementById('deleteArtikalForm');
+
+            // Populate modal with data
+            if (modalNaziv) modalNaziv.textContent = artikalNaziv;
+            if (modalCena) modalCena.textContent = artikalCena;
+            if (form) form.action = deleteUrl;
+
+            // Open modal using Bootstrap 5 Modal API
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        });
+    });
+}
+
+// =============================================================================
+// DOM READY INITIALIZATION
+// =============================================================================
+
+/**
+ * Initialize all delete modals on page load
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup delete modals if present on page
+    setupKomitentDeleteModal();
+    setupArtikalDeleteModal();
+});

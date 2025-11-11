@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
+{% from "macros/pagination.html" import render_pagination %}
 
 {% block title %}Komitenti - OBVEZNIK{% endblock %}
 
@@ -130,50 +131,17 @@
                                        class="btn btn-sm btn-outline-primary" title="Izmeni komitenta">
                                         <i class="fa-solid fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Obriši komitenta"
-                                            data-bs-toggle="modal" data-bs-target="#deleteModal{{ komitent.id }}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger js-delete-komitent"
+                                            title="Obriši komitenta"
+                                            data-komitent-id="{{ komitent.id }}"
+                                            data-komitent-naziv="{{ komitent.naziv }}"
+                                            data-komitent-pib="{{ komitent.pib }}"
+                                            data-delete-url="{{ url_for('komitenti.obrisi', id=komitent.id) }}">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-
-                        {# Delete Confirmation Modal #}
-                        <div class="modal fade" id="deleteModal{{ komitent.id }}" tabindex="-1"
-                             aria-labelledby="deleteModalLabel{{ komitent.id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-danger text-white border-0">
-                                        <h5 class="modal-title" id="deleteModalLabel{{ komitent.id }}">
-                                            <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
-                                        </h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <p class="mb-3">Da li ste sigurni da želite da obrišete komitenta?</p>
-                                        <div class="alert alert-light border mb-3">
-                                            <strong><i class="fa-solid fa-building me-2"></i>{{ komitent.naziv }}</strong><br>
-                                            <small class="text-muted">PIB: {{ komitent.pib }}</small>
-                                        </div>
-                                        <div class="alert alert-warning mb-0">
-                                            <i class="fa-solid fa-info-circle me-2"></i>
-                                            <strong>Napomena:</strong> Ne možete obrisati komitenta koji ima fakture.
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer border-0">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                            <i class="fa-solid fa-times me-2"></i> Otkaži
-                                        </button>
-                                        <form method="post" action="{{ url_for('komitenti.obrisi', id=komitent.id) }}" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="fa-solid fa-trash me-2"></i> Obriši Komitenta
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -182,40 +150,15 @@
     </div>
 
     {# Pagination Controls #}
-    {% if pagination.pages > 1 %}
-    <nav aria-label="Navigacija stranica">
-        <ul class="pagination justify-content-center">
-            {# Previous button #}
-            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('komitenti.lista', page=pagination.prev_num, sort=sort_by, order=order_dir, search=search_term) if pagination.has_prev else '#' }}">
-                    <i class="fa-solid fa-chevron-left"></i> Prethodna
-                </a>
-            </li>
-
-            {# Page numbers #}
-            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                {% if page_num %}
-                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                        <a class="page-link" href="{{ url_for('komitenti.lista', page=page_num, sort=sort_by, order=order_dir, search=search_term) }}">
-                            {{ page_num }}
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                    </li>
-                {% endif %}
-            {% endfor %}
-
-            {# Next button #}
-            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                <a class="page-link" href="{{ url_for('komitenti.lista', page=pagination.next_num, sort=sort_by, order=order_dir, search=search_term) if pagination.has_next else '#' }}">
-                    Sledeća <i class="fa-solid fa-chevron-right"></i>
-                </a>
-            </li>
-        </ul>
-    </nav>
-    {% endif %}
+    {{ render_pagination(
+        pagination=pagination,
+        endpoint='komitenti.lista',
+        preserve_args={
+            'sort': sort_by,
+            'order': order_dir,
+            'search': search_term
+        }
+    ) }}
 
     {% else %}
     <div class="card border-0 shadow-sm">
@@ -248,6 +191,42 @@
         <a href="{{ url_for('dashboard.pausalac_dashboard') }}" class="btn btn-outline-secondary">
             <i class="fa-solid fa-arrow-left me-2"></i> Nazad na Dashboard
         </a>
+    </div>
+</div>
+
+{# Delete Confirmation Modal - Single instance for all komitenti #}
+<div class="modal fade" id="deleteKomitentModal" tabindex="-1" aria-labelledby="deleteKomitentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title" id="deleteKomitentModalLabel">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Potvrda Brisanja
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">Da li ste sigurni da želite da obrišete komitenta?</p>
+                <div class="alert alert-light border mb-3">
+                    <strong><i class="fa-solid fa-building me-2"></i><span id="modalKomitentNaziv"></span></strong><br>
+                    <small class="text-muted">PIB: <span id="modalKomitentPib"></span></small>
+                </div>
+                <div class="alert alert-warning mb-0">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Napomena:</strong> Ne možete obrisati komitenta koji ima fakture.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-times me-2"></i> Otkaži
+                </button>
+                <form method="post" id="deleteKomitentForm" action="" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa-solid fa-trash me-2"></i> Obriši Komitenta
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

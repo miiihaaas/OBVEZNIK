@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
+{% from "macros/pagination.html" import render_pagination %}
 
 {% block title %}KPO Knjiga - OBVEZNIK{% endblock %}
 
@@ -237,40 +238,18 @@
                 </div>
 
                 <!-- Pagination -->
-                {% if pagination.pages > 1 %}
                 <div class="card-footer bg-light">
-                    <nav aria-label="KPO pagination">
-                        <ul class="pagination pagination-sm justify-content-center mb-0">
-                            <!-- Previous Page -->
-                            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                                <a class="page-link" href="{% if pagination.has_prev %}{{ url_for('kpo.lista', page=pagination.prev_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}{% else %}#{% endif %}">
-                                    <i class="fa-solid fa-chevron-left"></i> Prethodna
-                                </a>
-                            </li>
-
-                            <!-- Page Numbers -->
-                            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                                {% if page_num %}
-                                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                                        <a class="page-link" href="{{ url_for('kpo.lista', page=page_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}">{{ page_num }}</a>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-
-                            <!-- Next Page -->
-                            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                                <a class="page-link" href="{% if pagination.has_next %}{{ url_for('kpo.lista', page=pagination.next_num, sort_by=sort_by, sort_order=sort_order, **current_filters) }}{% else %}#{% endif %}">
-                                    Sledeća <i class="fa-solid fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
+                    {{ render_pagination(
+                        pagination=pagination,
+                        endpoint='kpo.lista',
+                        preserve_args={
+                            'sort_by': sort_by,
+                            'sort_order': sort_order,
+                            **current_filters
+                        },
+                        show_info=False
+                    ) }}
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "macros/breadcrumbs.html" import render_breadcrumbs %}
 {% from "macros/empty_state.html" import render_empty_state %}
+{% from "macros/pagination.html" import render_pagination %}
 
 {% block title %}Fakture - OBVEZNIK{% endblock %}
 
@@ -366,60 +367,15 @@
     </div>
 
     <!-- Pagination Controls -->
-    {% if pagination.pages > 1 %}
-    <div class="row mt-4">
-        <div class="col-12">
-            <nav aria-label="Pagination">
-                <ul class="pagination justify-content-center">
-                    <!-- Previous Button -->
-                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        {% if pagination.has_prev %}
-                        <a class="page-link" href="?page={{ pagination.prev_num }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Prethodna strana">
-                            <i class="fa-solid fa-chevron-left"></i> Prethodna
-                        </a>
-                        {% else %}
-                        <span class="page-link" aria-disabled="true">
-                            <i class="fa-solid fa-chevron-left"></i> Prethodna
-                        </span>
-                        {% endif %}
-                    </li>
-
-                    <!-- Page Numbers -->
-                    {% for page_num in range(1, pagination.pages + 1) %}
-                        {% if page_num == pagination.page %}
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">{{ page_num }}</span>
-                        </li>
-                        {% elif page_num == 1 or page_num == pagination.pages or (page_num >= pagination.page - 2 and page_num <= pagination.page + 2) %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_num }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                {{ page_num }}
-                            </a>
-                        </li>
-                        {% elif page_num == pagination.page - 3 or page_num == pagination.page + 3 %}
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    <!-- Next Button -->
-                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        {% if pagination.has_next %}
-                        <a class="page-link" href="?page={{ pagination.next_num }}{% for key, value in request.args.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Sledeća strana">
-                            Sledeća <i class="fa-solid fa-chevron-right"></i>
-                        </a>
-                        {% else %}
-                        <span class="page-link" aria-disabled="true">
-                            Sledeća <i class="fa-solid fa-chevron-right"></i>
-                        </span>
-                        {% endif %}
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </div>
-    {% endif %}
+    {{ render_pagination(
+        pagination=pagination,
+        endpoint='fakture.lista',
+        preserve_args={
+            'search': request.args.get('search', ''),
+            'sort': request.args.get('sort', ''),
+            'order': request.args.get('order', '')
+        }
+    ) }}
 
     {% else %}
     <!-- Empty State -->
